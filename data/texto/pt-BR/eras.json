@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "eras": [
+    {
+      "id": 1,
+      "name": "Era da Madeira",
+      "intro": "Um vale vazio, uma ponte caída e um punhado de servos. O rei espera notícias. Boas, de preferência.",
+      "unlock": ""
+    },
+    {
+      "id": 2,
+      "name": "Era do Ferro",
+      "intro": "A primeira barra de ferro brilha na forja. Em Coroa-d'Água, alguém já está escrevendo uma carta mais exigente.",
+      "unlock": "Primeira barra de ferro forjada no vale."
+    },
+    {
+      "id": 3,
+      "name": "Era do Carvão",
+      "intro": "Os reinos vizinhos afiam espadas. Alvermarca precisa de aço, e o vale vai fornecê-lo.",
+      "unlock": "A Guilda dos Ferreiros reconhece o vale."
+    },
+    {
+      "id": 4,
+      "name": "Era do Vapor",
+      "intro": "Mestre Corvo chegou com uma caldeira, três caixas de engrenagens e nenhuma explicação razoável.",
+      "unlock": "A torre do relógio exige uma força que rio nenhum dá."
+    }
+  ]
+}
