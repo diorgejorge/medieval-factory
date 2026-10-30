@@ -18,7 +18,8 @@ O jogo fica em http://localhost:5173. Para derrubar e apagar tudo:
 docker compose down --rmi all
 ```
 
-Controles: arrastar com o mouse ou WASD/setas para mover; roda do mouse para zoom.
+Controles: arrastar com o mouse ou WASD/setas para mover; roda do mouse para zoom;
+espaço pausa a simulação; 1, 2 e 3 mudam a velocidade (1x, 2x, 4x).
 
 ## Rodando com Node.js local (opcional)
 

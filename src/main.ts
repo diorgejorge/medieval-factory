@@ -1,8 +1,11 @@
 import { Application, Container } from 'pixi.js';
+import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
+import type { SimulationSnapshot } from './core/simulation';
 import { Grid } from './core/world/grid';
 import { Terrain } from './core/world/terrain';
 import { CameraControls } from './input/cameraControls';
+import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 
@@ -27,6 +30,9 @@ async function start(): Promise<void> {
   camera.centerOn({ x: mapCenter, y: mapCenter }, app.screen.width, app.screen.height);
   const controls = new CameraControls(camera, app.canvas);
 
+  const simulation = new SimulationClient();
+  bindSimulationControls(simulation);
+
   let sinceHudRefresh = 0;
   app.ticker.add((ticker) => {
     controls.update(ticker.deltaMS / 1000);
@@ -37,9 +43,18 @@ async function start(): Promise<void> {
     sinceHudRefresh += ticker.deltaMS;
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
       sinceHudRefresh = 0;
-      hud.textContent = `FPS ${Math.round(ticker.FPS)}  zoom ${camera.zoom.toFixed(2)}x`;
+      hud.textContent = formatHud(ticker.FPS, camera.zoom, simulation.snapshot);
     }
   });
+}
+
+function formatHud(fps: number, zoom: number, snapshot: SimulationSnapshot | null): string {
+  const render = `FPS ${Math.round(fps)}  zoom ${zoom.toFixed(2)}x`;
+  if (!snapshot) return `${render}\nsimulação iniciando...`;
+  // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
+  const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
+  const state = snapshot.paused ? 'PAUSADO' : `${snapshot.speed}x`;
+  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n[espaço] pausa  [1-3] velocidade`;
 }
 
 /** Terreno de demonstração até a geração por seed (M1): só para ver a grade e o culling. */

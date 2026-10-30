@@ -96,6 +96,9 @@ O MVP prova que o loop central é divertido. **Fora do MVP:** multiplayer, saque
 | Testes | **Vitest** | Mesmo pipeline do Vite; simulação pura é 100% testável. |
 | Qualidade | ESLint + Prettier + CI no GitHub Actions | Padrão de clean code automatizado. |
 
+**Migração futura:** este protótipo web valida o design; a versão final deve ir para **Unreal ou Unity**. Por isso,
+regras e dados ficam independentes de engine (JSON em `data/` e ideias em [IDEIAS.md](IDEIAS.md)).
+
 **Alternativa considerada:** simulação em **Rust → WASM**. Mais rápida, mas complica tooling e debug. Recomendação:
 começar em TS com dados em typed arrays; só migrar o núcleo para WASM se o profiling mostrar gargalo real.
 
