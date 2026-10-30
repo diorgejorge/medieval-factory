@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "decrees": [
+    {
+      "id": "canalizar-agua",
+      "type": "engenharia",
+      "era": 1,
+      "title": "Água para a fonte",
+      "letter": "A fonte da praça de Coroa-d'Água secou e os embaixadores reparam. Leve água do rio Lento até ela. Por ordem de Sua Majestade, com três selos.",
+      "reminder": "Faltam {prazo}. O rei pergunta pela fonte. De novo.",
+      "success": "A fonte jorra! Sua Majestade molhou a mão em público e sorriu. Recompensa: {recompensa}.",
+      "failure": "A fonte segue seca. O rei, paciente como diz o apelido, anota seu nome num livro grosso."
+    },
+    {
+      "id": "poco-da-vila",
+      "type": "benfeitoria",
+      "era": 1,
+      "title": "Um poço digno",
+      "letter": "Um reino que bebe do rio com as mãos não impressiona ninguém. Construa um poço na praça da cidade.",
+      "reminder": "Faltam {prazo}. O arauto trouxe um balde, por precaução.",
+      "success": "O poço está pronto e ninguém caiu nele ainda. Recompensa: {recompensa}.",
+      "failure": "Sem poço. O arauto devolve o balde com um suspiro."
+    },
+    {
+      "id": "celeiro-real",
+      "type": "benfeitoria",
+      "era": 1,
+      "title": "O celeiro do inverno",
+      "letter": "O inverno chega e os ratos da capital já engordaram. Erga um celeiro e encha-o com {quantidade} de {item}.",
+      "reminder": "Faltam {prazo}. Os ratos estão confiantes.",
+      "success": "Celeiro cheio. Pela primeira vez, os ratos parecem preocupados. Recompensa: {recompensa}.",
+      "failure": "O celeiro ficou vazio. Os ratos mandam lembranças."
+    },
+    {
+      "id": "lobo-alfa",
+      "type": "combate",
+      "era": 1,
+      "title": "O Cinzento",
+      "letter": "Um lobo enorme ronda as estradas e já comeu duas ovelhas e um chapéu de cobrador. Livre o vale do Cinzento.",
+      "reminder": "Faltam {prazo}. Uivos ao norte do rio.",
+      "success": "O Cinzento não ronda mais. O cobrador ganhou chapéu novo. Recompensa: {recompensa}.",
+      "failure": "O Cinzento segue solto e, ao que parece, gostou de chapéus."
+    },
+    {
+      "id": "espadas-para-guarda",
+      "type": "producao",
+      "era": 2,
+      "title": "Aço na cintura",
+      "letter": "A guarda real anda com espadas de enfeite. Entregue {quantidade} de {item} antes do prazo.",
+      "reminder": "Faltam {prazo}. A guarda treina com galhos.",
+      "success": "A guarda desfilou armada e ninguém se cortou. Recompensa: {recompensa}.",
+      "failure": "A guarda continua com galhos. O rei finge que é tradição."
+    },
+    {
+      "id": "ponte-do-vau",
+      "type": "engenharia",
+      "era": 2,
+      "title": "A ponte do vau",
+      "letter": "A ponte que a enchente levou faz falta, e as carroças reais se recusam a nadar. Reerga a ponte de Vau das Pedras.",
+      "reminder": "Faltam {prazo}. Um mercador atravessou a nado e reclamou por escrito.",
+      "success": "A ponte está de pé, e o vale volta a ter caminho para a capital. Recompensa: {recompensa}.",
+      "failure": "Sem ponte. As carroças reais seguem o caminho longo e mal-humorado."
+    },
+    {
+      "id": "bandoleiro",
+      "type": "combate",
+      "era": 2,
+      "title": "Rufo Mão-Torta",
+      "letter": "Um bandoleiro assalta as carroças de impostos e assina os assaltos. Prenda Rufo Mão-Torta.",
+      "reminder": "Faltam {prazo}. Rufo deixou um bilhete. Com erros de ortografia.",
+      "success": "Rufo está preso e reclama da comida. Recompensa: {recompensa}.",
+      "failure": "Rufo continua solto e agora tem fã-clube."
+    },
+    {
+      "id": "drenar-pantano",
+      "type": "engenharia",
+      "era": 3,
+      "title": "O pântano do leste",
+      "letter": "O pântano do leste fede, cria mosquitos e esconde boa terra. Drene-o para Sua Majestade.",
+      "reminder": "Faltam {prazo}. Os mosquitos já sabem seu nome.",
+      "success": "Onde havia lama, há terra. Recompensa: {recompensa}.",
+      "failure": "O pântano venceu. Os mosquitos comemoram."
+    },
+    {
+      "id": "cavaleiro-rival",
+      "type": "combate",
+      "era": 3,
+      "title": "Sir Gualdim de Montefrio",
+      "letter": "Sir Gualdim de Montefrio diz que o vale pertence a ele e que suas forjas são de brinquedo. Mostre que não.",
+      "reminder": "Faltam {prazo}. Sir Gualdim mandou polir a armadura.",
+      "success": "Sir Gualdim recua, elegante e furioso. Ele volta. Recompensa: {recompensa}.",
+      "failure": "Sir Gualdim finca sua bandeira na colina. Por enquanto."
+    },
+    {
+      "id": "muralha",
+      "type": "benfeitoria",
+      "era": 3,
+      "title": "A muralha da capital",
+      "letter": "Os vizinhos se armam e Coroa-d'Água tem muros de cerca de horta. Entregue {quantidade} de {item} para a muralha.",
+      "reminder": "Faltam {prazo}. Uma cabra pulou o muro atual.",
+      "success": "A muralha está erguida. Nem a cabra passa. Recompensa: {recompensa}.",
+      "failure": "Muralha pela metade. A cabra continua entrando."
+    },
+    {
+      "id": "torre-do-relogio",
+      "type": "benfeitoria",
+      "era": 4,
+      "title": "A torre do relógio",
+      "letter": "Mestre Corvo jura que uma torre pode bater as horas sozinha, se tiver vapor bastante. Sua Majestade quer ouvir.",
+      "reminder": "Faltam {prazo}. Corvo já deu nome a cada engrenagem.",
+      "success": "O sino bate sozinho pela primeira vez. O rei agradece sem pedir mais nada. Por uma semana. Recompensa: {recompensa}.",
+      "failure": "A torre está muda. Corvo diz que a culpa é da engrenagem Gertrudes."
+    },
+    {
+      "id": "automato-rebelde",
+      "type": "combate",
+      "era": 4,
+      "title": "O Badalo",
+      "letter": "O primeiro autômato de Corvo fugiu e só obedece ao sino da torre. Pare o Badalo antes que ele chegue à capital.",
+      "reminder": "Faltam {prazo}. O Badalo foi visto andando no compasso do sino.",
+      "success": "O Badalo está parado e, segundo Corvo, \"só pensativo\". Recompensa: {recompensa}.",
+      "failure": "O Badalo segue marchando. Na hora certa, pelo menos."
+    }
+  ]
+}

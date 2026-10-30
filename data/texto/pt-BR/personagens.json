@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "characters": [
+    { "id": "rei", "name": "Rei Osmundo III", "title": "o Paciente" },
+    { "id": "arauto", "name": "Tibério Cunha", "title": "Arauto Real" },
+    { "id": "escriba", "name": "Irmã Benedita", "title": "Escriba do Scriptório" },
+    { "id": "ferreira", "name": "Ilda Braga", "title": "Mestra da Guilda dos Ferreiros" },
+    { "id": "cavaleiro-rival", "name": "Sir Gualdim de Montefrio", "title": "Cavaleiro de Montefrio" },
+    { "id": "relojoeiro", "name": "Anselmo Corvo", "title": "Mestre Relojoeiro" },
+    { "id": "automato-rebelde", "name": "O Badalo", "title": "Autômato nº 1" },
+    { "id": "bandoleiro", "name": "Rufo Mão-Torta", "title": "Bandoleiro" },
+    { "id": "lobo-alfa", "name": "O Cinzento", "title": "Lobo alfa" }
+  ]
+}

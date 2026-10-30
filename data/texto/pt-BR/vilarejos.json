@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "names": {
+    "prefixes": ["Vau", "Ponte", "Pedra", "Moinho", "Freixo", "Salgueiro", "Fonte", "Lameiro", "Carvalho", "Ribeira", "Outeiro", "Juncal"],
+    "suffixes": ["Velho", "Verde", "do Lento", "das Rãs", "Alto", "Fundo", "de Baixo", "das Ovelhas", "Torto", "Seco"]
+  },
+  "temperaments": [
+    {
+      "id": "acolhedor",
+      "greeting": "Bem-vindo a {vilarejo}! Senta, que a sopa já sai.",
+      "request": "Andamos precisando de {item}. Se sobrar, lembra da gente.",
+      "tradeAccepted": "Negócio feito, e leva um pão pro caminho.",
+      "tradeRefused": "Assim não dá, mas a sopa continua de graça.",
+      "recruit": "Tem gente aqui querendo trabalho. Paga em comida que eles vão."
+    },
+    {
+      "id": "desconfiado",
+      "greeting": "{vilarejo}. Quem mandou você?",
+      "request": "Falta {item}. Não que seja da sua conta.",
+      "tradeAccepted": "Hum. Justo. Desta vez.",
+      "tradeRefused": "Achei mesmo que era golpe.",
+      "recruit": "Uns dois aceitam ir. Se você alimentar direito."
+    },
+    {
+      "id": "mercador",
+      "greeting": "{vilarejo} compra, vende e troca! Principalmente vende.",
+      "request": "Pago bem por {item}. Bem para mim, claro.",
+      "tradeAccepted": "Prazer fazer negócio! Volte sempre, e com mais.",
+      "tradeRefused": "Contraproposta: você paga mais.",
+      "recruit": "Servos? Tenho. Com desconto, se levar três."
+    },
+    {
+      "id": "devoto",
+      "greeting": "A paz esteja com você. {vilarejo} recebe bem quem chega em paz.",
+      "request": "Para a capela, precisamos de {item}. Os santos agradecem.",
+      "tradeAccepted": "Que seja abençoado o seu depósito.",
+      "tradeRefused": "Rezaremos para você mudar de ideia.",
+      "recruit": "Alguns fiéis podem ajudar, se houver pão e descanso no domingo."
+    },
+    {
+      "id": "orgulhoso",
+      "greeting": "Esta é {vilarejo}, o melhor vilarejo do vale. Pergunte a qualquer um daqui.",
+      "request": "Nosso {item} é o melhor do reino. Mas aceitaríamos mais.",
+      "tradeAccepted": "Aceitamos. Por generosidade.",
+      "tradeRefused": "Em {vilarejo} não se aceita qualquer coisa.",
+      "recruit": "Nossa gente vale o dobro. E come o dobro."
+    }
+  ]
+}
