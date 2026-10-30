@@ -195,7 +195,7 @@
     "hut_straw": {
       "frame": {
         "x": 1,
-        "y": 67,
+        "y": 83,
         "w": 48,
         "h": 48
       },
@@ -219,7 +219,7 @@
     "oven_clay": {
       "frame": {
         "x": 67,
-        "y": 67,
+        "y": 83,
         "w": 32,
         "h": 32
       },
@@ -243,7 +243,223 @@
     "oven_stone": {
       "frame": {
         "x": 133,
-        "y": 67,
+        "y": 83,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "house_thatch_r1": {
+      "frame": {
+        "x": 199,
+        "y": 83,
+        "w": 32,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 80
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "house_thatch_r2": {
+      "frame": {
+        "x": 265,
+        "y": 83,
+        "w": 64,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 64,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 48
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "house_thatch_r3": {
+      "frame": {
+        "x": 331,
+        "y": 83,
+        "w": 32,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 80
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "hut_straw_r1": {
+      "frame": {
+        "x": 397,
+        "y": 83,
+        "w": 32,
+        "h": 60
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 60
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 60
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "hut_straw_r2": {
+      "frame": {
+        "x": 463,
+        "y": 83,
+        "w": 48,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "hut_straw_r3": {
+      "frame": {
+        "x": 1,
+        "y": 165,
+        "w": 32,
+        "h": 60
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 60
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 60
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "oven_stone_r1": {
+      "frame": {
+        "x": 67,
+        "y": 165,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "oven_stone_r2": {
+      "frame": {
+        "x": 133,
+        "y": 165,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "oven_stone_r3": {
+      "frame": {
+        "x": 199,
+        "y": 165,
         "w": 32,
         "h": 32
       },
@@ -266,8 +482,8 @@
     },
     "watermill_0": {
       "frame": {
-        "x": 199,
-        "y": 67,
+        "x": 265,
+        "y": 165,
         "w": 34,
         "h": 36
       },
@@ -290,8 +506,8 @@
     },
     "watermill_1": {
       "frame": {
-        "x": 265,
-        "y": 67,
+        "x": 331,
+        "y": 165,
         "w": 34,
         "h": 36
       },
@@ -314,8 +530,8 @@
     },
     "watermill_2": {
       "frame": {
-        "x": 331,
-        "y": 67,
+        "x": 397,
+        "y": 165,
         "w": 34,
         "h": 36
       },
@@ -338,8 +554,8 @@
     },
     "windmill_blades_0": {
       "frame": {
-        "x": 397,
-        "y": 67,
+        "x": 463,
+        "y": 165,
         "w": 64,
         "h": 64
       },
@@ -362,8 +578,8 @@
     },
     "windmill_blades_1": {
       "frame": {
-        "x": 463,
-        "y": 67,
+        "x": 1,
+        "y": 247,
         "w": 64,
         "h": 64
       },
@@ -386,8 +602,8 @@
     },
     "windmill_blades_2": {
       "frame": {
-        "x": 1,
-        "y": 133,
+        "x": 67,
+        "y": 247,
         "w": 64,
         "h": 64
       },
@@ -410,8 +626,8 @@
     },
     "windmill_blades_3": {
       "frame": {
-        "x": 67,
-        "y": 133,
+        "x": 133,
+        "y": 247,
         "w": 64,
         "h": 64
       },
@@ -431,6 +647,822 @@
         "x": 0.5,
         "y": 1.0
       }
+    },
+    "watermill_r1_0": {
+      "frame": {
+        "x": 199,
+        "y": 247,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r1_1": {
+      "frame": {
+        "x": 265,
+        "y": 247,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r1_2": {
+      "frame": {
+        "x": 331,
+        "y": 247,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r2_0": {
+      "frame": {
+        "x": 397,
+        "y": 247,
+        "w": 34,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 36
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r2_1": {
+      "frame": {
+        "x": 463,
+        "y": 247,
+        "w": 34,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 36
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r2_2": {
+      "frame": {
+        "x": 1,
+        "y": 329,
+        "w": 34,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 34,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 34,
+        "h": 36
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r3_0": {
+      "frame": {
+        "x": 67,
+        "y": 329,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r3_1": {
+      "frame": {
+        "x": 133,
+        "y": 329,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "watermill_r3_2": {
+      "frame": {
+        "x": 199,
+        "y": 329,
+        "w": 36,
+        "h": 34
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 34
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 34
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_h_0": {
+      "frame": {
+        "x": 265,
+        "y": 329,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_h_1": {
+      "frame": {
+        "x": 331,
+        "y": 329,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_h_2": {
+      "frame": {
+        "x": 397,
+        "y": 329,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_h_3": {
+      "frame": {
+        "x": 463,
+        "y": 329,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_v_0": {
+      "frame": {
+        "x": 1,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_v_1": {
+      "frame": {
+        "x": 67,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_v_2": {
+      "frame": {
+        "x": 133,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "shaft_v_3": {
+      "frame": {
+        "x": 199,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_small_0": {
+      "frame": {
+        "x": 265,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_small_1": {
+      "frame": {
+        "x": 331,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_small_2": {
+      "frame": {
+        "x": 397,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_small_3": {
+      "frame": {
+        "x": 463,
+        "y": 411,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_large_0": {
+      "frame": {
+        "x": 1,
+        "y": 493,
+        "w": 32,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 40
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_large_1": {
+      "frame": {
+        "x": 67,
+        "y": 493,
+        "w": 32,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 40
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_large_2": {
+      "frame": {
+        "x": 133,
+        "y": 493,
+        "w": 32,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 40
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "gear_large_3": {
+      "frame": {
+        "x": 199,
+        "y": 493,
+        "w": 32,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 40
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "forge_iron_0": {
+      "frame": {
+        "x": 265,
+        "y": 493,
+        "w": 32,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 44
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "forge_iron_1": {
+      "frame": {
+        "x": 331,
+        "y": 493,
+        "w": 32,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 44
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "forge_iron_2": {
+      "frame": {
+        "x": 397,
+        "y": 493,
+        "w": 32,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 44
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "forge_iron_3": {
+      "frame": {
+        "x": 463,
+        "y": 493,
+        "w": 32,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 44
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "kiln_charcoal_0": {
+      "frame": {
+        "x": 1,
+        "y": 575,
+        "w": 48,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 48,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "kiln_charcoal_1": {
+      "frame": {
+        "x": 67,
+        "y": 575,
+        "w": 48,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 48,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "kiln_charcoal_2": {
+      "frame": {
+        "x": 133,
+        "y": 575,
+        "w": 48,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 48,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "kiln_charcoal_3": {
+      "frame": {
+        "x": 199,
+        "y": 575,
+        "w": 48,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 48,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 64
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    "anvil": {
+      "frame": {
+        "x": 265,
+        "y": 575,
+        "w": 32,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 16
+      },
+      "anchor": {
+        "x": 0.5,
+        "y": 1.0
+      }
     }
   },
   "meta": {
@@ -440,7 +1472,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 528,
-      "h": 198
+      "h": 656
     },
     "scale": "1"
   },
@@ -455,6 +1487,57 @@
       "windmill_blades_1",
       "windmill_blades_2",
       "windmill_blades_3"
+    ],
+    "watermill_r1": [
+      "watermill_r1_0",
+      "watermill_r1_1",
+      "watermill_r1_2"
+    ],
+    "watermill_r2": [
+      "watermill_r2_0",
+      "watermill_r2_1",
+      "watermill_r2_2"
+    ],
+    "watermill_r3": [
+      "watermill_r3_0",
+      "watermill_r3_1",
+      "watermill_r3_2"
+    ],
+    "shaft_h": [
+      "shaft_h_0",
+      "shaft_h_1",
+      "shaft_h_2",
+      "shaft_h_3"
+    ],
+    "shaft_v": [
+      "shaft_v_0",
+      "shaft_v_1",
+      "shaft_v_2",
+      "shaft_v_3"
+    ],
+    "gear_small": [
+      "gear_small_0",
+      "gear_small_1",
+      "gear_small_2",
+      "gear_small_3"
+    ],
+    "gear_large": [
+      "gear_large_0",
+      "gear_large_1",
+      "gear_large_2",
+      "gear_large_3"
+    ],
+    "forge_iron": [
+      "forge_iron_0",
+      "forge_iron_1",
+      "forge_iron_2",
+      "forge_iron_3"
+    ],
+    "kiln_charcoal": [
+      "kiln_charcoal_0",
+      "kiln_charcoal_1",
+      "kiln_charcoal_2",
+      "kiln_charcoal_3"
     ]
   }
 }
