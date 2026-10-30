@@ -5,7 +5,7 @@ export const Terrain = {
   Water: 2,
   Forest: 3,
   Rock: 4,
-  IronOre: 5,
+  OreIron: 5,
 } as const;
 
 export type TerrainType = (typeof Terrain)[keyof typeof Terrain];

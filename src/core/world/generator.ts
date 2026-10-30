@@ -94,7 +94,7 @@ function scatterOre(grid: Grid, seed: number): void {
   forEachTile(grid, (x, y) => {
     if (grid.getTerrain(x, y) !== Terrain.Rock) return;
     if (fractalNoise2d(x * frequency, y * frequency, seed, octaves) > threshold) {
-      grid.setTerrain(x, y, Terrain.IronOre);
+      grid.setTerrain(x, y, Terrain.OreIron);
     }
   });
 }
@@ -113,7 +113,7 @@ function growForests(grid: Grid, seed: number): void {
 function addBeaches(grid: Grid): void {
   forEachTile(grid, (x, y) => {
     const terrain = grid.getTerrain(x, y);
-    if (terrain === Terrain.Water || terrain === Terrain.Rock || terrain === Terrain.IronOre) return;
+    if (terrain === Terrain.Water || terrain === Terrain.Rock || terrain === Terrain.OreIron) return;
     if (touchesWater(grid, x, y)) grid.setTerrain(x, y, Terrain.Sand);
   });
 }

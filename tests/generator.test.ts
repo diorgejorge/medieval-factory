@@ -41,7 +41,7 @@ describe('generateWorld', () => {
     expect(counts.get(Terrain.Water)).toBeGreaterThan(total * 0.03);
     expect(counts.get(Terrain.Forest)).toBeGreaterThan(total * 0.05);
     expect(counts.get(Terrain.Grass)).toBeGreaterThan(total * 0.2);
-    expect((counts.get(Terrain.Rock) ?? 0) + (counts.get(Terrain.IronOre) ?? 0)).toBeGreaterThan(0);
+    expect((counts.get(Terrain.Rock) ?? 0) + (counts.get(Terrain.OreIron) ?? 0)).toBeGreaterThan(0);
   });
 
   it('o rio atravessa o mapa de borda a borda', () => {

@@ -84,7 +84,7 @@ function tilePixel(
       return treePixel(px, py, tileHash, noise) ?? grassPixel(noise);
     case Terrain.Rock:
       return rockPixel(noise);
-    case Terrain.IronOre:
+    case Terrain.OreIron:
       return orePixel(px, py, tileHash, noise) ?? rockPixel(noise);
   }
 }
