@@ -1,24 +1,35 @@
 /// <reference lib="webworker" />
-import { TICK_MS } from '../core/config';
-import { SimulationLoop } from '../core/simulation';
-import type { CommandMessage, SnapshotMessage } from './protocol';
+import villageTexts from '../../data/texto/pt-BR/vilarejos.json';
+import { MAP_SIZE_TILES, TICK_MS } from '../core/config';
+import { Simulation, SimulationLoop } from '../core/simulation';
+import { createWorld } from '../core/world/world';
+import type { CommandMessage, InitMessage, SnapshotMessage } from './protocol';
 
 declare const self: DedicatedWorkerGlobalScope;
 
 /** Acordamos duas vezes por tick para o atraso entre o tick ideal e o real ficar pequeno. */
 const WAKE_INTERVAL_MS = TICK_MS / 2;
 
-const loop = new SimulationLoop();
+let loop: SimulationLoop | null = null;
 let lastWakeMs = performance.now();
 let receivedCommand = false;
 
-self.onmessage = (event: MessageEvent<CommandMessage>) => {
-  loop.enqueue(event.data.command);
+self.onmessage = (event: MessageEvent<InitMessage | CommandMessage>) => {
+  const message = event.data;
+  if (message.kind === 'init') {
+    loop = new SimulationLoop(new Simulation(createWorld(message.seed, MAP_SIZE_TILES, villageTexts.names).site));
+  } else {
+    loop?.enqueue(message.command);
+  }
   receivedCommand = true;
 };
 
 setInterval(() => {
   const now = performance.now();
+  if (!loop) {
+    lastWakeMs = now;
+    return;
+  }
   const ticks = loop.advance(now - lastWakeMs, now);
   lastWakeMs = now;
   // Só publica quando algo mudou, para não inundar a main thread enquanto pausado.

@@ -1,11 +1,15 @@
 import { GAME_SPEEDS, MAX_TICKS_PER_ADVANCE, TICK_MS, type GameSpeed } from './config';
 import { FixedStepClock } from './time/fixedStepClock';
 import { RateMeter } from './time/rateMeter';
+import type { Building, BuildingKind, BuildingSite, Rotation } from './world/buildings';
 
 /** Únicas entradas que alteram a simulação: facilita replay, undo e multiplayer no futuro. */
 export type SimulationCommand =
   | { type: 'setPaused'; paused: boolean }
-  | { type: 'setSpeed'; speed: GameSpeed };
+  | { type: 'setSpeed'; speed: GameSpeed }
+  | { type: 'placeBuilding'; kind: BuildingKind; x: number; y: number; rotation: Rotation }
+  | { type: 'removeBuilding'; x: number; y: number }
+  | { type: 'rotateBuilding'; x: number; y: number };
 
 /** Estado publicado para a main thread a cada avanço. */
 export interface SimulationSnapshot {
@@ -13,11 +17,18 @@ export interface SimulationSnapshot {
   paused: boolean;
   speed: GameSpeed;
   ups: number;
+  /** Muda a cada construção colocada, removida ou girada; a tela só redesenha quando muda. */
+  buildingsVersion: number;
+  /** Só vem quando `buildingsVersion` mudou desde o último snapshot. */
+  buildings?: Building[];
 }
 
-/** O mundo simulado. Por enquanto só conta ticks; os sistemas entram nas próximas frentes. */
+/** O mundo simulado. Por enquanto conta ticks e guarda as construções; os sistemas entram nas próximas frentes. */
 export class Simulation {
   tick = 0;
+  buildingsVersion = 0;
+
+  constructor(readonly site: BuildingSite | null = null) {}
 
   step(): void {
     this.tick++;
@@ -26,12 +37,14 @@ export class Simulation {
 
 /** Liga relógio fixo, comandos e simulação. Sem dependência de Worker, para ser testável. */
 export class SimulationLoop {
-  readonly simulation = new Simulation();
+  private lastPublishedBuildings = -1;
   private readonly clock = new FixedStepClock(TICK_MS, MAX_TICKS_PER_ADVANCE);
   private readonly upsMeter = new RateMeter();
   private readonly pendingCommands: SimulationCommand[] = [];
   private paused = false;
   private speed: GameSpeed = 1;
+
+  constructor(readonly simulation = new Simulation()) {}
 
   enqueue(command: SimulationCommand): void {
     this.pendingCommands.push(command);
@@ -48,17 +61,27 @@ export class SimulationLoop {
   }
 
   snapshot(): SimulationSnapshot {
-    return {
+    const snapshot: SimulationSnapshot = {
       tick: this.simulation.tick,
       paused: this.paused,
       speed: this.speed,
       ups: this.upsMeter.perSecond,
+      buildingsVersion: this.simulation.buildingsVersion,
     };
+    if (this.simulation.buildingsVersion !== this.lastPublishedBuildings && this.simulation.site) {
+      snapshot.buildings = this.simulation.site.all;
+      this.lastPublishedBuildings = this.simulation.buildingsVersion;
+    }
+    return snapshot;
   }
 
   private applyPendingCommands(): void {
     for (const command of this.pendingCommands) this.apply(command);
     this.pendingCommands.length = 0;
+  }
+
+  private changedBuildings(): void {
+    this.simulation.buildingsVersion++;
   }
 
   private apply(command: SimulationCommand): void {
@@ -68,6 +91,15 @@ export class SimulationLoop {
         break;
       case 'setSpeed':
         if (GAME_SPEEDS.includes(command.speed)) this.speed = command.speed;
+        break;
+      case 'placeBuilding':
+        if (this.simulation.site?.place(command.kind, command.x, command.y, command.rotation)) this.changedBuildings();
+        break;
+      case 'removeBuilding':
+        if (this.simulation.site?.removeAt(command.x, command.y)) this.changedBuildings();
+        break;
+      case 'rotateBuilding':
+        if (this.simulation.site?.rotateAt(command.x, command.y)) this.changedBuildings();
         break;
     }
   }
