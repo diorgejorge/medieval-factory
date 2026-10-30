@@ -7,6 +7,7 @@ import { CameraControls } from './input/cameraControls';
 import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
+import { loadTerrainAtlas } from './render/terrainAtlas';
 
 const HUD_REFRESH_MS = 250;
 const INITIAL_ZOOM = 2;
@@ -23,7 +24,7 @@ async function start(): Promise<void> {
 
   const seed = readSeed();
   const grid = generateWorld(seed, MAP_SIZE_TILES);
-  const gridRenderer = new GridRenderer(grid);
+  const gridRenderer = new GridRenderer(grid, await loadTerrainAtlas());
   const world = new Container();
   world.addChild(gridRenderer.view);
   app.stage.addChild(world);
@@ -49,6 +50,7 @@ async function start(): Promise<void> {
     world.scale.set(camera.zoom);
     // Posição em pixels inteiros de tela: evita "tremedeira" e costuras entre chunks na pixel art.
     world.position.set(Math.round(-camera.x * camera.zoom), Math.round(-camera.y * camera.zoom));
+    gridRenderer.update(ticker.deltaMS);
     gridRenderer.cull(camera, app.screen.width, app.screen.height);
 
     sinceHudRefresh += ticker.deltaMS;
