@@ -6,7 +6,7 @@
 ## 1. Visão
 
 Você chega a uma vila abandonada com um punhado de servos e uma carta do rei. Precisa transformar a vila em um centro produtor
-capaz de cumprir os **decretos reais** (metas), usando a força da água, do vento e dos animais. Não há eletricidade nem esteiras
+capaz de cumprir os **decretos reais** (metas), usando a força da água, do vento, dos animais e, nas eras finais, do **vapor**. Não há eletricidade nem esteiras
 mágicas: tudo depende de **energia mecânica**, **gravidade**, **terreno** e **pessoas**.
 
 **Pilares**
@@ -14,6 +14,8 @@ mágicas: tudo depende de **energia mecânica**, **gravidade**, **terreno** e **
 2. **Terreno importa:** relevo e rios definem onde construir, não são só decoração.
 3. **Pessoas são parte da máquina:** servos precisam de comida e abrigo; a logística humana é um recurso.
 4. **Escala crescente:** de uma oficina manual a um vale industrializado.
+5. **Progressão natural:** madeira antes do metal, lenha antes do carvão, carvão antes do vapor (seção 2.1).
+6. **Cada ciclo, um desafio:** o rei sempre pede algo concreto e variado (seção 2.2).
 
 ## 2. Mecânicas principais (o que nos diferencia)
 
@@ -26,8 +28,8 @@ mágicas: tudo depende de **energia mecânica**, **gravidade**, **terreno** e **
 | **Servos** | Carregam itens à mão (logística inicial), operam máquinas manuais. Consomem comida e precisam de casas. | Early game sem automação; depois viram custo de manutenção. |
 | **Estações do ano** | Inverno congela rodas d'água, verão reduz a vazão dos rios, outono é colheita. Ciclo de ~20 min. | Exige estoques e fontes de energia redundantes. |
 | **Guildas (árvore de tecnologia)** | Pesquisa com **manuscritos** produzidos em scriptórios (pergaminho + tinta). Cada guilda (Ferreiros, Pedreiros, Tecelões, Moleiros...) libera um ramo. | Pesquisa vira uma cadeia produtiva, não só um timer. |
-| **Decretos reais** | Pedidos com prazo (ex.: "200 espadas antes do inverno"). Recompensas: terras, títulos, novas receitas. | Dá objetivos claros e ritmo; substitui a ameaça constante de inimigos. |
-| **Saqueadores (opcional)** | Ataques ocasionais atraídos pela riqueza. Defesa com paliçadas, torres de arqueiros. | Modo opcional; o modo padrão é pacífico. |
+| **Decretos reais** | O desafio de cada ciclo (seção 2.2), com prazo. Recompensas: terras, títulos, novas receitas. | Dá objetivos claros e ritmo; substitui a ameaça constante de inimigos. |
+| **Inimigos** | Alguns ciclos trazem um inimigo específico a derrotar (lobo alfa, bandoleiro, cavaleiro rival, autômato rebelde). Ataques aleatórios de saqueadores ficam como modo opcional. | Combate pontual e planejado como desafio, sem pressão constante. |
 
 ### Exemplos de cadeias produtivas
 
@@ -39,17 +41,46 @@ mágicas: tudo depende de **energia mecânica**, **gravidade**, **terreno** e **
 - **Pesquisa:** pele → curtume → pergaminho; galhas + ferro → tinta; pergaminho + tinta → manuscrito
 - **Vidro (late):** areia + cinza de potássio → forno de vidro → vidro → vitrais (decreto da catedral)
 
+### 2.1 Progressão por eras
+
+Cada era melhora **ferramentas** e **combustível**. O que vem antes continua útil, só fica mais lento ou menos denso.
+
+| Era | Ferramentas | Combustível e energia | Passagem para a próxima |
+|---|---|---|---|
+| **I. Madeira** | Madeira e pedra (machado de pedra, pá de madeira) | **Lenha**; força humana e animal; roda d'água | Fundir o primeiro ferro e forjar uma ferramenta de metal |
+| **II. Ferro** | Ferro (mais rápidas; liberam mina profunda) | **Carvão vegetal**; moinho de vento; fole a torque | Extrair carvão mineral |
+| **III. Carvão** | Aço | **Carvão mineral/coque**; altos-fornos | Construir a primeira caldeira |
+| **IV. Vapor (steampunk)** | Latão, engrenagens, autômatos | **Vapor**: caldeiras, pistões e tubulações | Fim de jogo: grandes obras do reino |
+
+- **Ferramentas são itens.** Servos e extratores usam (e gastam) ferramentas; o nível da ferramenta define a velocidade e o que pode ser extraído.
+- **Combustível tem densidade.** Lenha < carvão vegetal < carvão mineral < vapor; fornos de eras novas exigem o combustível da era.
+- **Vapor amplia a rede de energia:** tubulações levam força mais longe que eixos, mas consomem água e combustível sem parar.
+
+### 2.2 Ciclos e desafios
+
+O jogo avança em **ciclos** (no MVP, um período fixo de tempo; depois, um ano com estações). Cada ciclo traz **um desafio do rei**,
+alternando tipos para não repetir o mesmo em ciclos seguidos, e escalando com a era.
+
+| Tipo | Exemplos |
+|---|---|
+| **Engenharia** | Canalizar água do rio até a fonte da cidade (calhas + nora); drenar um pântano; erguer uma ponte |
+| **Benfeitoria na cidade principal** | Poço, celeiro, muralha, catedral; na era do vapor, uma torre do relógio a vapor |
+| **Combate** | Derrotar o lobo alfa, o bando de um bandoleiro, um cavaleiro rival, um autômato rebelde |
+| **Produção** | Entregar N itens (ex.: "200 espadas antes do inverno") |
+
+Cumprir dá recompensas (terras, títulos, receitas); falhar custa **favor do rei** (penalidade leve), não é game over.
+
 ## 3. Escopo do MVP
 
-O MVP prova que o loop central é divertido. **Fora do MVP:** multiplayer, saqueadores, canais, estações.
+O MVP prova que o loop central é divertido e cobre a **Era I e a entrada na Era II**. **Fora do MVP:** multiplayer, combate, saqueadores, canais, estações, eras III e IV.
 
 1. Mapa 2D top-down em grade, gerado por seed (relevo, rio, recursos).
 2. Colocar, rotacionar e remover construções.
 3. 4 recursos: madeira, pedra, minério de ferro, trigo.
 4. 8 a 10 construções: lenhador, pedreira, mina, fazenda, moinho, forno, forja, roda d'água, eixo, calha, depósito.
 5. Rede de eixos (torque) e calhas por gravidade funcionando.
-6. 2 cadeias completas (pão e barras de ferro).
-7. 1 decreto real como objetivo.
+6. 2 cadeias completas (pão com lenha; barras de ferro com carvão vegetal), com ferramentas de madeira → ferro.
+7. Ciclos com 2 desafios: canalizar água até a cidade e uma benfeitoria (poço ou celeiro).
 8. Salvar/carregar local.
 
 ## 4. Stack técnica
@@ -126,11 +157,13 @@ tests/
 | **M2: Produzir** | Extratores, depósitos, receitas em JSON, servos carregando itens | Cadeia do pão manual funciona |
 | **M3: Transportar** | Calhas por gravidade e guincho | 5k itens em movimento sem queda de UPS |
 | **M4: Energia** | Roda d'água, moinho de vento, eixos com alcance/perda | Moinho e forja dependem de torque |
-| **M5: Objetivo** | Decreto real + salvar/carregar | **MVP jogável** |
+| **M5: Objetivo** | Ciclos e desafios (canalizar água, benfeitoria) + salvar/carregar | **MVP jogável** |
 | M6 | Guildas e manuscritos (pesquisa) | Árvore com 3 guildas |
 | M7 | Carroças/estradas, comida e casas para servos | |
-| M8 | Estações do ano | |
-| M9 | Canais, saqueadores opcionais, polimento, áudio | |
+| M8 | Combate pontual: desafio de inimigo (lobo alfa, bandoleiro) | Derrotar um inimigo cumpre o ciclo |
+| M9 | Era III (carvão mineral, aço, altos-fornos) e estações do ano | |
+| M10 | Era IV: vapor steampunk (caldeiras, tubulações, autômatos) | Fábrica movida a vapor |
+| M11 | Canais, saqueadores opcionais, polimento, áudio | |
 
 ## 9. Riscos e mitigação
 
@@ -144,5 +177,6 @@ tests/
 ## 10. Decisões em aberto
 
 - Visual: pixel art ou vetorial simples?
-- Saqueadores: modo opcional ou cortar de vez?
+- Saqueadores aleatórios: modo opcional ou cortar de vez? (o combate pontual dos desafios fica)
+- Duração de um ciclo no MVP (proposta: 15 min)?
 - Hospedagem: GitHub Pages (simples) ou Cloudflare Pages (permite headers COOP/COEP para `SharedArrayBuffer`)?
