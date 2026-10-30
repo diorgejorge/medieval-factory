@@ -17,7 +17,11 @@ export const BUILDINGS = {
 export type BuildingKind = keyof typeof BUILDINGS;
 export const BUILDING_KINDS = Object.keys(BUILDINGS) as BuildingKind[];
 
-/** 0 = norte, 1 = leste, 2 = sul, 3 = oeste. Depois define por onde a máquina recebe e entrega. */
+/**
+ * Para onde a frente da construção olha, girando no sentido horário: 0 = sul (de frente para a câmera,
+ * como a arte padrão), 1 = oeste, 2 = norte, 3 = leste. Depois define por onde a máquina recebe e entrega.
+ * A arte de cada direção é o frame `<frame>_r<rotação>`; sem ele, usa o frame padrão.
+ */
 export type Rotation = 0 | 1 | 2 | 3;
 
 export interface Building {
@@ -40,7 +44,8 @@ export function footprint(kind: BuildingKind, rotation: Rotation): { width: numb
 /** Objeto para a camada de desenho: centro da base, embaixo do terreno ocupado. */
 export function buildingObject(building: Building): MapObject {
   const { width, height } = footprint(building.kind, building.rotation);
-  return { frame: BUILDINGS[building.kind].frame, x: building.x + width / 2, y: building.y + height };
+  const frame = `${BUILDINGS[building.kind].frame}_r${building.rotation}`;
+  return { frame, x: building.x + width / 2, y: building.y + height };
 }
 
 export function rotateClockwise(rotation: Rotation): Rotation {

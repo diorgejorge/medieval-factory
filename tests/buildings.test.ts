@@ -66,7 +66,7 @@ describe('BuildingSite: regras de ocupação', () => {
   });
 
   it('o objeto de desenho fica no centro da base', () => {
-    expect(buildingObject({ id: 1, kind: 'house', x: 1, y: 1, rotation: 0 })).toMatchObject({ x: 3, y: 3 });
+    expect(buildingObject({ id: 1, kind: 'house', x: 1, y: 1, rotation: 0 })).toEqual({ frame: 'house_thatch_r0', x: 3, y: 3 });
   });
 });
 

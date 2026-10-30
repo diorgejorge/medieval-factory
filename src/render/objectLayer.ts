@@ -93,8 +93,9 @@ export class ObjectLayer {
   }
 
   private createSprite(object: MapObject, group: string): PlacedSprite | null {
-    const frames = this.atlas.animations.get(object.frame) ?? [];
-    const still = this.atlas.frames.get(object.frame);
+    const name = this.resolveFrame(object.frame);
+    const frames = this.atlas.animations.get(name) ?? [];
+    const still = this.atlas.frames.get(name);
     const first = frames[0] ?? still;
     if (!first) return null;
 
@@ -110,7 +111,7 @@ export class ObjectLayer {
     }
 
     // A base é a última linha opaca do sprite: assim nada "flutua" se o PNG tiver margem embaixo.
-    const bounds = this.opaqueBounds(object.frame, first);
+    const bounds = this.opaqueBounds(name, first);
     const x = Math.round(object.x * TILE_SIZE_PX);
     const y = Math.round(object.y * TILE_SIZE_PX);
     sprite.position.set(x - Math.floor(first.w / 2), y - bounds.bottom - 1);
@@ -120,6 +121,12 @@ export class ObjectLayer {
     shadow.alpha = SHADOW_ALPHA;
     shadow.position.set(sprite.x + bounds.left + SHADOW_OFFSET_X_PX, y - SHADOW_ABOVE_PX);
     return { group, sprite, shadow, x, y };
+  }
+
+  /** Sem a arte de uma direção (`<frame>_r<n>`), usa a arte padrão do objeto. */
+  private resolveFrame(name: string): string {
+    if (this.atlas.animations.has(name) || this.atlas.frames.has(name)) return name;
+    return name.replace(/_r\d+$/, '');
   }
 
   private texture(frame: AtlasFrame): Texture {

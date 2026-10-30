@@ -66,11 +66,12 @@ export class BuildGhost {
     const midX = (left + right) / 2;
     const midY = (top + bottom) / 2;
     const a = ARROW_PX;
+    // Na ordem das rotações: sul, oeste, norte, leste.
     const points = [
-      [midX, top - a, midX - a, top, midX + a, top],
-      [right + a, midY, right, midY - a, right, midY + a],
       [midX, bottom + a, midX - a, bottom, midX + a, bottom],
       [left - a, midY, left, midY - a, left, midY + a],
+      [midX, top - a, midX - a, top, midX + a, top],
+      [right + a, midY, right, midY - a, right, midY + a],
     ][rotation];
     if (points) this.area.poly(points).fill({ color });
   }
