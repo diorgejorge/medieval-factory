@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "items": {
+    "wood": "Madeira",
+    "stone": "Pedra",
+    "wheat": "Trigo",
+    "flour": "Farinha",
+    "bread": "Pão",
+    "firewood": "Lenha",
+    "fish": "Peixe",
+    "wool": "Lã",
+    "iron_ore": "Minério de ferro",
+    "clay": "Argila",
+    "stone_axe": "Machado de pedra",
+    "stone_pickaxe": "Picareta de pedra",
+    "charcoal": "Carvão vegetal",
+    "iron_ingot": "Barra de ferro",
+    "iron_axe": "Machado de ferro",
+    "iron_pickaxe": "Picareta de ferro"
+  }
+}
