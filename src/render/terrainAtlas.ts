@@ -1,23 +1,5 @@
 import { Terrain, type TerrainType } from '../core/world/terrain';
-
-/** Formato do spritesheet exportado pela equipe Visual (assets/terrain/terrain.json). */
-interface AtlasJson {
-  frames: Record<string, { frame: AtlasFrame }>;
-  animations?: Record<string, string[]>;
-}
-
-export interface AtlasFrame {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export interface TerrainAtlas {
-  image: HTMLImageElement;
-  frames: ReadonlyMap<string, AtlasFrame>;
-  waterAnimation: readonly AtlasFrame[];
-}
+import { loadAtlas, type Atlas } from './atlas';
 
 /** Prefixo dos frames de cada terreno no atlas; as variantes são `<prefixo>_0` … `_3`. */
 export const TERRAIN_FRAME_PREFIX: Readonly<Record<TerrainType, string>> = {
@@ -31,25 +13,38 @@ export const TERRAIN_FRAME_PREFIX: Readonly<Record<TerrainType, string>> = {
 
 export const ATLAS_VARIANTS = 4;
 
-const ATLAS_JSON_URL = new URL('../../assets/terrain/terrain.json', import.meta.url).href;
-const ATLAS_IMAGE_URL = new URL('../../assets/terrain/terrain.png', import.meta.url).href;
+/** Pares com tiles de transição no atlas (`<a>_<b>_<máscara>`), na ordem em que aparecem no nome. */
+const TRANSITION_PAIRS: readonly (readonly [TerrainType, TerrainType])[] = [
+  [Terrain.Grass, Terrain.Sand],
+  [Terrain.Grass, Terrain.Water],
+  [Terrain.Sand, Terrain.Water],
+];
 
-/** Carrega o atlas; devolve null se ele ainda não existir, e o jogo cai no terreno procedural. */
-export async function loadTerrainAtlas(): Promise<TerrainAtlas | null> {
-  try {
-    const response = await fetch(ATLAS_JSON_URL);
-    if (!response.ok) return null;
-    const json = (await response.json()) as AtlasJson;
-    const image = new Image();
-    image.src = ATLAS_IMAGE_URL;
-    await image.decode();
-
-    const frames = new Map(Object.entries(json.frames).map(([name, entry]) => [name, entry.frame]));
-    const waterAnimation = (json.animations?.['water'] ?? [])
-      .map((name) => frames.get(name))
-      .filter((frame): frame is AtlasFrame => frame !== undefined);
-    return { image, frames, waterAnimation };
-  } catch {
-    return null;
+/**
+ * Tile de transição (dual grid) para o canto entre 4 células: NO, NE, SO, SE.
+ * Só existe quando os 4 cantos misturam exatamente os dois terrenos de um par conhecido.
+ * Bits da máscara = cantos com o terreno `a` (1 = NO, 2 = NE, 4 = SO, 8 = SE).
+ */
+export function transitionFrame(nw: TerrainType, ne: TerrainType, sw: TerrainType, se: TerrainType): string | null {
+  const corners = [nw, ne, sw, se];
+  for (const [a, b] of TRANSITION_PAIRS) {
+    if (!corners.every((t) => t === a || t === b)) continue;
+    const mask = corners.reduce<number>((bits, t, i) => (t === a ? bits | (1 << i) : bits), 0);
+    if (mask === 0 || mask === 15) return null;
+    return `${TERRAIN_FRAME_PREFIX[a]}_${TERRAIN_FRAME_PREFIX[b]}_${mask}`;
   }
+  return null;
+}
+
+const TERRAIN_JSON_URL = new URL('../../assets/terrain/terrain.json', import.meta.url).href;
+const TERRAIN_IMAGE_URL = new URL('../../assets/terrain/terrain.png', import.meta.url).href;
+const OBJECTS_JSON_URL = new URL('../../assets/objects/objects.json', import.meta.url).href;
+const OBJECTS_IMAGE_URL = new URL('../../assets/objects/objects.png', import.meta.url).href;
+
+export function loadTerrainAtlas(): Promise<Atlas | null> {
+  return loadAtlas(TERRAIN_JSON_URL, TERRAIN_IMAGE_URL);
+}
+
+export function loadObjectsAtlas(): Promise<Atlas | null> {
+  return loadAtlas(OBJECTS_JSON_URL, OBJECTS_IMAGE_URL);
 }
