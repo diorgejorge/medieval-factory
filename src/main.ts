@@ -3,10 +3,13 @@ import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
 import type { SimulationSnapshot } from './core/simulation';
 import { findNearestGrass, generateWorld } from './core/world/generator';
+import { placeStartingVillage, scatterTrees } from './core/world/mapObjects';
 import { CameraControls } from './input/cameraControls';
 import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
+import { ObjectLayer } from './render/objectLayer';
+import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
 
 const HUD_REFRESH_MS = 250;
 const INITIAL_ZOOM = 2;
@@ -23,15 +26,24 @@ async function start(): Promise<void> {
 
   const seed = readSeed();
   const grid = generateWorld(seed, MAP_SIZE_TILES);
-  const gridRenderer = new GridRenderer(grid);
+  const [terrainAtlas, objectsAtlas] = await Promise.all([loadTerrainAtlas(), loadObjectsAtlas()]);
+  const gridRenderer = new GridRenderer(grid, terrainAtlas);
   const world = new Container();
   world.addChild(gridRenderer.view);
+
+  const mapCenterTile = Math.floor(MAP_SIZE_TILES / 2);
+  const village = placeStartingVillage(grid, mapCenterTile, mapCenterTile);
+  const objects = objectsAtlas ? new ObjectLayer(objectsAtlas) : null;
+  if (objects) {
+    objects.add(scatterTrees(grid, seed));
+    objects.add(village?.buildings ?? []);
+    world.addChild(objects.view);
+  }
   app.stage.addChild(world);
 
   const camera = new Camera();
   camera.zoom = INITIAL_ZOOM;
-  const mapCenterTile = Math.floor(MAP_SIZE_TILES / 2);
-  const start = findNearestGrass(grid, mapCenterTile, mapCenterTile) ?? { x: mapCenterTile, y: mapCenterTile };
+  const start = village?.center ?? findNearestGrass(grid, mapCenterTile, mapCenterTile) ?? { x: mapCenterTile, y: mapCenterTile };
   camera.centerOn(
     { x: (start.x + 0.5) * TILE_SIZE_PX, y: (start.y + 0.5) * TILE_SIZE_PX },
     app.screen.width,
@@ -49,7 +61,9 @@ async function start(): Promise<void> {
     world.scale.set(camera.zoom);
     // Posição em pixels inteiros de tela: evita "tremedeira" e costuras entre chunks na pixel art.
     world.position.set(Math.round(-camera.x * camera.zoom), Math.round(-camera.y * camera.zoom));
+    gridRenderer.update(ticker.deltaMS);
     gridRenderer.cull(camera, app.screen.width, app.screen.height);
+    objects?.cull(camera, app.screen.width, app.screen.height);
 
     sinceHudRefresh += ticker.deltaMS;
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
