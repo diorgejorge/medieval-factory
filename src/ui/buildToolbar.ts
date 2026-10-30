@@ -1,17 +1,11 @@
-import { BUILDING_KINDS, type BuildingKind, type PlacementProblem } from '../core/world/buildings';
+import { GAME_DATA } from '../core/data/data';
+import type { BuildingKind, PlacementProblem } from '../core/world/buildings';
 
 /** Ferramenta escolhida na barra: uma construção, remover, ou nada (modo normal). */
 export type BuildTool = BuildingKind | 'remove' | null;
 
-/** Nomes provisórios; viram dados em JSON junto com as construções (frente 7). */
-const BUILDING_LABELS: Readonly<Record<BuildingKind, string>> = {
-  oven: 'Forno',
-  hut: 'Cabana',
-  house: 'Casa',
-  watermill: "Roda d'água",
-};
-
 const PROBLEM_TEXT: Readonly<Record<PlacementProblem, string>> = {
+  unknown: 'Construção desconhecida',
   outside: 'Fora do mapa',
   water: 'Não dá para construir na água',
   forest: 'Tem árvores aqui',
@@ -22,16 +16,17 @@ const PROBLEM_TEXT: Readonly<Record<PlacementProblem, string>> = {
 
 const HELP = '[R] girar  [X] remover  [Esc] cancelar';
 
-/** Barra de construção no rodapé: um botão por construção, mais o de remover. */
+/** Barra de construção no rodapé: um botão por construção que já tem arte, mais o de remover. */
 export class BuildToolbar {
-  private readonly buttons = new Map<Exclude<BuildTool, null>, HTMLButtonElement>();
+  private readonly buttons = new Map<BuildingKind, HTMLButtonElement>();
   private readonly status: HTMLElement;
 
   constructor(element: HTMLElement, onSelect: (tool: BuildTool) => void) {
     const row = document.createElement('div');
-    for (const tool of [...BUILDING_KINDS, 'remove'] as const) {
+    const buildable = [...GAME_DATA.buildings.values()].filter((b) => b.frame !== undefined);
+    for (const { id: tool, name } of [...buildable, { id: 'remove', name: 'Remover' }]) {
       const button = document.createElement('button');
-      button.textContent = tool === 'remove' ? 'Remover' : BUILDING_LABELS[tool];
+      button.textContent = name;
       button.addEventListener('click', () => onSelect(button.classList.contains('active') ? null : tool));
       this.buttons.set(tool, button);
       row.appendChild(button);

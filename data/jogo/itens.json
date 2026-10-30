@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "note": "Itens do jogo. 'name' é provisório até a equipe Roteiro entregar data/texto/pt-BR/itens.json. 'trade' = vilarejos produzem/pedem. 'fuel' = segundos de queima. 'tool' = nível (1 pedra, 2 ferro, 3 aço) e usos.",
+  "items": [
+    { "id": "wood", "name": "madeira", "era": 1, "category": "resource", "trade": true },
+    { "id": "stone", "name": "pedra", "era": 1, "category": "resource", "trade": true },
+    { "id": "wheat", "name": "trigo", "era": 1, "category": "resource", "trade": true },
+    { "id": "flour", "name": "farinha", "era": 1, "category": "intermediate", "trade": true },
+    { "id": "bread", "name": "pão", "era": 1, "category": "food", "trade": true },
+    { "id": "firewood", "name": "lenha", "era": 1, "category": "fuel", "fuel": 8, "trade": true },
+    { "id": "fish", "name": "peixe", "era": 1, "category": "food", "trade": true },
+    { "id": "wool", "name": "lã", "era": 1, "category": "resource", "trade": true },
+    { "id": "iron_ore", "name": "minério de ferro", "era": 1, "category": "resource", "trade": true },
+    { "id": "clay", "name": "argila", "era": 1, "category": "resource", "trade": true },
+    { "id": "stone_axe", "name": "machado de pedra", "era": 1, "category": "tool", "tool": { "tier": 1, "uses": 40 } },
+    { "id": "stone_pickaxe", "name": "picareta de pedra", "era": 1, "category": "tool", "tool": { "tier": 1, "uses": 40 } },
+    { "id": "charcoal", "name": "carvão vegetal", "era": 2, "category": "fuel", "fuel": 20 },
+    { "id": "iron_ingot", "name": "barra de ferro", "era": 2, "category": "intermediate" },
+    { "id": "iron_axe", "name": "machado de ferro", "era": 2, "category": "tool", "tool": { "tier": 2, "uses": 150 } },
+    { "id": "iron_pickaxe", "name": "picareta de ferro", "era": 2, "category": "tool", "tool": { "tier": 2, "uses": 150 } }
+  ]
+}

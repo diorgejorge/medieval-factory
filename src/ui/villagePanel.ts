@@ -1,18 +1,9 @@
+import { GAME_DATA } from '../core/data/data';
 import type { Village, VillageGood } from '../core/world/villages';
 
-/** Nomes de exibição provisórios; viram dados em JSON junto com os itens (frente 7). */
-const GOOD_LABELS: Readonly<Record<VillageGood, string>> = {
-  wood: 'madeira',
-  stone: 'pedra',
-  wheat: 'trigo',
-  flour: 'farinha',
-  bread: 'pão',
-  firewood: 'lenha',
-  fish: 'peixe',
-  wool: 'lã',
-  iron_ore: 'minério de ferro',
-  clay: 'argila',
-};
+function label(item: VillageGood): string {
+  return GAME_DATA.items.get(item)?.name ?? item;
+}
 
 export interface Temperament {
   greeting: string;
@@ -39,9 +30,9 @@ export class VillagePanel {
       el('h2', village.name),
       el('p', temperament ? `“${fill(temperament.greeting)}”` : '', 'quote'),
       el('p', `População: ${village.population}`),
-      el('p', `Produz: ${village.produces.map((g) => GOOD_LABELS[g]).join(', ')}`),
-      el('p', `Pede: ${village.wants.map((g) => GOOD_LABELS[g]).join(', ')}`),
-      el('p', temperament && firstWant ? `“${fill(temperament.request, GOOD_LABELS[firstWant])}”` : '', 'quote'),
+      el('p', `Produz: ${village.produces.map(label).join(', ')}`),
+      el('p', `Pede: ${village.wants.map(label).join(', ')}`),
+      el('p', temperament && firstWant ? `“${fill(temperament.request, label(firstWant))}”` : '', 'quote'),
       el('p', '[Esc] fechar', 'hint'),
     );
     this.element.hidden = false;
