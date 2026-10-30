@@ -2,8 +2,6 @@ import type { Camera } from '../render/camera';
 
 /** Velocidade de pan pelo teclado, em pixels de tela por segundo. */
 const KEYBOARD_PAN_SPEED = 800;
-/** Fator de zoom por passo da roda do mouse. */
-const WHEEL_ZOOM_STEP = 1.1;
 
 const PAN_KEYS: Readonly<Record<string, readonly [number, number]>> = {
   KeyW: [0, -1],
@@ -71,8 +69,8 @@ export class CameraControls {
   private readonly onWheel = (event: WheelEvent): void => {
     event.preventDefault();
     const rect = this.target.getBoundingClientRect();
-    const factor = event.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
-    this.camera.zoomAt({ x: event.clientX - rect.left, y: event.clientY - rect.top }, factor);
+    const steps = event.deltaY < 0 ? 1 : -1;
+    this.camera.stepZoomAt({ x: event.clientX - rect.left, y: event.clientY - rect.top }, steps);
   };
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {

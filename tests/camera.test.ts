@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Camera, MAX_ZOOM, MIN_ZOOM } from '../src/render/camera';
+import { Camera, MAX_ZOOM, MIN_ZOOM, ZOOM_LEVELS } from '../src/render/camera';
 
 describe('Camera', () => {
   it('converte tela ↔ mundo de forma inversa', () => {
@@ -38,6 +38,17 @@ describe('Camera', () => {
     expect(camera.zoom).toBe(MAX_ZOOM);
     camera.zoomAt({ x: 0, y: 0 }, 0.0001);
     expect(camera.zoom).toBe(MIN_ZOOM);
+  });
+
+  it('zoom por passos usa só os níveis permitidos e respeita os limites', () => {
+    const camera = new Camera();
+    camera.stepZoomAt({ x: 100, y: 100 }, 1);
+    expect(camera.zoom).toBe(2);
+    camera.stepZoomAt({ x: 100, y: 100 }, -2);
+    expect(camera.zoom).toBe(0.5);
+    camera.stepZoomAt({ x: 0, y: 0 }, 99);
+    expect(camera.zoom).toBe(MAX_ZOOM);
+    expect(ZOOM_LEVELS).toContain(camera.zoom);
   });
 
   it('calcula as células visíveis limitadas ao mapa', () => {

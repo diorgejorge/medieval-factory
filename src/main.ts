@@ -2,14 +2,15 @@ import { Application, Container } from 'pixi.js';
 import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
 import type { SimulationSnapshot } from './core/simulation';
-import { Grid } from './core/world/grid';
-import { Terrain } from './core/world/terrain';
+import { generateWorld } from './core/world/generator';
 import { CameraControls } from './input/cameraControls';
 import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 
 const HUD_REFRESH_MS = 250;
+const INITIAL_ZOOM = 2;
+const SEED_PARAM = 'seed';
 
 async function start(): Promise<void> {
   const host = document.getElementById('game');
@@ -17,56 +18,68 @@ async function start(): Promise<void> {
   if (!host || !hud) throw new Error('Elementos #game/#hud ausentes no index.html');
 
   const app = new Application();
-  await app.init({ resizeTo: host, background: 0x1b1a17, antialias: false });
+  await app.init({ resizeTo: host, background: 0x1b1a17, antialias: false, roundPixels: true });
   host.appendChild(app.canvas);
 
-  const gridRenderer = new GridRenderer(createDemoGrid());
+  const seed = readSeed();
+  const gridRenderer = new GridRenderer(generateWorld(seed, MAP_SIZE_TILES));
   const world = new Container();
   world.addChild(gridRenderer.view);
   app.stage.addChild(world);
 
   const camera = new Camera();
+  camera.zoom = INITIAL_ZOOM;
   const mapCenter = (MAP_SIZE_TILES * TILE_SIZE_PX) / 2;
   camera.centerOn({ x: mapCenter, y: mapCenter }, app.screen.width, app.screen.height);
   const controls = new CameraControls(camera, app.canvas);
 
   const simulation = new SimulationClient();
   bindSimulationControls(simulation);
+  bindNewMapKey();
 
   let sinceHudRefresh = 0;
   app.ticker.add((ticker) => {
     controls.update(ticker.deltaMS / 1000);
     world.scale.set(camera.zoom);
-    world.position.set(-camera.x * camera.zoom, -camera.y * camera.zoom);
+    // Posição em pixels inteiros de tela: evita "tremedeira" e costuras entre chunks na pixel art.
+    world.position.set(Math.round(-camera.x * camera.zoom), Math.round(-camera.y * camera.zoom));
     gridRenderer.cull(camera, app.screen.width, app.screen.height);
 
     sinceHudRefresh += ticker.deltaMS;
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
       sinceHudRefresh = 0;
-      hud.textContent = formatHud(ticker.FPS, camera.zoom, simulation.snapshot);
+      hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
     }
   });
 }
 
-function formatHud(fps: number, zoom: number, snapshot: SimulationSnapshot | null): string {
-  const render = `FPS ${Math.round(fps)}  zoom ${zoom.toFixed(2)}x`;
-  if (!snapshot) return `${render}\nsimulação iniciando...`;
+function formatHud(fps: number, zoom: number, seed: number, snapshot: SimulationSnapshot | null): string {
+  const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}`;
+  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa';
+  if (!snapshot) return `${render}\nsimulação iniciando...\n${help}`;
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
   const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
   const state = snapshot.paused ? 'PAUSADO' : `${snapshot.speed}x`;
-  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n[espaço] pausa  [1-3] velocidade`;
+  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n${help}`;
 }
 
-/** Terreno de demonstração até a geração por seed (M1): só para ver a grade e o culling. */
-function createDemoGrid(): Grid {
-  const grid = new Grid(MAP_SIZE_TILES);
-  const riverX = MAP_SIZE_TILES / 2;
-  for (let i = 0; i < grid.size; i++) {
-    grid.setTerrain(riverX, i, Terrain.Water);
-    grid.setTerrain(riverX + 1, i, Terrain.Water);
-    grid.setTerrain(i, i, Terrain.Dirt);
-  }
-  return grid;
+/** A seed vem da URL (?seed=123) para um mapa poder ser compartilhado; sem ela, sorteia uma. */
+function readSeed(): number {
+  const fromUrl = Number(new URLSearchParams(location.search).get(SEED_PARAM));
+  return Number.isInteger(fromUrl) && fromUrl > 0 ? fromUrl : randomSeed();
+}
+
+function randomSeed(): number {
+  return 1 + Math.floor(Math.random() * 999_999);
+}
+
+function bindNewMapKey(): void {
+  window.addEventListener('keydown', (event) => {
+    if (event.code !== 'KeyN' || event.repeat) return;
+    const url = new URL(location.href);
+    url.searchParams.set(SEED_PARAM, String(randomSeed()));
+    location.assign(url);
+  });
 }
 
 void start();

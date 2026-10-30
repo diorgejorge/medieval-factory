@@ -11,8 +11,13 @@ export interface IndexRange {
   maxY: number;
 }
 
-export const MIN_ZOOM = 0.125;
-export const MAX_ZOOM = 4;
+/**
+ * Níveis de zoom permitidos. Pixel art só fica nítida em escalas inteiras (ou frações de 2 ao afastar);
+ * escalas como 1.1× borram ou deformam pixels.
+ */
+export const ZOOM_LEVELS = [0.25, 0.5, 1, 2, 3, 4, 6, 8] as const;
+export const MIN_ZOOM = ZOOM_LEVELS[0];
+export const MAX_ZOOM = ZOOM_LEVELS[ZOOM_LEVELS.length - 1] ?? 1;
 
 /**
  * Câmera 2D sem dependência do Pixi, para ser testável.
@@ -45,6 +50,14 @@ export class Camera {
     this.y = before.y - anchor.y / this.zoom;
   }
 
+  /** Sobe ou desce `steps` níveis de ZOOM_LEVELS, mantendo fixo o ponto sob `anchor`. */
+  stepZoomAt(anchor: Point, steps: number): void {
+    const current = nearestZoomLevelIndex(this.zoom);
+    const target = clamp(current + steps, 0, ZOOM_LEVELS.length - 1);
+    const zoom = ZOOM_LEVELS[target] ?? this.zoom;
+    this.zoomAt(anchor, zoom / this.zoom);
+  }
+
   /** Centraliza a câmera em um ponto do mundo. */
   centerOn(world: Point, viewWidth: number, viewHeight: number): void {
     this.x = world.x - viewWidth / 2 / this.zoom;
@@ -69,6 +82,14 @@ export class Camera {
     if (minX > maxX || minY > maxY) return null;
     return { minX, minY, maxX, maxY };
   }
+}
+
+function nearestZoomLevelIndex(zoom: number): number {
+  let best = 0;
+  ZOOM_LEVELS.forEach((level, index) => {
+    if (Math.abs(level - zoom) < Math.abs((ZOOM_LEVELS[best] ?? level) - zoom)) best = index;
+  });
+  return best;
 }
 
 function clamp(value: number, min: number, max: number): number {

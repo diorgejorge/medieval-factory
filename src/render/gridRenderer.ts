@@ -1,27 +1,32 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, Sprite, Texture } from 'pixi.js';
 import { CHUNK_SIZE_TILES, TILE_SIZE_PX } from '../core/config';
 import type { Grid } from '../core/world/grid';
 import type { Camera } from './camera';
-import { TERRAIN_COLORS } from './terrainPalette';
+import { paintChunk } from './terrainPixels';
 
 const CHUNK_SIZE_PX = CHUNK_SIZE_TILES * TILE_SIZE_PX;
 
 /**
- * Desenha o terreno em um Graphics por chunk. A geometria é construída uma vez;
- * a cada frame só alternamos a visibilidade dos chunks (culling).
+ * Cada chunk vira uma textura pixel art pintada uma única vez; no frame só alternamos
+ * a visibilidade dos sprites (culling). São ~64 sprites para um mapa 256×256.
  */
 export class GridRenderer {
   readonly view = new Container();
-  private readonly chunks: Graphics[] = [];
+  private readonly chunks: Sprite[] = [];
   private readonly chunksPerSide: number;
 
-  constructor(private readonly grid: Grid) {
+  constructor(grid: Grid) {
     this.chunksPerSide = Math.ceil(grid.size / CHUNK_SIZE_TILES);
+    const image = new ImageData(CHUNK_SIZE_PX, CHUNK_SIZE_PX);
+
     for (let cy = 0; cy < this.chunksPerSide; cy++) {
       for (let cx = 0; cx < this.chunksPerSide; cx++) {
-        const chunk = this.buildChunk(cx, cy);
-        this.chunks.push(chunk);
-        this.view.addChild(chunk);
+        image.data.fill(0);
+        paintChunk(grid, cx * CHUNK_SIZE_TILES, cy * CHUNK_SIZE_TILES, CHUNK_SIZE_TILES, image.data);
+        const sprite = new Sprite(this.createTexture(image));
+        sprite.position.set(cx * CHUNK_SIZE_PX, cy * CHUNK_SIZE_PX);
+        this.chunks.push(sprite);
+        this.view.addChild(sprite);
       }
     }
   }
@@ -42,36 +47,14 @@ export class GridRenderer {
     }
   }
 
-  private buildChunk(cx: number, cy: number): Graphics {
-    // Agrupa os tiles por cor e preenche cada grupo de uma vez: menos chamadas de fill.
-    const tilesByColor = new Map<number, number[]>();
-    const startX = cx * CHUNK_SIZE_TILES;
-    const startY = cy * CHUNK_SIZE_TILES;
-    const endX = Math.min(startX + CHUNK_SIZE_TILES, this.grid.size);
-    const endY = Math.min(startY + CHUNK_SIZE_TILES, this.grid.size);
-
-    for (let y = startY; y < endY; y++) {
-      for (let x = startX; x < endX; x++) {
-        const shades = TERRAIN_COLORS[this.grid.getTerrain(x, y)];
-        const color = shades[(x + y) & 1] ?? shades[0];
-        let tiles = tilesByColor.get(color);
-        if (!tiles) {
-          tiles = [];
-          tilesByColor.set(color, tiles);
-        }
-        tiles.push(x, y);
-      }
-    }
-
-    const graphics = new Graphics();
-    for (const [color, tiles] of tilesByColor) {
-      for (let i = 0; i < tiles.length; i += 2) {
-        const tileX = tiles[i] ?? 0;
-        const tileY = tiles[i + 1] ?? 0;
-        graphics.rect(tileX * TILE_SIZE_PX, tileY * TILE_SIZE_PX, TILE_SIZE_PX, TILE_SIZE_PX);
-      }
-      graphics.fill(color);
-    }
-    return graphics;
+  /** Cada chunk ganha seu canvas; o buffer de pixels é reaproveitado entre chunks. */
+  private createTexture(image: ImageData): Texture {
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    canvas.getContext('2d')?.putImageData(image, 0, 0);
+    const texture = Texture.from(canvas);
+    texture.source.scaleMode = 'nearest';
+    return texture;
   }
 }

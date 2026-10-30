@@ -204,7 +204,7 @@ tests/
 
 ## 10. Decisões em aberto
 
-- Visual: pixel art ou vetorial simples?
+- ~~Visual: pixel art ou vetorial simples?~~ **Decidido:** pixel art; terreno em tiles 16×16, máquinas e estruturas em sprites 32×32 (2×2 tiles).
 - Saqueadores aleatórios: modo opcional ou cortar de vez? (o combate pontual dos desafios fica)
 - Duração de um ciclo no MVP (proposta: 15 min)?
 - Hospedagem: GitHub Pages (simples) ou Cloudflare Pages (permite headers COOP/COEP para `SharedArrayBuffer`)?
