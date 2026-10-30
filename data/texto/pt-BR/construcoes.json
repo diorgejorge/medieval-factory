@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "buildings": {
+    "hut": "Choupana",
+    "house": "Casa de taipa",
+    "storage": "Armazém",
+    "workbench": "Bancada",
+    "lumberjack": "Cabana do lenhador",
+    "quarry": "Pedreira",
+    "mine": "Mina",
+    "farm": "Lavoura",
+    "mill": "Moinho",
+    "watermill": "Roda d'água",
+    "oven": "Forno de pão",
+    "charcoal_kiln": "Carvoaria",
+    "smelter": "Fundição",
+    "forge": "Forja"
+  }
+}
