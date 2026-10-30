@@ -26,7 +26,11 @@ const TRANSITION_PAIRS: readonly (readonly [TerrainType, TerrainType])[] = [
  * Bits da máscara = cantos com o terreno `a` (1 = NO, 2 = NE, 4 = SO, 8 = SE).
  */
 export function transitionFrame(nw: TerrainType, ne: TerrainType, sw: TerrainType, se: TerrainType): string | null {
-  const corners = [nw, ne, sw, se];
+  let corners = [nw, ne, sw, se];
+  // Campo encostando na água só pela diagonal: vira margem de areia, senão sobra um quadrado de água.
+  if (corners.includes(Terrain.Water) && corners.includes(Terrain.Sand)) {
+    corners = corners.map((t) => (t === Terrain.Grass ? Terrain.Sand : t));
+  }
   for (const [a, b] of TRANSITION_PAIRS) {
     if (!corners.every((t) => t === a || t === b)) continue;
     const mask = corners.reduce<number>((bits, t, i) => (t === a ? bits | (1 << i) : bits), 0);

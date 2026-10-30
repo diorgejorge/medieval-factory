@@ -69,6 +69,9 @@ describe('transitionFrame', () => {
   it('não tem transição quando os cantos são iguais ou o par não existe', () => {
     expect(transitionFrame(Grass, Grass, Grass, Grass)).toBeNull();
     expect(transitionFrame(Grass, Rock, Grass, Grass)).toBeNull();
-    expect(transitionFrame(Grass, Sand, Water, Water)).toBeNull();
+  });
+
+  it('trata o campo como areia num canto de campo, areia e água', () => {
+    expect(transitionFrame(Grass, Sand, Sand, Water)).toBe('sand_water_7');
   });
 });
