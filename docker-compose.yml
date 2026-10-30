@@ -1,0 +1,6 @@
+services:
+  game:
+    build: .
+    image: medieval-factory
+    ports:
+      - '5173:80'
