@@ -55,11 +55,13 @@ export interface GameData {
   recipes: ReadonlyMap<string, RecipeDef>;
 }
 
-/** Os três arquivos de data/jogo, como vêm do disco (ainda sem conferir). */
+/** Os arquivos de data/jogo e os nomes de data/texto/pt-BR, como vêm do disco (ainda sem conferir). */
 export interface RawGameData {
   items: unknown;
   buildings: unknown;
   recipes: unknown;
+  itemNames: unknown;
+  buildingNames: unknown;
 }
 
 export class GameDataError extends Error {
@@ -88,9 +90,13 @@ const TERRAIN_BY_NAME: Readonly<Record<string, TerrainType>> = {
  */
 export function parseGameData(raw: RawGameData): GameData {
   const problems: string[] = [];
-  const items = parseList(raw.items, 'items', 'itens.json', problems, (entry, where) => parseItem(entry, where, problems));
+  const itemNames = parseNames(raw.itemNames, 'items', 'texto/pt-BR/itens.json', problems);
+  const buildingNames = parseNames(raw.buildingNames, 'buildings', 'texto/pt-BR/construcoes.json', problems);
+  const items = parseList(raw.items, 'items', 'itens.json', problems, (entry, where) =>
+    parseItem(entry, where, itemNames, problems),
+  );
   const buildings = parseList(raw.buildings, 'buildings', 'construcoes.json', problems, (entry, where) =>
-    parseBuilding(entry, where, items, problems),
+    parseBuilding(entry, where, items, buildingNames, problems),
   );
   const recipes = parseList(raw.recipes, 'recipes', 'receitas.json', problems, (entry, where) =>
     parseRecipe(entry, where, items, buildings, problems),
@@ -132,11 +138,16 @@ function parseList<T extends { id: string }>(
   return result;
 }
 
-function parseItem(entry: Record<string, unknown>, where: string, problems: string[]): ItemDef | null {
+function parseItem(
+  entry: Record<string, unknown>,
+  where: string,
+  names: ReadonlyMap<string, string>,
+  problems: string[],
+): ItemDef | null {
   const before = problems.length;
   const item: ItemDef = {
     id: entry['id'] as string,
-    name: requireString(entry, 'name', where, problems),
+    name: requireName(entry['id'] as string, names, where, problems),
     era: requireOneOf(entry, 'era', ERAS, where, problems),
     category: requireOneOf(entry, 'category', ITEM_CATEGORIES, where, problems),
   };
@@ -162,12 +173,13 @@ function parseBuilding(
   entry: Record<string, unknown>,
   where: string,
   items: ReadonlyMap<string, ItemDef>,
+  names: ReadonlyMap<string, string>,
   problems: string[],
 ): BuildingDef | null {
   const before = problems.length;
   const building: BuildingDef = {
     id: entry['id'] as string,
-    name: requireString(entry, 'name', where, problems),
+    name: requireName(entry['id'] as string, names, where, problems),
     era: requireOneOf(entry, 'era', ERAS, where, problems),
     width: requireSide(entry, 'width', where, problems),
     height: requireSide(entry, 'height', where, problems),
@@ -241,6 +253,28 @@ function parseAmounts(
     }
     return [{ item: requireItem(entry, 'item', items, where, problems), amount: requirePositiveInt(entry, 'amount', where, problems) }];
   });
+}
+
+/** Arquivo de nomes do Roteiro: { version, <key>: { "<id>": "nome" } }. */
+function parseNames(file: unknown, key: string, fileName: string, problems: string[]): Map<string, string> {
+  const names = new Map<string, string>();
+  const entries = isObject(file) ? file[key] : undefined;
+  if (!isObject(file) || typeof file['version'] !== 'number' || !isObject(entries)) {
+    problems.push(`${fileName}: precisa de "version" (número) e do objeto "${key}"`);
+    return names;
+  }
+  for (const [id, name] of Object.entries(entries)) {
+    if (typeof name === 'string' && name.length > 0) names.set(id, name);
+    else problems.push(`${fileName}: nome de "${id}" deve ser um texto`);
+  }
+  return names;
+}
+
+function requireName(id: string, names: ReadonlyMap<string, string>, where: string, problems: string[]): string {
+  const name = names.get(id);
+  if (name) return name;
+  problems.push(`${where}: falta o nome em data/texto/pt-BR`);
+  return id;
 }
 
 function requireItem(

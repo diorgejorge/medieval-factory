@@ -32,7 +32,7 @@ export class VillagePanel {
       el('p', `População: ${village.population}`),
       el('p', `Produz: ${village.produces.map(label).join(', ')}`),
       el('p', `Pede: ${village.wants.map(label).join(', ')}`),
-      el('p', temperament && firstWant ? `“${fill(temperament.request, label(firstWant))}”` : '', 'quote'),
+      el('p', temperament && firstWant ? `“${fill(temperament.request, label(firstWant).toLocaleLowerCase('pt-BR'))}”` : '', 'quote'),
       el('p', '[Esc] fechar', 'hint'),
     );
     this.element.hidden = false;

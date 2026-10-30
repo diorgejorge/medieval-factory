@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 'item' do 'terrain' em volta e exige ferramenta de nível 'minTool'. 'name' é provisório.",
+  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 'item' do 'terrain' em volta e exige ferramenta de nível 'minTool'. Nomes de exibição: data/texto/pt-BR/construcoes.json (Roteiro).",
   "buildings": [
-    { "id": "oven", "name": "Forno", "era": 1, "width": 2, "height": 2, "frame": "oven_stone" },
-    { "id": "hut", "name": "Cabana", "era": 1, "width": 3, "height": 2, "frame": "hut_straw" },
-    { "id": "house", "name": "Casa", "era": 1, "width": 4, "height": 2, "frame": "house_thatch" },
-    { "id": "watermill", "name": "Roda d'água", "era": 2, "width": 2, "height": 2, "frame": "watermill", "needsWater": true },
-    { "id": "storage", "name": "Depósito", "era": 1, "width": 2, "height": 2 },
-    { "id": "workbench", "name": "Bancada", "era": 1, "width": 2, "height": 2 },
-    { "id": "lumberjack", "name": "Lenhador", "era": 1, "width": 2, "height": 2, "extracts": { "item": "wood", "terrain": "forest", "minTool": 1 } },
-    { "id": "quarry", "name": "Pedreira", "era": 1, "width": 2, "height": 2, "extracts": { "item": "stone", "terrain": "rock", "minTool": 1 } },
-    { "id": "mine", "name": "Mina", "era": 1, "width": 2, "height": 2, "extracts": { "item": "iron_ore", "terrain": "ore_iron", "minTool": 1 } },
-    { "id": "farm", "name": "Fazenda", "era": 1, "width": 3, "height": 3, "extracts": { "item": "wheat", "terrain": "grass", "minTool": 1 } },
-    { "id": "mill", "name": "Moinho", "era": 1, "width": 2, "height": 2 },
-    { "id": "charcoal_kiln", "name": "Carvoaria", "era": 2, "width": 2, "height": 2 },
-    { "id": "smelter", "name": "Forno de fundição", "era": 2, "width": 2, "height": 2 },
-    { "id": "forge", "name": "Forja", "era": 2, "width": 2, "height": 2 }
+    { "id": "oven", "era": 1, "width": 2, "height": 2, "frame": "oven_stone" },
+    { "id": "hut", "era": 1, "width": 3, "height": 2, "frame": "hut_straw" },
+    { "id": "house", "era": 1, "width": 4, "height": 2, "frame": "house_thatch" },
+    { "id": "watermill", "era": 2, "width": 2, "height": 2, "frame": "watermill", "needsWater": true },
+    { "id": "storage", "era": 1, "width": 2, "height": 2 },
+    { "id": "workbench", "era": 1, "width": 2, "height": 2 },
+    { "id": "lumberjack", "era": 1, "width": 2, "height": 2, "extracts": { "item": "wood", "terrain": "forest", "minTool": 1 } },
+    { "id": "quarry", "era": 1, "width": 2, "height": 2, "extracts": { "item": "stone", "terrain": "rock", "minTool": 1 } },
+    { "id": "mine", "era": 1, "width": 2, "height": 2, "extracts": { "item": "iron_ore", "terrain": "ore_iron", "minTool": 1 } },
+    { "id": "farm", "era": 1, "width": 3, "height": 3, "extracts": { "item": "wheat", "terrain": "grass", "minTool": 1 } },
+    { "id": "mill", "era": 1, "width": 2, "height": 2 },
+    { "id": "charcoal_kiln", "era": 2, "width": 2, "height": 2 },
+    { "id": "smelter", "era": 2, "width": 2, "height": 2 },
+    { "id": "forge", "era": 2, "width": 2, "height": 2 }
   ]
 }

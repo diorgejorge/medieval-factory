@@ -2,13 +2,15 @@ import { describe, expect, it } from 'vitest';
 import buildings from '../data/jogo/construcoes.json';
 import items from '../data/jogo/itens.json';
 import recipes from '../data/jogo/receitas.json';
+import buildingNames from '../data/texto/pt-BR/construcoes.json';
+import itemNames from '../data/texto/pt-BR/itens.json';
 import { GAME_DATA } from '../src/core/data/data';
 import { GameDataError, parseGameData, type RawGameData } from '../src/core/data/gameData';
 import { Terrain } from '../src/core/world/terrain';
 
 /** Cópia profunda dos dados reais, para estragar um pedaço por teste. */
-function rawCopy(): { items: typeof items; buildings: typeof buildings; recipes: typeof recipes } {
-  return structuredClone({ items, buildings, recipes });
+function rawCopy() {
+  return structuredClone({ items, buildings, recipes, itemNames, buildingNames });
 }
 
 function must<T>(value: T | undefined): T {
@@ -80,6 +82,23 @@ describe('dados do jogo (data/jogo)', () => {
   });
 
   it('acusa arquivo sem version ou sem a lista', () => {
-    expect(problemsOf({ items: {}, buildings: buildings, recipes: recipes })[0]).toContain('itens.json');
+    expect(problemsOf({ ...rawCopy(), items: {} })[0]).toContain('itens.json');
+  });
+
+  it('acusa item ou construção sem nome nos textos do Roteiro', () => {
+    const raw = rawCopy();
+    const names: Record<string, string> = { ...raw.itemNames.items };
+    delete names['bread'];
+    const problems = problemsOf({ ...raw, itemNames: { version: 1, items: names } });
+    expect(problems).toContain('itens.json "bread": falta o nome em data/texto/pt-BR');
+  });
+
+  it('usa os nomes do Roteiro', () => {
+    expect(GAME_DATA.items.get('iron_ore')?.name).toBe('Minério de ferro');
+    expect(GAME_DATA.buildings.get('oven')?.name).toBe(buildingNameOf('oven'));
   });
 });
+
+function buildingNameOf(buildingId: string): string | undefined {
+  return (buildingNames.buildings as Record<string, string>)[buildingId];
+}
