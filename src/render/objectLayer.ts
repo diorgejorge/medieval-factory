@@ -17,6 +17,7 @@ const ANIMATION_FPS = 6;
 const CULL_MARGIN_PX = 4 * TILE_SIZE_PX;
 
 interface PlacedSprite {
+  group: string;
   sprite: Sprite;
   shadow: Sprite;
   x: number;
@@ -41,10 +42,13 @@ export class ObjectLayer {
     this.view.addChild(this.shadows, this.sprites);
   }
 
-  /** Adiciona objetos mantendo a ordem por y da base. Frames que faltam no atlas são ignorados. */
-  add(objects: readonly MapObject[]): void {
+  /**
+   * Adiciona objetos mantendo a ordem por y da base. Frames que faltam no atlas são ignorados.
+   * O grupo permite trocar um conjunto inteiro depois (ex.: as construções do jogador).
+   */
+  add(objects: readonly MapObject[], group = 'map'): void {
     for (const object of objects) {
-      const placed = this.createSprite(object);
+      const placed = this.createSprite(object, group);
       if (placed) this.placed.push(placed);
     }
     this.placed.sort(compareDrawOrder);
@@ -54,6 +58,25 @@ export class ObjectLayer {
       this.sprites.addChild(sprite);
       this.shadows.addChild(shadow);
     }
+  }
+
+  /** Troca todos os objetos de um grupo pelos novos. */
+  replaceGroup(group: string, objects: readonly MapObject[]): void {
+    for (let i = this.placed.length - 1; i >= 0; i--) {
+      const placed = this.placed[i];
+      if (placed?.group !== group) continue;
+      placed.sprite.destroy();
+      placed.shadow.destroy();
+      this.placed.splice(i, 1);
+    }
+    this.add(objects, group);
+  }
+
+  /** Sprite avulso posicionado como o objeto, sem sombra nem ordenação (para a prévia fantasma). */
+  spriteFor(object: MapObject): Sprite | null {
+    const placed = this.createSprite(object, '');
+    placed?.shadow.destroy();
+    return placed?.sprite ?? null;
   }
 
   cull(camera: Camera, viewWidth: number, viewHeight: number): void {
@@ -69,9 +92,10 @@ export class ObjectLayer {
     }
   }
 
-  private createSprite(object: MapObject): PlacedSprite | null {
-    const frames = this.atlas.animations.get(object.frame) ?? [];
-    const still = this.atlas.frames.get(object.frame);
+  private createSprite(object: MapObject, group: string): PlacedSprite | null {
+    const name = this.resolveFrame(object.frame);
+    const frames = this.atlas.animations.get(name) ?? [];
+    const still = this.atlas.frames.get(name);
     const first = frames[0] ?? still;
     if (!first) return null;
 
@@ -87,7 +111,7 @@ export class ObjectLayer {
     }
 
     // A base é a última linha opaca do sprite: assim nada "flutua" se o PNG tiver margem embaixo.
-    const bounds = this.opaqueBounds(object.frame, first);
+    const bounds = this.opaqueBounds(name, first);
     const x = Math.round(object.x * TILE_SIZE_PX);
     const y = Math.round(object.y * TILE_SIZE_PX);
     sprite.position.set(x - Math.floor(first.w / 2), y - bounds.bottom - 1);
@@ -96,7 +120,13 @@ export class ObjectLayer {
     shadow.tint = SHADOW_COLOR;
     shadow.alpha = SHADOW_ALPHA;
     shadow.position.set(sprite.x + bounds.left + SHADOW_OFFSET_X_PX, y - SHADOW_ABOVE_PX);
-    return { sprite, shadow, x, y };
+    return { group, sprite, shadow, x, y };
+  }
+
+  /** Sem a arte de uma direção (`<frame>_r<n>`), usa a arte padrão do objeto. */
+  private resolveFrame(name: string): string {
+    if (this.atlas.animations.has(name) || this.atlas.frames.has(name)) return name;
+    return name.replace(/_r\d+$/, '');
   }
 
   private texture(frame: AtlasFrame): Texture {
