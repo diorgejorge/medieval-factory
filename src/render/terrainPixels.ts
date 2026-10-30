@@ -24,6 +24,8 @@ const PALETTE = {
   rockLight: [160, 156, 148],
   ore: [176, 92, 52],
   oreLight: [214, 132, 82],
+  dirt: [150, 108, 66],
+  dirtDark: [124, 88, 54],
 } as const satisfies Record<string, Rgb>;
 
 /** Quanto o relevo clareia/escurece a cor: ajuda a ler colinas e vales sem sprites de altura. */
@@ -86,6 +88,8 @@ function tilePixel(
       return rockPixel(noise);
     case Terrain.OreIron:
       return orePixel(px, py, tileHash, noise) ?? rockPixel(noise);
+    case Terrain.Dirt:
+      return noise < 50 ? PALETTE.dirtDark : PALETTE.dirt;
   }
 }
 

@@ -9,6 +9,7 @@ export const TERRAIN_FRAME_PREFIX: Readonly<Record<TerrainType, string>> = {
   [Terrain.Forest]: 'forest',
   [Terrain.Rock]: 'rock',
   [Terrain.OreIron]: 'ore_iron',
+  [Terrain.Dirt]: 'dirt',
 };
 
 export const ATLAS_VARIANTS = 4;
@@ -16,6 +17,7 @@ export const ATLAS_VARIANTS = 4;
 /** Pares com tiles de transição no atlas (`<a>_<b>_<máscara>`), na ordem em que aparecem no nome. */
 const TRANSITION_PAIRS: readonly (readonly [TerrainType, TerrainType])[] = [
   [Terrain.Grass, Terrain.Sand],
+  [Terrain.Grass, Terrain.Dirt],
   [Terrain.Grass, Terrain.Water],
   [Terrain.Sand, Terrain.Water],
 ];

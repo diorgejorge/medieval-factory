@@ -12,11 +12,21 @@
         font: 12px/1.4 monospace; color: #f2e8cf; background: rgba(0, 0, 0, 0.55);
         border-radius: 4px; pointer-events: none; white-space: pre;
       }
+      #panel {
+        position: fixed; top: 8px; right: 8px; width: 260px; padding: 10px 14px;
+        font: 13px/1.45 Georgia, serif; color: #2b1d12; background: #ead8b1;
+        border: 3px solid #5a3a22; border-radius: 6px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+      }
+      #panel h2 { margin: 0 0 6px; font-size: 18px; }
+      #panel p { margin: 4px 0; }
+      #panel .quote { font-style: italic; color: #5a3a22; }
+      #panel .hint { margin-top: 8px; font: 11px monospace; color: #7a5a3a; }
     </style>
   </head>
   <body>
     <div id="game"></div>
     <div id="hud"></div>
+    <div id="panel" hidden></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

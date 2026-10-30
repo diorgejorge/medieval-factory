@@ -3,13 +3,16 @@ import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
 import type { SimulationSnapshot } from './core/simulation';
 import { findNearestGrass, generateWorld } from './core/world/generator';
-import { placeStartingVillage, scatterTrees } from './core/world/mapObjects';
+import { settleWorld, villageAt } from './core/world/villages';
+import villageTexts from '../data/texto/pt-BR/vilarejos.json';
+import { bindClicks } from './input/clickControls';
 import { CameraControls } from './input/cameraControls';
 import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 import { ObjectLayer } from './render/objectLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
+import { VillagePanel } from './ui/villagePanel';
 
 const HUD_REFRESH_MS = 250;
 const INITIAL_ZOOM = 2;
@@ -18,7 +21,8 @@ const SEED_PARAM = 'seed';
 async function start(): Promise<void> {
   const host = document.getElementById('game');
   const hud = document.getElementById('hud');
-  if (!host || !hud) throw new Error('Elementos #game/#hud ausentes no index.html');
+  const panel = document.getElementById('panel');
+  if (!host || !hud || !panel) throw new Error('Elementos #game/#hud/#panel ausentes no index.html');
 
   const app = new Application();
   await app.init({ resizeTo: host, background: 0x1b1a17, antialias: false, roundPixels: true });
@@ -26,23 +30,22 @@ async function start(): Promise<void> {
 
   const seed = readSeed();
   const grid = generateWorld(seed, MAP_SIZE_TILES);
+  const { start: village, villages, objects: mapObjects } = settleWorld(grid, seed, villageTexts.names);
   const [terrainAtlas, objectsAtlas] = await Promise.all([loadTerrainAtlas(), loadObjectsAtlas()]);
   const gridRenderer = new GridRenderer(grid, terrainAtlas);
   const world = new Container();
   world.addChild(gridRenderer.view);
 
-  const mapCenterTile = Math.floor(MAP_SIZE_TILES / 2);
-  const village = placeStartingVillage(grid, mapCenterTile, mapCenterTile);
   const objects = objectsAtlas ? new ObjectLayer(objectsAtlas) : null;
   if (objects) {
-    objects.add(scatterTrees(grid, seed));
-    objects.add(village?.buildings ?? []);
+    objects.add(mapObjects);
     world.addChild(objects.view);
   }
   app.stage.addChild(world);
 
   const camera = new Camera();
   camera.zoom = INITIAL_ZOOM;
+  const mapCenterTile = Math.floor(MAP_SIZE_TILES / 2);
   const start = village?.center ?? findNearestGrass(grid, mapCenterTile, mapCenterTile) ?? { x: mapCenterTile, y: mapCenterTile };
   camera.centerOn(
     { x: (start.x + 0.5) * TILE_SIZE_PX, y: (start.y + 0.5) * TILE_SIZE_PX },
@@ -50,6 +53,14 @@ async function start(): Promise<void> {
     app.screen.height,
   );
   const controls = new CameraControls(camera, app.canvas);
+
+  const villagePanel = new VillagePanel(panel, villageTexts.temperaments);
+  bindClicks(app.canvas, (screen) => {
+    const point = camera.screenToWorld(screen);
+    const clicked = villageAt(villages, Math.floor(point.x / TILE_SIZE_PX), Math.floor(point.y / TILE_SIZE_PX));
+    if (clicked) villagePanel.show(clicked);
+    else villagePanel.hide();
+  });
 
   const simulation = new SimulationClient();
   bindSimulationControls(simulation);
@@ -75,7 +86,7 @@ async function start(): Promise<void> {
 
 function formatHud(fps: number, zoom: number, seed: number, snapshot: SimulationSnapshot | null): string {
   const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}`;
-  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa';
+  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo';
   if (!snapshot) return `${render}\nsimulação iniciando...\n${help}`;
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
   const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
