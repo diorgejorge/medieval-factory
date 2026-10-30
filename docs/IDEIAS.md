@@ -20,6 +20,7 @@ Regra: **nenhum número de balanceamento no código**. Se é regra de jogo, vai 
 - Mapa gerado por seed com aparência orgânica: rio sinuoso, lagos, florestas, colinas, jazidas.
 - **Vilarejos vizinhos** perto da água, ligados por trilhas. Ao clicar: nome, população, o que produzem e o que pedem.
 - Interação com vilarejos: trocar itens, recrutar servos em troca de comida; mais tarde, pedir proteção (combate).
+- **Névoa de guerra:** o mapa começa coberto e se revela em volta da vila e por onde os servos andam; vilarejos distantes só aparecem quando descobertos.
 
 ### Progressão por eras
 - **I. Madeira:** ferramentas de madeira/pedra, lenha, força humana/animal, roda d'água.

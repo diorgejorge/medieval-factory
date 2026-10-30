@@ -6,6 +6,8 @@ export const Terrain = {
   Forest: 3,
   Rock: 4,
   OreIron: 5,
+  /** Trilha de terra batida entre vilarejos. */
+  Dirt: 6,
 } as const;
 
 export type TerrainType = (typeof Terrain)[keyof typeof Terrain];

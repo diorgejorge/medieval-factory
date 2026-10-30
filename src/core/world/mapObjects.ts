@@ -52,6 +52,15 @@ export function scatterTrees(grid: Grid, seed: number): MapObject[] {
   return trees;
 }
 
+export interface StartingVillage {
+  buildings: MapObject[];
+  center: { x: number; y: number };
+  /** Retângulo das casas, em tiles. */
+  area: { left: number; top: number; width: number; height: number };
+  /** Tile logo abaixo das casas, onde chegam as trilhas. */
+  door: { x: number; y: number };
+}
+
 /**
  * Procura, em anéis a partir de (x, y), um retângulo só de campo para a vila inicial.
  * Devolve as construções e o centro da vila, ou null se o mapa não tiver espaço.
@@ -60,7 +69,7 @@ export function placeStartingVillage(
   grid: Grid,
   x: number,
   y: number,
-): { buildings: MapObject[]; center: { x: number; y: number } } | null {
+): StartingVillage | null {
   const { width, height, buildings } = STARTING_VILLAGE;
   for (let radius = 0; radius < grid.size; radius++) {
     for (let dy = -radius; dy <= radius; dy++) {
@@ -72,6 +81,8 @@ export function placeStartingVillage(
         return {
           buildings: buildings.map((b) => ({ frame: b.frame, x: left + b.dx, y: top + b.dy })),
           center: { x: left + width / 2, y: top + height / 2 },
+          area: { left, top, width, height },
+          door: { x: left + (width >> 1), y: top + height },
         };
       }
     }
