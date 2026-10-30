@@ -5,6 +5,8 @@ import type { ObjectLayer } from './objectLayer';
 
 const OK_COLOR = 0x6fcf6f;
 const BLOCKED_COLOR = 0xe0533d;
+const NO_TINT = 0xffffff;
+const BLOCKED_TINT = 0xff7a6a;
 const AREA_ALPHA = 0.35;
 const SPRITE_ALPHA = 0.6;
 /** Seta de rotação: triângulo no meio da borda para onde a construção "olha". */
@@ -28,6 +30,7 @@ export class BuildGhost {
     this.drawArea(x, y, width, height, color);
     this.drawArrow(x, y, width, height, rotation, color);
     this.setSprite({ id: 0, kind, x, y, rotation });
+    if (this.sprite) this.sprite.tint = ok ? NO_TINT : BLOCKED_TINT;
     this.view.visible = true;
   }
 
