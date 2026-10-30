@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateWorld } from '../src/core/world/generator';
+import { findNearestGrass, generateWorld } from '../src/core/world/generator';
 import type { Grid } from '../src/core/world/grid';
 import { Terrain, TERRAIN_TYPES, type TerrainType } from '../src/core/world/terrain';
 
@@ -53,6 +53,13 @@ describe('generateWorld', () => {
     const crossesVertically = Array.from({ length: SIZE }, (_, y) => y).every(hasWaterInRow);
     const crossesHorizontally = Array.from({ length: SIZE }, (_, x) => x).every(hasWaterInColumn);
     expect(crossesVertically || crossesHorizontally).toBe(true);
+  });
+
+  it('encontra o campo mais próximo de um ponto', () => {
+    const grid = generateWorld(42, SIZE);
+    const found = findNearestGrass(grid, SIZE / 2, SIZE / 2);
+    expect(found).not.toBeNull();
+    if (found) expect(grid.getTerrain(found.x, found.y)).toBe(Terrain.Grass);
   });
 
   it('areia só aparece encostada na água', () => {

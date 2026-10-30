@@ -2,7 +2,7 @@ import { Application, Container } from 'pixi.js';
 import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
 import type { SimulationSnapshot } from './core/simulation';
-import { generateWorld } from './core/world/generator';
+import { findNearestGrass, generateWorld } from './core/world/generator';
 import { CameraControls } from './input/cameraControls';
 import { bindSimulationControls } from './input/simulationControls';
 import { Camera } from './render/camera';
@@ -22,15 +22,21 @@ async function start(): Promise<void> {
   host.appendChild(app.canvas);
 
   const seed = readSeed();
-  const gridRenderer = new GridRenderer(generateWorld(seed, MAP_SIZE_TILES));
+  const grid = generateWorld(seed, MAP_SIZE_TILES);
+  const gridRenderer = new GridRenderer(grid);
   const world = new Container();
   world.addChild(gridRenderer.view);
   app.stage.addChild(world);
 
   const camera = new Camera();
   camera.zoom = INITIAL_ZOOM;
-  const mapCenter = (MAP_SIZE_TILES * TILE_SIZE_PX) / 2;
-  camera.centerOn({ x: mapCenter, y: mapCenter }, app.screen.width, app.screen.height);
+  const mapCenterTile = Math.floor(MAP_SIZE_TILES / 2);
+  const start = findNearestGrass(grid, mapCenterTile, mapCenterTile) ?? { x: mapCenterTile, y: mapCenterTile };
+  camera.centerOn(
+    { x: (start.x + 0.5) * TILE_SIZE_PX, y: (start.y + 0.5) * TILE_SIZE_PX },
+    app.screen.width,
+    app.screen.height,
+  );
   const controls = new CameraControls(camera, app.canvas);
 
   const simulation = new SimulationClient();

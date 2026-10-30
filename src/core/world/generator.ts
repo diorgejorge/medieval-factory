@@ -36,6 +36,24 @@ export function generateWorld(seed: number, size: number): Grid {
   return grid;
 }
 
+/**
+ * Tile de campo mais próximo de (x, y), procurando em anéis quadrados crescentes.
+ * Serve para a câmera (e depois a vila inicial) não começar no meio de um lago.
+ */
+export function findNearestGrass(grid: Grid, x: number, y: number): { x: number; y: number } | null {
+  for (let radius = 0; radius < grid.size; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
+        const tx = x + dx;
+        const ty = y + dy;
+        if (grid.isInside(tx, ty) && grid.getTerrain(tx, ty) === Terrain.Grass) return { x: tx, y: ty };
+      }
+    }
+  }
+  return null;
+}
+
 function applyRelief(grid: Grid, seed: number): void {
   const { frequency, octaves } = WORLD_GEN.height;
   for (let y = 0; y < grid.size; y++) {
