@@ -12,6 +12,8 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+from machines import machine_frames
+
 ASSETS = Path(__file__).resolve().parent.parent
 VENDOR = ASSETS / "vendor" / "ninja-adventure"
 TILE = 16
@@ -179,6 +181,84 @@ BUILDINGS: dict[str, tuple[int, int, int, int]] = {
 }
 
 
+# ---------- construções giradas (vista 3/4) ----------
+# Rotação horária: r0 = S (arte original, frente para a câmera), r1 = O, r2 = N, r3 = L.
+# Na vista 3/4 só a parede sul aparece: r2 mostra o fundo (sem porta) e r1/r3 mostram a fachada estreita,
+# com o telhado mais comprido (largura e profundidade trocam) e a porta no canto do lado para onde ela abre.
+
+
+def patch_from(img: Image.Image, box: tuple[int, int, int, int], dx: int) -> Image.Image:
+    """Cobre `box` copiando a mesma área deslocada `dx` px na horizontal (apaga porta/janela)."""
+    out = img.copy()
+    x0, y0, x1, y1 = box
+    out.paste(img.crop((x0 + dx, y0, x1 + dx, y1)), (x0, y0))
+    return out
+
+
+def narrow(img: Image.Image, keep: int) -> Image.Image:
+    """Junta as `keep` colunas da esquerda com as `keep` da direita: fachada estreita, cantos originais."""
+    out = Image.new("RGBA", (2 * keep, img.height))
+    out.paste(img.crop((0, 0, keep, img.height)), (0, 0))
+    out.paste(img.crop((img.width - keep, 0, img.width, img.height)), (keep, 0))
+    return out
+
+
+def deepen(img: Image.Image, rows: tuple[int, int], extra: int) -> Image.Image:
+    """Alonga o telhado repetindo a faixa de linhas `rows` até somar `extra` px de profundidade."""
+    top, bottom = rows
+    band = img.crop((0, top, img.width, bottom))
+    out = Image.new("RGBA", (img.width, img.height + extra))
+    out.paste(img.crop((0, 0, img.width, bottom)), (0, 0))
+    for y in range(bottom, bottom + extra, band.height):
+        out.paste(band.crop((0, 0, img.width, min(band.height, bottom + extra - y))), (0, y))
+    out.paste(img.crop((0, bottom, img.width, img.height)), (0, bottom + extra))
+    return out
+
+
+def plain_wall(img: Image.Image, box: tuple[int, int, int, int], wall_src: int, pillars: tuple[int, ...],
+               pillar_src: int) -> Image.Image:
+    """Parede lisa: cada linha de `box` repete a coluna `wall_src`; pilares copiados da coluna `pillar_src`."""
+    out = img.copy()
+    x0, y0, x1, y1 = box
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            out.putpixel((x, y), img.getpixel((wall_src, y)))
+        for px in pillars:
+            out.putpixel((px, y), img.getpixel((pillar_src, y)))
+    return out
+
+
+def side_door(img: Image.Image, door: Image.Image, at: tuple[int, int]) -> Image.Image:
+    out = img.copy()
+    out.alpha_composite(door, at)
+    return out
+
+
+def rotations(name: str, base: Image.Image) -> dict[str, Image.Image]:
+    """Quadros r1..r3 de uma construção do pacote (r0 é o próprio `base`)."""
+    if name == "house_thatch":  # 4x2 -> 2x4
+        back = plain_wall(base, (4, 33, 60, 46), wall_src=49, pillars=(21, 42), pillar_src=15)
+        west = side_door(deepen(narrow(back, 16), (12, 28), 32), base.crop((17, 33, 25, 47)), (3, 65))
+    elif name == "hut_straw":  # 3x2 -> 2x3
+        back = patch_from(base, (17, 33, 31, 47), -14)
+        west = side_door(deepen(narrow(back, 16), (38, 44), 12), base.crop((17, 34, 24, 46)), (3, 46))
+    elif name == "oven_stone":  # 2x2, só a boca muda de lado
+        back = patch_from(base, (11, 19, 22, 26), -9)
+        west = side_door(back, base.crop((11, 19, 16, 26)).transpose(Image.FLIP_LEFT_RIGHT), (2, 19))
+    else:
+        raise ValueError(name)
+    return {f"{name}_r1": west, f"{name}_r2": back, f"{name}_r3": ImageOps.mirror(west)}
+
+
+def wheel_rotations(frames: list[Image.Image]) -> dict[str, list[Image.Image]]:
+    """Roda d'água vista de cima: girar a imagem gira o eixo junto (rotação horária)."""
+    turns = {1: Image.ROTATE_270, 2: Image.ROTATE_180, 3: Image.ROTATE_90}
+    return {f"watermill_r{r}": [f.transpose(t) for f in frames] for r, t in turns.items()}
+
+
+ROTATABLE = ("house_thatch", "hut_straw", "oven_stone")
+
+
 def object_frames() -> tuple[dict[str, Image.Image], dict[str, list[str]]]:
     round_a, round_b = tile(NATURE, (0, 0), 2, 2), tile(NATURE, (16, 0), 2, 2)
     pine = tile(NATURE, (2, 0), 2, 2)
@@ -189,11 +269,16 @@ def object_frames() -> tuple[dict[str, Image.Image], dict[str, list[str]]]:
         "tree_pine_1": ImageOps.mirror(pine),
     }
     frames.update({name: tile(HOUSE, (c, r), w, h) for name, (c, r, w, h) in BUILDINGS.items()})
+    for name in ROTATABLE:
+        frames.update(rotations(name, frames[name]))
     animations = {}
     for name, frames_list in (("watermill", strip(WATERMILL, 34, 36)),
                               ("windmill_blades", strip(MILL_PROPELLER, 64, 64))):
         animations[name] = [f"{name}_{i}" for i in range(len(frames_list))]
         frames.update(zip(animations[name], frames_list))
+    for name, rotated in wheel_rotations(strip(WATERMILL, 34, 36)).items():
+        animations[name] = [f"{name}_{i}" for i in range(len(rotated))]
+        frames.update(zip(animations[name], rotated))
     return frames, animations
 
 
@@ -241,6 +326,9 @@ def build() -> None:
     write_atlas(terrain, ASSETS / "terrain" / "terrain.json", cols=16,
                 animations={"water_ripple": [f"water_ripple_{i}" for i in range(4)]})
     objects, animations = object_frames()
+    machines, machine_animations = machine_frames(HOUSE, NATURE)
+    objects.update(machines)
+    animations.update(machine_animations)
     write_atlas(objects, ASSETS / "objects" / "objects.json", cols=8,
                 animations=animations, anchor={"x": 0.5, "y": 1.0})
 

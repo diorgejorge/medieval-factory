@@ -87,6 +87,33 @@ Desenhados **deslocados meio tile**: cada tile de transição fica entre 4 célu
 - Animadas (em `animations`): `watermill` (roda d'água, 3 quadros 34×36) e `windmill_blades` (pás do moinho, 4 quadros 64×64).
 Âncora no centro da base (`anchor` 0.5, 1.0); ordenar por y da base; sombra no chão desenhada pelo motor.
 
+### Máquinas (`assets/_tools/machines.py`)
+
+Montadas sobre peças do pacote (tronco, forno de pedra, forno de barro, bancada) para o traço casar;
+o que não existe no pacote é desenhado com as cores dele (contorno `#141b1b`, 3 tons por material).
+
+| Frame / animação | Tamanho | Uso |
+|---|---|---|
+| `shaft_h`, `shaft_v` (4 quadros) | 16×16 | Eixo de tronco com cintas de ferro; o horizontal fica sobre um poste. Emenda com o vizinho |
+| `gear_small` (4 quadros) | 16×16 | Engrenagem pequena (8 dentes) |
+| `gear_large` (4 quadros) | 32×40 | Engrenagem grande de pé numa armação de madeira, 2×2 |
+| `forge_iron` (4 quadros) | 32×44 | Forja de ferro 2×2: forno de pedra com chaminé e brasa pulsando |
+| `kiln_charcoal` (4 quadros) | 48×64 | Carvoaria 3×2 (forno de barro alto) com brasa |
+| `anvil` | 32×16 | Bancada de ferreiro (decoração ao lado da forja) |
+
+### Construções giradas
+
+Rotação horária: `_r0` = S (arte original), `_r1` = O, `_r2` = N, `_r3` = L. Nas rotações 1 e 3 o footprint troca
+largura e altura. Na vista 3/4 só a parede sul aparece: `_r2` mostra o fundo (sem porta) e `_r1`/`_r3` mostram a
+fachada estreita, o telhado mais comprido e a porta no canto do lado para onde ela abre.
+
+| Base | Footprint r0 | Frames |
+|---|---|---|
+| `house_thatch` | 4×2 | `house_thatch_r1..r3` |
+| `hut_straw` | 3×2 | `hut_straw_r1..r3` |
+| `oven_stone` | 2×2 | `oven_stone_r1..r3` |
+| `watermill` (animação) | 2×2 | animações `watermill_r1..r3` (quadros `watermill_rN_0..2`) |
+
 ## Futuro: Unity/Unreal em HD-2D
 
 Na migração, o visual vira HD-2D: os mesmos sprites em pixel art como *billboards* num cenário 3D com
