@@ -24,6 +24,13 @@ describe('Grid', () => {
     expect(() => grid.getTerrain(4, 0)).toThrow(RangeError);
   });
 
+  it('guarda o relevo de cada tile', () => {
+    const grid = new Grid(4);
+    grid.setHeight(1, 2, 200);
+    expect(grid.getHeight(1, 2)).toBe(200);
+    expect(grid.getHeight(2, 1)).toBe(0);
+  });
+
   it('rejeita tamanho inválido', () => {
     expect(() => new Grid(0)).toThrow(RangeError);
     expect(() => new Grid(1.5)).toThrow(RangeError);

@@ -1,9 +1,13 @@
 /** Tipos de terreno. Valores cabem em um byte para ficarem em Uint8Array. */
 export const Terrain = {
   Grass: 0,
-  Dirt: 1,
+  Sand: 1,
   Water: 2,
-  Rock: 3,
+  Forest: 3,
+  Rock: 4,
+  OreIron: 5,
 } as const;
 
 export type TerrainType = (typeof Terrain)[keyof typeof Terrain];
+
+export const TERRAIN_TYPES: readonly TerrainType[] = Object.values(Terrain);

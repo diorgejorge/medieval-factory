@@ -198,13 +198,13 @@ tests/
 | Risco | Mitigação |
 |---|---|
 | Performance do JS com fábricas grandes | Decisões da seção 6 desde o M0; benchmarks no CI; WASM como plano B. |
-| Arte consome muito tempo | Top-down ortogonal (não isométrico) com tiles 32 px; placeholders até o M5. |
+| Arte consome muito tempo | Top-down ortogonal (não isométrico) com pixel art: terreno em tiles 16×16 e máquinas em sprites 32×32 (2×2 tiles); placeholders procedurais até o atlas da equipe Visual (assets/terrain). |
 | Escopo cresce demais | MVP fechado (seção 3); cada mecânica nova só após o loop central estar divertido. |
 | Mecânicas físicas frustrantes | Visualização clara (overlay de torque e de relevo) e playtest a cada marco. |
 
 ## 10. Decisões em aberto
 
-- Visual: pixel art ou vetorial simples?
+- ~~Visual: pixel art ou vetorial simples?~~ **Decidido:** pixel art; terreno em tiles 16×16, máquinas e estruturas em sprites 32×32 (2×2 tiles).
 - Saqueadores aleatórios: modo opcional ou cortar de vez? (o combate pontual dos desafios fica)
 - Duração de um ciclo no MVP (proposta: 15 min)?
 - Hospedagem: GitHub Pages (simples) ou Cloudflare Pages (permite headers COOP/COEP para `SharedArrayBuffer`)?
