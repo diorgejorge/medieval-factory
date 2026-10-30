@@ -39,6 +39,36 @@ mágicas: tudo depende de **energia mecânica**, **gravidade**, **terreno** e **
 - **Pesquisa:** pele → curtume → pergaminho; galhas + ferro → tinta; pergaminho + tinta → manuscrito
 - **Vidro (late):** areia + cinza de potássio → forno de vidro → vidro → vitrais (decreto da catedral)
 
+### Progressão de eras: do medieval ao steampunk
+
+Regra de design: **cada era estende os sistemas existentes, não os substitui.** O vapor entra como nova fonte de torque e
+novos itens; o código ganha dados (JSON), não motores novos. Isso mantém o escopo e o desempenho sob controle.
+
+| Era | Energia | Logística | Trabalho | Material-chave | Como desbloqueia |
+|---|---|---|---|---|---|
+| **I. Madeira** | Força humana e bois | Servos carregando | Servos | Madeira, pedra | Início |
+| **II. Ferro** | Roda d'água, moinho de vento (eixos) | Calhas, guinchos | Servos com ferramentas de ferro | Ferro, carvão vegetal | Primeira barra de ferro |
+| **III. Carvão** | Mesmas fontes, eixos de ferro (mais alcance, menos perda) | Carroças, estradas | Servos especializados (guildas) | Carvão mineral, aço (alto-forno) | Desafio do rei + manuscritos da Guilda dos Ferreiros |
+| **IV. Vapor** | **Caldeira + máquina a vapor**: torque alto, sem depender de rio/vento, consome carvão e água | **Tubulação de vapor** e canais | **Autômatos**: não comem, consomem carvão e precisam de manutenção | Latão, engrenagens de precisão, vidro | Desafio da torre do relógio |
+
+**O que o vapor traz de novo (Era IV)**
+- **Caldeira:** carvão + água → vapor. Precisa de bomba (torque) ou ficar junto ao rio, o que liga a era nova à antiga.
+- **Máquina a vapor:** vapor → torque na rede de eixos existente. Nada muda no sistema de torque, só surge uma fonte mais forte.
+- **Tubulação de vapor:** leva vapor da caldeira a máquinas distantes. Mesma ideia dos eixos (rede por union-find,
+  alcance e perda), então reaproveita o código da rede de torque com outros parâmetros.
+- **Autômatos:** substituem servos aos poucos. Trocam a cadeia de comida por carvão + peças de reposição (latão).
+- **Risco de pressão:** caldeira sem consumo acumula pressão e para (não explode no modo padrão), criando o mesmo
+  incentivo a equilibrar produção que os sistemas dormentes já criam.
+- **Visual:** a mesma vila ganha chaminés, tubos e latão; as construções medievais continuam no mapa e funcionando.
+
+**Cadeias da Era IV**
+- **Aço:** carvão mineral → coqueria → coque; ferro + coque → alto-forno → aço
+- **Latão:** minério de cobre + minério de zinco → fundição → latão
+- **Engrenagens de precisão:** latão → torno (torque) → engrenagens
+- **Autômato:** aço + engrenagens + vidro (visor) → oficina do relojoeiro → autômato
+
+**Fora de escopo por enquanto:** eletricidade, dirigíveis e trens. O vapor já fecha o arco; cada um desses seria um sistema novo.
+
 ## 3. Escopo do MVP
 
 O MVP prova que o loop central é divertido. **Fora do MVP:** multiplayer, saqueadores, canais, estações.
