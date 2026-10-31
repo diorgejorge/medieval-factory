@@ -15,11 +15,21 @@ const SHADOW_OFFSET_X_PX = 1;
 const ANIMATION_FPS = 6;
 /** Folga do culling: copas e telhados passam da célula da base. */
 const CULL_MARGIN_PX = 4 * TILE_SIZE_PX;
+/** O culling liga/desliga blocos de objetos de uma vez; só refaz quando a câmera muda de bloco. */
+const CHUNK_PX = 16 * TILE_SIZE_PX;
+const CHUNK_KEY_STRIDE = 1 << 16;
+
+interface ChunkRange {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
 
 interface PlacedSprite {
   group: string;
   sprite: Sprite;
-  shadow: Sprite;
+  shadow: Sprite | null;
   x: number;
   y: number;
 }
@@ -36,6 +46,8 @@ export class ObjectLayer {
   private readonly source: Texture['source'];
   private readonly shadowTextures = new Map<number, Texture>();
   private readonly bounds = new Map<string, OpaqueBounds>();
+  private readonly chunks = new Map<number, PlacedSprite[]>();
+  private visibleRange: ChunkRange | null = null;
 
   constructor(private readonly atlas: Atlas) {
     this.source = nearestTexture(atlas.image).source;
@@ -56,8 +68,9 @@ export class ObjectLayer {
     this.shadows.removeChildren();
     for (const { sprite, shadow } of this.placed) {
       this.sprites.addChild(sprite);
-      this.shadows.addChild(shadow);
+      if (shadow) this.shadows.addChild(shadow);
     }
+    this.indexChunks();
   }
 
   /** Troca todos os objetos de um grupo pelos novos. */
@@ -66,7 +79,7 @@ export class ObjectLayer {
       const placed = this.placed[i];
       if (placed?.group !== group) continue;
       placed.sprite.destroy();
-      placed.shadow.destroy();
+      placed.shadow?.destroy();
       this.placed.splice(i, 1);
     }
     this.add(objects, group);
@@ -75,20 +88,45 @@ export class ObjectLayer {
   /** Sprite avulso posicionado como o objeto, sem sombra nem ordenação (para a prévia fantasma). */
   spriteFor(object: MapObject): Sprite | null {
     const placed = this.createSprite(object, '');
-    placed?.shadow.destroy();
+    placed?.shadow?.destroy();
     return placed?.sprite ?? null;
   }
 
   cull(camera: Camera, viewWidth: number, viewHeight: number): void {
     const bottomRight = camera.screenToWorld({ x: viewWidth, y: viewHeight });
-    const minX = camera.x - CULL_MARGIN_PX;
-    const minY = camera.y - CULL_MARGIN_PX;
-    const maxX = bottomRight.x + CULL_MARGIN_PX;
-    const maxY = bottomRight.y + CULL_MARGIN_PX * 2;
-    for (const { sprite, shadow, x, y } of this.placed) {
-      const visible = x >= minX && x <= maxX && y >= minY && y <= maxY;
-      sprite.visible = visible;
-      shadow.visible = visible;
+    const range: ChunkRange = {
+      minX: chunkOf(camera.x - CULL_MARGIN_PX),
+      minY: chunkOf(camera.y - CULL_MARGIN_PX),
+      maxX: chunkOf(bottomRight.x + CULL_MARGIN_PX),
+      maxY: chunkOf(bottomRight.y + CULL_MARGIN_PX * 2),
+    };
+    const previous = this.visibleRange;
+    if (previous && sameRange(previous, range)) return;
+    if (previous) this.setRangeVisible(previous, false, range);
+    this.setRangeVisible(range, true, null);
+    this.visibleRange = range;
+  }
+
+  /** Reagrupa os objetos por bloco e esconde todos; o próximo `cull` mostra só os da tela. */
+  private indexChunks(): void {
+    this.chunks.clear();
+    for (const placed of this.placed) {
+      setVisible(placed, false);
+      const key = chunkKey(chunkOf(placed.x), chunkOf(placed.y));
+      const chunk = this.chunks.get(key);
+      if (chunk) chunk.push(placed);
+      else this.chunks.set(key, [placed]);
+    }
+    this.visibleRange = null;
+  }
+
+  /** Muda a visibilidade dos blocos de `range`, pulando os que continuam dentro de `keep`. */
+  private setRangeVisible(range: ChunkRange, visible: boolean, keep: ChunkRange | null): void {
+    for (let cy = range.minY; cy <= range.maxY; cy++) {
+      for (let cx = range.minX; cx <= range.maxX; cx++) {
+        if (keep && cx >= keep.minX && cx <= keep.maxX && cy >= keep.minY && cy <= keep.maxY) continue;
+        for (const placed of this.chunks.get(chunkKey(cx, cy)) ?? []) setVisible(placed, visible);
+      }
     }
   }
 
@@ -104,21 +142,25 @@ export class ObjectLayer {
     if (textures.length > 1) {
       const animated = new AnimatedSprite(textures);
       animated.animationSpeed = ANIMATION_FPS / 60;
-      animated.play();
+      // Máquina parada fica no primeiro quadro; objetos sem o dado (árvores, rodas) sempre animam.
+      if (object.working !== false) animated.play();
       sprite = animated;
     } else {
       sprite = new Sprite(textures[0]);
     }
 
     // A base é a última linha opaca do sprite: assim nada "flutua" se o PNG tiver margem embaixo.
-    const bounds = this.opaqueBounds(name, first);
+    // Arte em alta definição tem mais pixels que o chão e é reduzida pela densidade.
+    const density = first.density ?? 1;
+    const bounds = scaleBounds(this.opaqueBounds(name, first), density);
     const x = Math.round(object.x * TILE_SIZE_PX);
     const y = Math.round(object.y * TILE_SIZE_PX);
-    sprite.position.set(x - Math.floor(first.w / 2), y - bounds.bottom - 1);
+    sprite.scale.set(1 / density);
+    sprite.position.set(x - Math.floor(first.w / density / 2), y - bounds.bottom - 1);
 
     // Sombra colada à base, na largura da silhueta. Construções não têm: a arte já assenta no chão.
+    if (object.noShadow) return { group, sprite, shadow: null, x, y };
     const shadow = new Sprite(this.shadowTexture(bounds.right - bounds.left + 1));
-    shadow.renderable = !object.noShadow;
     shadow.tint = SHADOW_COLOR;
     shadow.alpha = SHADOW_ALPHA;
     shadow.position.set(sprite.x + bounds.left + SHADOW_OFFSET_X_PX, y - SHADOW_ABOVE_PX);
@@ -160,6 +202,32 @@ export class ObjectLayer {
     this.bounds.set(name, bounds);
     return bounds;
   }
+}
+
+function scaleBounds(bounds: OpaqueBounds, density: number): OpaqueBounds {
+  if (density === 1) return bounds;
+  return {
+    left: Math.floor(bounds.left / density),
+    right: Math.floor(bounds.right / density),
+    bottom: Math.floor(bounds.bottom / density),
+  };
+}
+
+function chunkOf(px: number): number {
+  return Math.max(0, Math.floor(px / CHUNK_PX));
+}
+
+function chunkKey(cx: number, cy: number): number {
+  return cy * CHUNK_KEY_STRIDE + cx;
+}
+
+function sameRange(a: ChunkRange, b: ChunkRange): boolean {
+  return a.minX === b.minX && a.minY === b.minY && a.maxX === b.maxX && a.maxY === b.maxY;
+}
+
+function setVisible({ sprite, shadow }: PlacedSprite, visible: boolean): void {
+  sprite.visible = visible;
+  if (shadow) shadow.visible = visible;
 }
 
 interface OpaqueBounds {

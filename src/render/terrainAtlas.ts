@@ -25,14 +25,18 @@ const TRANSITION_PAIRS: readonly (readonly [TerrainType, TerrainType])[] = [
 /**
  * Tile de transição (dual grid) para o canto entre 4 células: NO, NE, SO, SE.
  * Só existe quando os 4 cantos misturam exatamente os dois terrenos de um par conhecido.
+ * Perto da água, toda terra firme conta como areia: sem isso, um canto com água e dois outros terrenos
+ * (areia e floresta, por exemplo) fica sem transição e mostra um quadrado de água.
  * Bits da máscara = cantos com o terreno `a` (1 = NO, 2 = NE, 4 = SO, 8 = SE).
  */
 export function transitionFrame(nw: TerrainType, ne: TerrainType, sw: TerrainType, se: TerrainType): string | null {
-  let corners = [nw, ne, sw, se];
-  // Campo encostando na água só pela diagonal: vira margem de areia, senão sobra um quadrado de água.
-  if (corners.includes(Terrain.Water) && corners.includes(Terrain.Sand)) {
-    corners = corners.map((t) => (t === Terrain.Grass ? Terrain.Sand : t));
-  }
+  const corners = [nw, ne, sw, se];
+  const frame = pairFrame(corners);
+  if (frame || !corners.includes(Terrain.Water)) return frame;
+  return pairFrame(corners.map((t) => (t === Terrain.Water ? t : Terrain.Sand)));
+}
+
+function pairFrame(corners: readonly TerrainType[]): string | null {
   for (const [a, b] of TRANSITION_PAIRS) {
     if (!corners.every((t) => t === a || t === b)) continue;
     const mask = corners.reduce<number>((bits, t, i) => (t === a ? bits | (1 << i) : bits), 0);
