@@ -13,8 +13,10 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+from items import item_frames
 from machines import machine_frames
-from references import reference_frames
+from references import HD_DENSITY, reference_frames
+from transport import transport_frames
 
 ASSETS = Path(__file__).resolve().parent.parent
 OWN_ART = ASSETS / "vendor" / "djorge"
@@ -294,18 +296,35 @@ def object_frames() -> tuple[dict[str, Image.Image], dict[str, list[str]]]:
 
 # ---------- saída ----------
 
-def write_atlas(frames: dict[str, Image.Image], out: Path, cols: int,
-                animations: dict[str, list[str]] | None = None, anchor: dict | None = None) -> None:
-    cell_w = max(img.width for img in frames.values()) + 2 * PAD
-    cell_h = max(img.height for img in frames.values()) + 2 * PAD
-    rows = -(-len(frames) // cols)
-    atlas = Image.new("RGBA", (cols * cell_w, rows * cell_h))
+def shelf_pack(sizes: list[tuple[int, int]], max_width: int) -> tuple[list[tuple[int, int]], int, int]:
+    """Prateleiras: do mais alto ao mais baixo, enche linhas até `max_width`. Devolve posições e tamanho."""
+    order = sorted(range(len(sizes)), key=lambda i: -sizes[i][1])
+    spots: list[tuple[int, int]] = [(0, 0)] * len(sizes)
+    x = y = shelf_h = used_w = 0
+    for i in order:
+        w, h = sizes[i]
+        if x + w > max_width:
+            x, y, shelf_h = 0, y + shelf_h, 0
+        spots[i] = (x, y)
+        x += w
+        used_w = max(used_w, x)
+        shelf_h = max(shelf_h, h)
+    return spots, used_w, y + shelf_h
+
+
+def write_atlas(frames: dict[str, Image.Image], out: Path, max_width: int,
+                animations: dict[str, list[str]] | None = None, anchor: dict | None = None,
+                densities: dict[str, int] | None = None) -> None:
+    """`densities`: frames desenhados com mais pixels que o chão (o render reduz pela densidade)."""
+    images = list(frames.values())
+    spots, width, height = shelf_pack([(img.width + 2 * PAD, img.height + 2 * PAD) for img in images], max_width)
+    atlas = Image.new("RGBA", (width, height))
     meta_frames = {}
-    for i, (name, img) in enumerate(frames.items()):
-        x, y = (i % cols) * cell_w + PAD, (i // cols) * cell_h + PAD
+    for name, img, (sx, sy) in zip(frames, images, spots):
+        x, y = sx + PAD, sy + PAD
         padded = img.resize((img.width + 2 * PAD, img.height + 2 * PAD), Image.NEAREST)
         padded.paste(img, (PAD, PAD))  # borda: pixels vizinhos esticados (extrusão aproximada)
-        atlas.alpha_composite(padded, (x - PAD, y - PAD))
+        atlas.alpha_composite(padded, (sx, sy))
         entry = {
             "frame": {"x": x, "y": y, "w": img.width, "h": img.height},
             "rotated": False,
@@ -315,13 +334,15 @@ def write_atlas(frames: dict[str, Image.Image], out: Path, cols: int,
         }
         if anchor:
             entry["anchor"] = anchor
+        if densities and name in densities:
+            entry["density"] = densities[name]
         meta_frames[name] = entry
     out.parent.mkdir(parents=True, exist_ok=True)
     png = out.with_suffix(".png")
     atlas.save(png, optimize=True)
     sheet = {
         "frames": meta_frames,
-        "meta": {"app": "assets/_tools/build_terrain.py", "version": "2", "image": png.name,
+        "meta": {"app": "assets/_tools/build_terrain.py", "version": "3", "image": png.name,
                  "format": "RGBA8888", "size": {"w": atlas.width, "h": atlas.height}, "scale": "1"},
     }
     if animations:
@@ -333,16 +354,24 @@ def write_atlas(frames: dict[str, Image.Image], out: Path, cols: int,
 def build() -> None:
     terrain = {f"{name}_{i}": img for name, imgs in base_frames().items() for i, img in enumerate(imgs)}
     terrain.update(transition_frames())
-    write_atlas(terrain, ASSETS / "terrain" / "terrain.json", cols=16,
+    write_atlas(terrain, ASSETS / "terrain" / "terrain.json", max_width=16 * (TILE + 2 * PAD),
                 animations={"water_ripple": [f"water_ripple_{i}" for i in range(4)]})
     objects, animations = object_frames()
     machines, machine_animations = machine_frames(NATURE)
     objects.update(machines)
     animations.update(machine_animations)
-    objects.update(reference_frames(ASSETS / "source"))
-    objects.update(own_buildings(OWN_ART / "buildings"))
-    write_atlas(objects, ASSETS / "objects" / "objects.json", cols=8,
-                animations=animations, anchor={"x": 0.5, "y": 1.0})
+    transport, transport_animations = transport_frames()
+    objects.update(transport)
+    animations.update(transport_animations)
+    items = json.loads((ASSETS.parent / "data" / "jogo" / "itens.json").read_text())["items"]
+    objects.update(item_frames([item["id"] for item in items]))
+    buildings = reference_frames(ASSETS / "source")
+    own = own_buildings(OWN_ART / "buildings")
+    objects.update(buildings)
+    objects.update(own)
+    write_atlas(objects, ASSETS / "objects" / "objects.json", max_width=1024,
+                animations=animations, anchor={"x": 0.5, "y": 1.0},
+                densities={name: HD_DENSITY for name in buildings if name not in own})
 
 
 if __name__ == "__main__":

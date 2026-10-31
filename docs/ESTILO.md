@@ -56,6 +56,7 @@ Construções antigas continuam com suas cores; a era nova acrescenta, não repi
 
 - `assets/_tools/build_terrain.py` monta os atlas a partir do pacote; não edite os PNGs de saída à mão.
 - Formato: spritesheet do Pixi (hash de frames), importável em Unity/Godot. Cada frame tem 1 px de borda extra.
+- Frames empacotados em prateleiras (do mais alto ao mais baixo), para o atlas não crescer com o maior frame.
 
 ## Terreno
 
@@ -78,6 +79,7 @@ Variante escolhida por hash de (x, y).
 Frames `<a>_<b>_<máscara>`, máscara 0–15: bits dos cantos com o terreno `a`
 (1 = NO, 2 = NE, 4 = SO, 8 = SE). Pares: `grass_dirt`, `grass_sand`, `grass_water`, `sand_water`.
 Desenhados **deslocados meio tile**: cada tile de transição fica entre 4 células do mapa.
+Num canto com água e outros dois terrenos, a terra firme conta como areia (margem), para não sobrar um quadrado de água.
 
 ## Objetos do mapa
 
@@ -107,14 +109,26 @@ Vêm das imagens de referência do usuário. Para importar uma imagem nova (ou t
 recorta e guarda `assets/source/<id>.png` numa resolução intermediária. O build tira o tablado da maquete (laterais de terra e grama da base), para o prédio assentar direto no terreno, clareia as cores, reduz para pixel art (Lanczos),
 realça o contraste, limita a 32 cores e redesenha o contorno de 1 px.
 
-| Frame | Tamanho | Footprint |
-|---|---|---|
-| `storage`, `workbench`, `quarry`, `mine`, `lumberjack`, `charcoal_kiln`, `smelter`, `forge` | 74 px de largura | 2×2 |
-| `mill` | 74×95 | 2×2 |
-| `farm` | 90×63 | 3×3 |
+A largura sai do terreno ocupado em `data/jogo/construcoes.json`: `largura × 16 + 4` px (até 2 px de folga de cada lado,
+nunca mais que isso; arte maior que o terreno cobre as vizinhas). Elas são desenhadas em **alta definição**: 2 pixels
+de arte por pixel do chão (`"density": 2` no atlas), e o render (`objectLayer.ts`) reduz pela densidade. Com terreno 4×4
+a arte tem 136 px no atlas e ocupa 68 px no jogo.
 
 As referências são **isométricas** (base em losango), diferente do terreno e dos outros objetos (3/4 reto).
-Âncora no centro de baixo, como os demais; o moinho é parado (as pás não giram).
+Âncora no centro de baixo, como os demais; o moinho é parado (as pás não giram). Máquina parada (`working: false`)
+fica no primeiro quadro da animação.
+
+### Calha e esteira (`assets/_tools/transport.py`)
+
+Peças de 16×16 rentes ao chão, de borda a borda no sentido do fluxo para emendar com a vizinha. Rotação do contrato:
+`chute`/`belt` = fluxo para o sul, `_r1` oeste, `_r2` norte, `_r3` leste. A calha é parada, com setas no canal; a esteira
+tem 4 quadros (ripas andando no sentido do fluxo).
+
+### Ícones dos itens (`assets/_tools/items.py`)
+
+`item_<id>`, 16×16, para todos os ids de `data/jogo/itens.json`. Ordem de preferência: `vendor/djorge/items/<id>.png`,
+ícone do pacote em `vendor/ninja-adventure/items/` (com troca de cores para variações, como a lâmina de pedra), e por
+fim um desenho simples nosso até haver arte própria.
 
 ### Construções giradas
 

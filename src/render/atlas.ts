@@ -1,6 +1,6 @@
 /** Formato de spritesheet do Pixi exportado pela equipe Visual (assets/<nome>/<nome>.json). */
 interface AtlasJson {
-  frames: Record<string, { frame: AtlasFrame; anchor?: { x: number; y: number } }>;
+  frames: Record<string, { frame: AtlasFrame; anchor?: { x: number; y: number }; density?: number }>;
   animations?: Record<string, string[]>;
 }
 
@@ -9,6 +9,8 @@ export interface AtlasFrame {
   y: number;
   w: number;
   h: number;
+  /** Pixels da arte por pixel do chão (construções em alta definição = 2); ausente = 1. */
+  density?: number;
 }
 
 export interface Atlas {
@@ -27,7 +29,12 @@ export async function loadAtlas(jsonUrl: string, imageUrl: string): Promise<Atla
     image.src = imageUrl;
     await image.decode();
 
-    const frames = new Map(Object.entries(json.frames).map(([name, entry]) => [name, entry.frame]));
+    const frames = new Map(
+      Object.entries(json.frames).map(([name, entry]): [string, AtlasFrame] => [
+        name,
+        entry.density ? { ...entry.frame, density: entry.density } : entry.frame,
+      ]),
+    );
     const animations = new Map(
       Object.entries(json.animations ?? {}).map(([name, frameNames]) => [
         name,

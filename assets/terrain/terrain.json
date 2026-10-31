@@ -2243,7 +2243,7 @@
   },
   "meta": {
     "app": "assets/_tools/build_terrain.py",
-    "version": "2",
+    "version": "3",
     "image": "terrain.png",
     "format": "RGBA8888",
     "size": {

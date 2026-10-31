@@ -8,6 +8,7 @@ limitada e o contorno de 1 px redesenhado para casar com o resto do atlas.
 
 from __future__ import annotations
 
+import json
 from collections import deque
 from pathlib import Path
 
@@ -19,9 +20,17 @@ COLORS = 32
 CONTRAST = 1.15  # devolve o contraste que a redução tira
 BRIGHTNESS, SATURATION = 1.18, 1.1  # aproxima das cores claras do terreno
 SIDE_FACE = 24  # altura máxima (px na fonte) das laterais de terra do tablado
-DEFAULT_WIDTH = 72  # largura final em px; a fazenda (3x3) é maior para ler bem
-WIDTHS = {"farm": 88}
-SOURCE_SCALE = 4  # resolução guardada em assets/source, relativa à largura final
+TILE = 16
+OVERHANG_PX = 4  # a arte pode passar 2 px de cada lado do terreno ocupado, nunca mais que isso
+HD_DENSITY = 2  # alta definição: 2 pixels da arte por pixel do chão (o render desenha na metade do tamanho)
+SOURCE_WIDTH = 288  # largura guardada em assets/source: folga para qualquer tamanho final
+BUILDINGS = Path(__file__).resolve().parents[2] / "data" / "jogo" / "construcoes.json"
+
+
+def footprint_widths(data: Path = BUILDINGS) -> dict[str, int]:
+    """Largura final de cada construção: o terreno ocupado (data/jogo) mais a folga."""
+    buildings = json.loads(data.read_text())["buildings"]
+    return {b.get("frame", b["id"]): b["width"] * TILE + OVERHANG_PX for b in buildings}
 
 
 def remove_background(img: Image.Image) -> Image.Image:
@@ -113,19 +122,18 @@ def add_outline(img: Image.Image) -> Image.Image:
 
 
 def reference_frames(source: Path) -> dict[str, Image.Image]:
-    """Um frame por imagem em `source` (nome do arquivo = id da construção), na largura de WIDTHS."""
-    return {path.stem: pixelate(brighten(strip_base(Image.open(path).convert("RGBA"))),
-                                WIDTHS.get(path.stem, DEFAULT_WIDTH))
+    """Um frame por imagem em `source` (nome do arquivo = frame da construção), na largura do terreno, em HD_DENSITY."""
+    widths = footprint_widths()
+    return {path.stem: pixelate(brighten(strip_base(Image.open(path).convert("RGBA"))), widths[path.stem] * HD_DENSITY)
             for path in sorted(source.glob("*.png"))}
 
 
 def import_reference(image: Path, name: str, source: Path) -> Path:
-    """Tira o fundo, recorta e guarda a referência com SOURCE_SCALE vezes a largura final."""
+    """Tira o fundo, recorta e guarda a referência com SOURCE_WIDTH px de largura."""
     img = remove_background(Image.open(image))
     img = img.crop(img.getbbox())
-    width = WIDTHS.get(name, DEFAULT_WIDTH) * SOURCE_SCALE
     out = source / f"{name}.png"
-    img.resize((width, round(img.height * width / img.width)), Image.LANCZOS).save(out, optimize=True)
+    img.resize((SOURCE_WIDTH, round(img.height * SOURCE_WIDTH / img.width)), Image.LANCZOS).save(out, optimize=True)
     return out
 
 
