@@ -1,6 +1,7 @@
 import { GAME_SPEEDS, MAX_TICKS_PER_ADVANCE, TICK_MS, type GameSpeed } from './config';
 import { FixedStepClock } from './time/fixedStepClock';
 import { RateMeter } from './time/rateMeter';
+import type { Economy, EconomySnapshot } from './economy/economy';
 import type { Building, BuildingKind, BuildingSite, Rotation } from './world/buildings';
 
 /** Únicas entradas que alteram a simulação: facilita replay, undo e multiplayer no futuro. */
@@ -21,6 +22,8 @@ export interface SimulationSnapshot {
   buildingsVersion: number;
   /** Só vem quando `buildingsVersion` mudou desde o último snapshot. */
   buildings?: Building[];
+  /** Estoque e estado de extratores e armazéns. */
+  economy?: EconomySnapshot;
 }
 
 /** O mundo simulado. Por enquanto conta ticks e guarda as construções; os sistemas entram nas próximas frentes. */
@@ -28,10 +31,16 @@ export class Simulation {
   tick = 0;
   buildingsVersion = 0;
 
-  constructor(readonly site: BuildingSite | null = null) {}
+  constructor(
+    readonly site: BuildingSite | null = null,
+    readonly economy: Economy | null = null,
+  ) {
+    if (site) economy?.sync(site);
+  }
 
   step(): void {
     this.tick++;
+    this.economy?.step();
   }
 }
 
@@ -68,6 +77,7 @@ export class SimulationLoop {
       ups: this.upsMeter.perSecond,
       buildingsVersion: this.simulation.buildingsVersion,
     };
+    if (this.simulation.economy) snapshot.economy = this.simulation.economy.snapshot();
     if (this.simulation.buildingsVersion !== this.lastPublishedBuildings && this.simulation.site) {
       snapshot.buildings = this.simulation.site.all;
       this.lastPublishedBuildings = this.simulation.buildingsVersion;
@@ -82,6 +92,7 @@ export class SimulationLoop {
 
   private changedBuildings(): void {
     this.simulation.buildingsVersion++;
+    if (this.simulation.site) this.simulation.economy?.sync(this.simulation.site);
   }
 
   private apply(command: SimulationCommand): void {

@@ -12,6 +12,7 @@ const PROBLEM_TEXT: Readonly<Record<PlacementProblem, string>> = {
   occupied: 'Já tem uma construção aqui',
   reserved: 'Terreno de um vilarejo',
   needsWater: "A roda d'água precisa encostar na água",
+  noResource: 'Não há o recurso por perto (madeira, pedra ou minério)',
 };
 
 const HELP = '[R] girar  [X] remover  [Esc] cancelar';
@@ -40,6 +41,7 @@ export class BuildToolbar {
   setTool(tool: BuildTool): void {
     for (const [key, button] of this.buttons) button.classList.toggle('active', key === tool);
     this.status.textContent = tool ? HELP : 'Escolha o que construir';
+    this.status.classList.remove('blocked');
   }
 
   /** Mostra por que não dá para construir no lugar do cursor (ou a ajuda, se der). */

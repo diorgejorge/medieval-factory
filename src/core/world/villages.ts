@@ -125,11 +125,12 @@ export function carveTrails(grid: Grid, points: readonly Tile[], areas: readonly
 
 /** Vilarejo cuja área (com folga para os telhados) contém o tile, ou null. */
 export function villageAt(villages: readonly Village[], x: number, y: number): Village | null {
-  return (
-    villages.find(
-      ({ area }) => x >= area.left && x < area.left + area.width && y >= area.top - 1 && y < area.top + area.height,
-    ) ?? null
-  );
+  return villages.find(({ area }) => isClickOnArea(area, x, y)) ?? null;
+}
+
+/** Clique numa área de casas: inclui a linha de cima, onde ficam os telhados. */
+export function isClickOnArea(area: Area, x: number, y: number): boolean {
+  return x >= area.left && x < area.left + area.width && y >= area.top - 1 && y < area.top + area.height;
 }
 
 function isInsideArea(area: Area, x: number, y: number): boolean {

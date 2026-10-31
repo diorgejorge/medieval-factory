@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "note": "Estoque inicial guardado na vila do jogador, que funciona como o primeiro armazém ('capacity').",
+  "capacity": 200,
+  "stock": [
+    { "item": "wood", "amount": 20 },
+    { "item": "stone", "amount": 10 },
+    { "item": "bread", "amount": 10 },
+    { "item": "stone_axe", "amount": 2 },
+    { "item": "stone_pickaxe", "amount": 2 }
+  ]
+}

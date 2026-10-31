@@ -32,7 +32,34 @@ export interface Building {
 }
 
 /** Por que não dá para construir ali; a UI traduz em texto. */
-export type PlacementProblem = 'unknown' | 'outside' | 'water' | 'forest' | 'occupied' | 'reserved' | 'needsWater';
+export type PlacementProblem =
+  | 'unknown'
+  | 'outside'
+  | 'water'
+  | 'forest'
+  | 'occupied'
+  | 'reserved'
+  | 'needsWater'
+  | 'noResource';
+
+/** Raio, em tiles a partir da borda, onde um extrator procura o recurso. */
+export const EXTRACTION_RADIUS = 3;
+
+/** Tiles do terreno pedido em volta da construção, até EXTRACTION_RADIUS da borda. */
+export function countResourceTiles(
+  grid: Grid,
+  building: Pick<Building, 'kind' | 'x' | 'y' | 'rotation'>,
+  terrain: number,
+): number {
+  const { width, height } = footprint(building.kind, building.rotation);
+  let count = 0;
+  for (let y = building.y - EXTRACTION_RADIUS; y < building.y + height + EXTRACTION_RADIUS; y++) {
+    for (let x = building.x - EXTRACTION_RADIUS; x < building.x + width + EXTRACTION_RADIUS; x++) {
+      if (grid.isInside(x, y) && grid.getTerrain(x, y) === terrain) count++;
+    }
+  }
+  return count;
+}
 
 /** Tamanho em tiles; girar 90° troca largura e altura. */
 export function footprint(kind: BuildingKind, rotation: Rotation): { width: number; height: number } {
@@ -89,6 +116,8 @@ export class BuildingSite {
       }
     }
     if (buildingDef(kind).needsWater && !this.touchesWater(x, y, width, height)) return 'needsWater';
+    const extracts = buildingDef(kind).extracts;
+    if (extracts && countResourceTiles(this.grid, { kind, x, y, rotation }, extracts.terrain) === 0) return 'noResource';
     return null;
   }
 
