@@ -60,7 +60,7 @@ export interface GameData {
   buildings: ReadonlyMap<string, BuildingDef>;
   recipes: ReadonlyMap<string, RecipeDef>;
   /** Estoque e capacidade da vila do jogador, que é o primeiro armazém (data/jogo/inicio.json). */
-  start: { capacity: number; stock: ItemAmount[] };
+  start: { capacity: number; servants: number; stock: ItemAmount[] };
 }
 
 /** Os arquivos de data/jogo e os nomes de data/texto/pt-BR, como vêm do disco (ainda sem conferir). */
@@ -119,10 +119,11 @@ function parseStart(file: unknown, items: ReadonlyMap<string, ItemDef>, problems
   const where = 'inicio.json';
   if (!isObject(file) || typeof file['version'] !== 'number') {
     problems.push(`${where}: precisa de "version" (número)`);
-    return { capacity: 0, stock: [] };
+    return { capacity: 0, servants: 0, stock: [] };
   }
   return {
     capacity: requirePositiveInt(file, 'capacity', where, problems),
+    servants: requirePositiveInt(file, 'servants', where, problems),
     stock: parseAmounts(file['stock'], `${where} stock`, items, problems),
   };
 }

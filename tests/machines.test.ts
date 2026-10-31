@@ -11,7 +11,7 @@ const seconds = (recipe: string) => GAME_DATA.recipes.get(recipe)?.seconds ?? 0;
 function setup(stock: { item: string; amount: number }[], capacity = 200) {
   const grid = new Grid(30);
   const site = new BuildingSite(grid);
-  const economy = new Economy(grid, { x: 10, y: 10 }, { capacity, stock });
+  const economy = new Economy(grid, { x: 10, y: 10 }, { capacity, servants: 0, stock });
   return { site, economy };
 }
 

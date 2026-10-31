@@ -1,7 +1,8 @@
 {
   "version": 1,
-  "note": "Estoque inicial guardado na vila do jogador, que funciona como o primeiro armazém ('capacity').",
+  "note": "Estoque inicial guardado na vila do jogador, que funciona como o primeiro armazém ('capacity'), e quantos servos começam nela.",
   "capacity": 200,
+  "servants": 4,
   "stock": [
     { "item": "wood", "amount": 20 },
     { "item": "stone", "amount": 10 },
