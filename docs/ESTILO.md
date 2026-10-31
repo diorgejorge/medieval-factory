@@ -89,7 +89,7 @@ Desenhados **deslocados meio tile**: cada tile de transição fica entre 4 célu
 
 ### Máquinas (`assets/_tools/machines.py`)
 
-Montadas sobre peças do pacote (tronco, forno de pedra, forno de barro, bancada) para o traço casar;
+Montadas sobre peças do pacote (tronco) para o traço casar;
 o que não existe no pacote é desenhado com as cores dele (contorno `#141b1b`, 3 tons por material).
 
 | Frame / animação | Tamanho | Uso |
@@ -97,9 +97,22 @@ o que não existe no pacote é desenhado com as cores dele (contorno `#141b1b`, 
 | `shaft_h`, `shaft_v` (4 quadros) | 16×16 | Eixo de tronco com cintas de ferro; o horizontal fica sobre um poste. Emenda com o vizinho |
 | `gear_small` (4 quadros) | 16×16 | Engrenagem pequena (8 dentes) |
 | `gear_large` (4 quadros) | 32×40 | Engrenagem grande de pé numa armação de madeira, 2×2 |
-| `forge_iron` (4 quadros) | 32×44 | Forja de ferro 2×2: forno de pedra com chaminé e brasa pulsando |
-| `kiln_charcoal` (4 quadros) | 48×64 | Carvoaria 3×2 (forno de barro alto) com brasa |
-| `anvil` | 32×16 | Bancada de ferreiro (decoração ao lado da forja) |
+
+### Construções da barra (`assets/_tools/references.py`)
+
+Vêm das imagens de referência do usuário. Para importar uma imagem nova (ou trocar uma existente):
+`python3 assets/_tools/references.py <imagem> <id>`, com o id de `data/jogo/construcoes.json`. Isso tira o fundo claro,
+recorta e guarda `assets/source/<id>.png` numa resolução intermediária. O build reduz para pixel art (Lanczos),
+realça o contraste, limita a 32 cores e redesenha o contorno de 1 px.
+
+| Frame | Tamanho | Footprint |
+|---|---|---|
+| `storage`, `workbench`, `quarry`, `mine`, `lumberjack`, `charcoal_kiln`, `smelter`, `forge` | 74 px de largura | 2×2 |
+| `mill` | 74×95 | 2×2 |
+| `farm` | 90×63 | 3×3 |
+
+As referências são **isométricas** (base em losango), diferente do terreno e dos outros objetos (3/4 reto).
+Âncora no centro de baixo, como os demais; o moinho é parado (as pás não giram).
 
 ### Construções giradas
 
