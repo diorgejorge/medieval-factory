@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "note": "Passos do tutorial da Era I, em ordem. 'speaker' = id em personagens.json. Quando cada passo termina é regra da mecânica, que referencia o mesmo id.",
+  "steps": [
+    {
+      "id": "carta-inicial",
+      "speaker": "rei",
+      "title": "Por ordem de Sua Majestade",
+      "text": "Vau das Pedras está vazio desde a enchente. Entrego-o a você, com servos e boa vontade. Faça o vale produzir. Aguardo notícias. Boas."
+    },
+    {
+      "id": "olhar-o-vale",
+      "speaker": "arauto",
+      "title": "Conheça o vale",
+      "text": "Ande pelo vale com W, A, S, D e use a roda do mouse para aproximar. Eu esperava mais. Mas o rio é bonito."
+    },
+    {
+      "id": "primeiro-lenhador",
+      "speaker": "arauto",
+      "title": "Madeira primeiro",
+      "text": "Escolha a Cabana do lenhador na barra e coloque perto da floresta. R gira, Esc cancela."
+    },
+    {
+      "id": "primeira-pedreira",
+      "speaker": "arauto",
+      "title": "Pedra para ferramentas",
+      "text": "Agora uma Pedreira junto às rochas. Sem pedra, nada de machado."
+    },
+    {
+      "id": "bancada",
+      "speaker": "escriba",
+      "title": "A bancada",
+      "text": "Na Bancada, madeira vira lenha, e madeira com pedra vira machado e picareta. Ferramenta gasta; tenha sempre outra pronta."
+    },
+    {
+      "id": "remover",
+      "speaker": "arauto",
+      "title": "Errar é permitido",
+      "text": "Construiu no lugar errado? X ativa a remoção. Ninguém da corte está olhando. Eu acho."
+    },
+    {
+      "id": "cadeia-do-pao",
+      "speaker": "escriba",
+      "title": "Pão para os servos",
+      "text": "Lavoura dá trigo, o Moinho faz farinha e o Forno de pão assa com lenha. Servo alimentado trabalha; servo com fome reclama em versos."
+    },
+    {
+      "id": "vilarejos",
+      "speaker": "arauto",
+      "title": "Os vizinhos",
+      "text": "Clique num vilarejo para ver o que ele produz e o que pede. Troque o que sobra, recrute quem quer trabalho."
+    },
+    {
+      "id": "tempo",
+      "speaker": "arauto",
+      "title": "Dono do tempo",
+      "text": "Espaço pausa. 1, 2 e 3 mudam a velocidade. O prazo do rei não pausa no coração dele, mas no jogo, sim."
+    },
+    {
+      "id": "fim-do-tutorial",
+      "speaker": "arauto",
+      "title": "O primeiro decreto",
+      "text": "O vale está de pé. Meu cavalo e eu voltamos à capital; logo chega a primeira ordem do rei. Boa sorte."
+    }
+  ]
+}
