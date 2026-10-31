@@ -79,7 +79,10 @@ async function start(): Promise<void> {
     build.refresh();
   };
 
-  const villagePanel = new VillagePanel(panel, villageTexts.temperaments);
+  const villagePanel = new VillagePanel(panel, villageTexts.temperaments, {
+    trade: (village, give, receive) => simulation.send({ type: 'trade', village, give, receive }),
+    recruit: (village) => simulation.send({ type: 'recruit', village }),
+  });
   const buildingPanel = new BuildingPanel(panel, (buildingId, recipe) =>
     simulation.send({ type: 'setRecipe', buildingId, recipe }),
   );
@@ -94,7 +97,7 @@ async function start(): Promise<void> {
     villagePanel.hide();
     if (building) buildingPanel.show(building.id, buildingDef(building.kind).name, economy);
     else if (village && isClickOnArea(village.area, tile.x, tile.y)) buildingPanel.show(START_STORAGE_ID, 'Sua vila', economy);
-    else if (neighbor) villagePanel.show(neighbor);
+    else if (neighbor) villagePanel.show(neighbor, villages.indexOf(neighbor), economy);
   });
 
   let sinceHudRefresh = 0;
@@ -113,6 +116,7 @@ async function start(): Promise<void> {
       sinceHudRefresh = 0;
       hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
       buildingPanel.refresh(simulation.snapshot?.economy);
+      villagePanel.refresh(simulation.snapshot?.economy);
     }
   });
 }

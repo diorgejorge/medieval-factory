@@ -6,6 +6,7 @@ import type { Grid } from '../world/grid';
 import { Machine, recipesFor, type MachineStatus } from './machines';
 import { Servant, stepServants, type Demand, type ServantView } from './servants';
 import { add, available, markStoragesChanged, storageChanges, used, type Storage } from './storage';
+import { recruit, trade, type VillageState, type VillageView } from './villageTrade';
 
 /** Até onde (em tiles, do centro de uma construção ao da outra) um extrator alcança um armazém. */
 export const STORAGE_RANGE = 24;
@@ -40,6 +41,8 @@ export interface EconomySnapshot {
   stock: Record<string, number>;
   buildings: Record<number, BuildingReport>;
   servants: ServantView[];
+  /** Mesma ordem dos vilarejos do mapa. */
+  villages: VillageView[];
 }
 
 interface Extractor {
@@ -62,6 +65,8 @@ export class Economy {
   private readonly machines = new Map<number, Machine>();
   private readonly machineKinds = new Map<number, string>();
   private readonly servants: Servant[] = [];
+  private readonly villages: VillageState[];
+  private readonly home: { x: number; y: number } | null;
   private demands: Demand[] = [];
   private ticksUntilDemands = 0;
 
@@ -69,7 +74,10 @@ export class Economy {
     private readonly grid: Grid,
     startCenter: { x: number; y: number } | null,
     start: { capacity: number; servants: number; stock: readonly ItemAmount[] } = GAME_DATA.start,
+    villages: readonly { produces: readonly string[]; wants: readonly string[]; population: number }[] = [],
   ) {
+    this.home = startCenter;
+    this.villages = villages.map((v) => ({ produces: v.produces, wants: v.wants, population: v.population, result: null, requests: 0 }));
     if (startCenter) {
       const items = new Map(start.stock.map(({ item, amount }) => [item, amount]));
       this.storages.set(START_STORAGE_ID, { center: startCenter, capacity: start.capacity, items });
@@ -118,6 +126,22 @@ export class Economy {
     markStoragesChanged();
   }
 
+  /** Troca com um vilarejo; o produto vai para a vila do jogador. */
+  tradeWithVillage(index: number, give: string, receive: string): boolean {
+    const village = this.villages[index];
+    const home = this.storages.get(START_STORAGE_ID);
+    if (!village || !home) return false;
+    return trade(village, give, receive, [...this.storages.values()], home);
+  }
+
+  /** Recruta um servo do vilarejo, pago com comida; ele começa na vila do jogador. */
+  recruitFromVillage(index: number): boolean {
+    const village = this.villages[index];
+    if (!village || !this.home || !recruit(village, [...this.storages.values()])) return false;
+    this.servants.push(new Servant(this.home.x, this.home.y));
+    return true;
+  }
+
   /** Troca a receita de uma máquina, se ela souber fazer essa receita. */
   setRecipe(buildingId: number, recipeId: string): boolean {
     const machine = this.machines.get(buildingId);
@@ -161,7 +185,12 @@ export class Economy {
         progress: machine.progress,
       };
     }
-    return { stock, buildings, servants: this.servants.map((s) => s.view()) };
+    return {
+      stock,
+      buildings,
+      servants: this.servants.map((s) => s.view()),
+      villages: this.villages.map(({ population, result, requests }) => ({ population, result, requests })),
+    };
   }
 
   private stepExtractor(extractor: Extractor): void {

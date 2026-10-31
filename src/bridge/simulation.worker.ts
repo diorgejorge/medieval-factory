@@ -2,6 +2,7 @@
 import villageTexts from '../../data/texto/pt-BR/vilarejos.json';
 import { MAP_SIZE_TILES, TICK_MS } from '../core/config';
 import { Simulation, SimulationLoop } from '../core/simulation';
+import { GAME_DATA } from '../core/data/data';
 import { Economy } from '../core/economy/economy';
 import { createWorld } from '../core/world/world';
 import type { CommandMessage, InitMessage, SnapshotMessage } from './protocol';
@@ -19,7 +20,8 @@ self.onmessage = (event: MessageEvent<InitMessage | CommandMessage>) => {
   const message = event.data;
   if (message.kind === 'init') {
     const world = createWorld(message.seed, MAP_SIZE_TILES, villageTexts.names);
-    const economy = new Economy(world.grid, world.settlements.start?.center ?? null);
+    const { start, villages } = world.settlements;
+    const economy = new Economy(world.grid, start?.center ?? null, GAME_DATA.start, villages);
     loop = new SimulationLoop(new Simulation(world.site, economy));
   } else {
     loop?.enqueue(message.command);
