@@ -3,6 +3,8 @@ import { GAME_DATA } from '../data/data';
 import type { BuildingDef, ItemAmount, ToolKind, ToolTier } from '../data/gameData';
 import { buildingDef, countResourceTiles, footprint, type Building, type BuildingSite } from '../world/buildings';
 import type { Grid } from '../world/grid';
+import { Machine, recipesFor, type MachineStatus } from './machines';
+import { add, markStoragesChanged, storageChanges, used, type Storage } from './storage';
 
 /** Até onde (em tiles, do centro de uma construção ao da outra) um extrator alcança um armazém. */
 export const STORAGE_RANGE = 24;
@@ -18,7 +20,12 @@ export interface HeldTool {
 
 /** O que a tela precisa saber de cada construção com economia. */
 export interface BuildingReport {
-  status?: ExtractorStatus;
+  status?: ExtractorStatus | MachineStatus;
+  /** Receita atual e as possíveis, para máquinas. */
+  recipe?: string | null;
+  recipes?: string[];
+  /** Andamento da receita, de 0 a 1. */
+  progress?: number;
   tool?: HeldTool | null;
   /** Conteúdo, para armazéns. */
   items?: Record<string, number>;
@@ -29,12 +36,6 @@ export interface EconomySnapshot {
   /** Soma de todos os armazéns. */
   stock: Record<string, number>;
   buildings: Record<number, BuildingReport>;
-}
-
-interface Storage {
-  center: { x: number; y: number };
-  capacity: number;
-  items: Map<string, number>;
 }
 
 interface Extractor {
@@ -54,6 +55,8 @@ interface Extractor {
 export class Economy {
   private readonly storages = new Map<number, Storage>();
   private readonly extractors = new Map<number, Extractor>();
+  private readonly machines = new Map<number, Machine>();
+  private readonly machineKinds = new Map<number, string>();
 
   constructor(
     private readonly grid: Grid,
@@ -76,6 +79,11 @@ export class Economy {
       if (def.storage && !this.storages.has(building.id)) {
         this.storages.set(building.id, { center, capacity: def.storage.capacity, items: new Map() });
       }
+      const recipes = recipesFor(building.kind);
+      if (recipes.length > 0 && !this.machines.has(building.id)) {
+        this.machines.set(building.id, new Machine(center, recipes[0] ?? null));
+        this.machineKinds.set(building.id, building.kind);
+      }
       const extractor = this.extractors.get(building.id);
       if (def.extracts && !extractor) {
         this.extractors.set(building.id, {
@@ -94,11 +102,30 @@ export class Economy {
     }
     for (const id of this.storages.keys()) if (!alive.has(id)) this.storages.delete(id);
     for (const id of this.extractors.keys()) if (!alive.has(id)) this.extractors.delete(id);
+    for (const id of this.machines.keys()) {
+      if (alive.has(id)) continue;
+      this.machines.delete(id);
+      this.machineKinds.delete(id);
+    }
+    markStoragesChanged();
   }
 
-  /** Um tick: cada extrator avança, e entrega um item quando completa o ciclo. */
+  /** Troca a receita de uma máquina, se ela souber fazer essa receita. */
+  setRecipe(buildingId: number, recipeId: string): boolean {
+    const machine = this.machines.get(buildingId);
+    const recipe = recipesFor(this.machineKinds.get(buildingId) ?? '').find((r) => r.id === recipeId);
+    if (!machine || !recipe) return false;
+    machine.setRecipe(recipe);
+    return true;
+  }
+
+  /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
     for (const extractor of this.extractors.values()) this.stepExtractor(extractor);
+    for (const machine of this.machines.values()) {
+      if (machine.isSleeping(storageChanges())) continue;
+      machine.step(this.storagesInRange(machine.center), storageChanges());
+    }
   }
 
   snapshot(): EconomySnapshot {
@@ -111,6 +138,14 @@ export class Economy {
     }
     for (const [id, extractor] of this.extractors) {
       buildings[id] = { status: extractor.status, tool: extractor.tool && { ...extractor.tool } };
+    }
+    for (const [id, machine] of this.machines) {
+      buildings[id] = {
+        status: machine.status,
+        recipe: machine.recipe?.id ?? null,
+        recipes: recipesFor(this.machineKinds.get(id) ?? '').map((r) => r.id),
+        progress: machine.progress,
+      };
     }
     return { stock, buildings };
   }
@@ -182,14 +217,3 @@ function buildingCenter(building: Building): { x: number; y: number } {
   return { x: building.x + width / 2, y: building.y + height / 2 };
 }
 
-function used(storage: Storage): number {
-  let total = 0;
-  for (const amount of storage.items.values()) total += amount;
-  return total;
-}
-
-function add(storage: Storage, item: string, amount: number): void {
-  const next = (storage.items.get(item) ?? 0) + amount;
-  if (next > 0) storage.items.set(item, next);
-  else storage.items.delete(item);
-}
