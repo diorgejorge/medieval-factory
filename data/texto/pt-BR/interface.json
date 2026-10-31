@@ -60,7 +60,12 @@
     "recipeItemSeparator": " + ",
     "recipeFuel": " (queima {combustiveis})",
     "filterItem": "Separa: {item}",
-    "filterAny": "Separa: o primeiro que chegar"
+    "filterAny": "Separa: o primeiro que chegar",
+    "route": "Rota: {origem} → {destino}",
+    "routeCargo": "Leva: {item}",
+    "routeNone": "Sem rota",
+    "routePickOrigin": "Escolher origem",
+    "routePickDestination": "Escolher destino"
   },
   "villagePanel": {
     "population": "População: {populacao}",
