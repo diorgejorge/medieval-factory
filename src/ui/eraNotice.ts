@@ -1,10 +1,14 @@
 import erasText from '../../data/texto/pt-BR/eras.json';
+import { UI_TEXT } from '../core/data/data';
+import { fillText, quoteText } from '../core/data/interfaceText';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV'];
 
 export function eraName(era: number): string {
   const text = erasText.eras.find((entry) => entry.id === era);
-  return `Era ${ROMAN[era] ?? era}${text ? `: ${text.name}` : ''}`;
+  const numero = ROMAN[era] ?? String(era);
+  // Era sem nome em eras.json: só o número (formato fixo, não há chave para ele).
+  return text ? fillText(UI_TEXT.common.eraLabel, { numero, nome: text.name }) : `Era ${numero}`;
 }
 
 /** Anuncia a era nova no painel, com a introdução escrita pelo Roteiro. */
@@ -14,10 +18,10 @@ export function showEraNotice(element: HTMLElement, era: number): void {
   title.textContent = eraName(era);
   const intro = document.createElement('p');
   intro.className = 'quote';
-  intro.textContent = text ? `“${text.intro}”` : '';
+  intro.textContent = text ? quoteText(UI_TEXT, text.intro) : '';
   const hint = document.createElement('p');
   hint.className = 'hint';
-  hint.textContent = 'Novas construções na barra. [Esc] fechar';
+  hint.textContent = UI_TEXT.eraNotice.hint;
   element.replaceChildren(title, intro, hint);
   element.hidden = false;
   const close = (event: KeyboardEvent) => {

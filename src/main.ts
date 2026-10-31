@@ -1,6 +1,8 @@
 import { Application, Container } from 'pixi.js';
 import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
+import { UI_TEXT } from './core/data/data';
+import { fillText } from './core/data/interfaceText';
 import type { SimulationSnapshot } from './core/simulation';
 import { START_STORAGE_ID } from './core/economy/economy';
 import { buildingDef, buildingObject } from './core/world/buildings';
@@ -106,7 +108,7 @@ async function start(): Promise<void> {
     buildingPanel.hide();
     villagePanel.hide();
     if (building) buildingPanel.show(building.id, buildingDef(building.kind).name, economy);
-    else if (village && isClickOnArea(village.area, tile.x, tile.y)) buildingPanel.show(START_STORAGE_ID, 'Sua vila', economy);
+    else if (village && isClickOnArea(village.area, tile.x, tile.y)) buildingPanel.show(START_STORAGE_ID, UI_TEXT.hud.ownVillage, economy);
     else if (neighbor) villagePanel.show(neighbor, villages.indexOf(neighbor), economy);
   });
 
@@ -149,18 +151,20 @@ async function start(): Promise<void> {
 }
 
 function formatHud(fps: number, zoom: number, seed: number, snapshot: SimulationSnapshot | null): string {
-  const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}${snapshot ? `  ${eraName(snapshot.era)}` : ''}`;
-  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo ou construção  [R] girar';
-  if (!snapshot) return `${render}\nsimulação iniciando...\n${help}`;
+  const text = UI_TEXT.hud;
+  // Sem snapshot ainda não há era: a linha termina antes dela.
+  const era = snapshot ? eraName(snapshot.era) : '';
+  const render = fillText(text.debugLine, { fps: Math.round(fps), zoom, seed, era }).trimEnd();
+  if (!snapshot) return `${render}\n${text.starting}\n${text.help}`;
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
   const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
-  const state = snapshot.paused ? 'PAUSADO' : `${snapshot.speed}x`;
+  const state = snapshot.paused ? text.paused : fillText(text.speed, { velocidade: snapshot.speed });
   const economy = snapshot.economy;
   const busy = economy?.servants.filter((servant) => servant.busy).length ?? 0;
   const stock = economy
-    ? `\nEstoque: ${formatItems(economy.stock)}\nServos: ${busy} trabalhando de ${economy.servants.length}`
+    ? `\n${fillText(text.stock, { itens: formatItems(economy.stock) })}\n${fillText(text.servants, { ocupados: busy, total: economy.servants.length })}`
     : '';
-  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n${help}${stock}`;
+  return `${render}\n${fillText(text.simLine, { ups, tick: snapshot.tick, estado: state })}\n${text.help}${stock}`;
 }
 
 /** A seed vem da URL (?seed=123) para um mapa poder ser compartilhado; sem ela, sorteia uma. */
