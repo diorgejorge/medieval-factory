@@ -43,6 +43,23 @@ export function connectTransport(objects: readonly MapObject[], hasFrame: (name:
   });
 }
 
+const ROAD = 'road';
+/** Ordem dos lados no nome do frame da estrada (`road_<lados>`), igual à de assets/_tools/roads.py. */
+const ROAD_SIDES: readonly Side[] = ['n', 'e', 's', 'w'];
+
+/** Estrada emenda com as vizinhas: o frame lista os lados que têm estrada (`road_ns`, `road_nesw`...). */
+export function connectRoads(objects: readonly MapObject[], hasFrame: (name: string) => boolean): MapObject[] {
+  const roads = new Set(objects.filter((object) => object.frame === ROAD).map(tileKey));
+  if (roads.size === 0) return [...objects];
+  return objects.map((object) => {
+    if (object.frame !== ROAD) return object;
+    const [tx, ty] = tileOf(object);
+    const sides = ROAD_SIDES.filter((side) => roads.has(`${tx + STEP[side][0]},${ty + STEP[side][1]}`)).join('');
+    const frame = sides ? `${ROAD}_${sides}` : ROAD;
+    return hasFrame(frame) ? { ...object, frame } : object;
+  });
+}
+
 function parsePiece(object: MapObject): Piece | null {
   const match = CONVEYOR.exec(object.frame);
   const [, material, rotation] = match ?? [];
