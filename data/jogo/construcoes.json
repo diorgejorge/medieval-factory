@@ -18,8 +18,8 @@
     { "id": "forge", "era": 2, "width": 4, "height": 4, "frame": "forge" },
     { "id": "chute", "era": 1, "width": 1, "height": 1, "frame": "chute", "transport": { "speed": 3, "gravity": true } },
     { "id": "belt", "era": 1, "width": 1, "height": 1, "frame": "belt", "transport": { "speed": 1.5, "gravity": false, "climb": 2 } },
-    { "id": "hoist", "era": 2, "width": 1, "height": 1, "transport": { "speed": 1, "gravity": false, "climb": 255 } },
-    { "id": "splitter", "era": 1, "width": 1, "height": 1, "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "split" } },
-    { "id": "filter", "era": 1, "width": 1, "height": 1, "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "filter" } }
+    { "id": "hoist", "era": 2, "width": 1, "height": 1, "frame": "hoist", "transport": { "speed": 1, "gravity": false, "climb": 255 } },
+    { "id": "splitter", "era": 1, "width": 1, "height": 1, "frame": "splitter", "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "split" } },
+    { "id": "filter", "era": 1, "width": 1, "height": 1, "frame": "filter", "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "filter" } }
   ]
 }
