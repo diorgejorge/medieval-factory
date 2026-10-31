@@ -36,6 +36,8 @@ export interface BuildingReport {
   /** Conteúdo, para armazéns. */
   items?: Record<string, number>;
   capacity?: number;
+  /** Separador: item que segue em frente (null = o primeiro que chegar). */
+  filter?: string | null;
 }
 
 export interface EconomySnapshot {
@@ -256,6 +258,9 @@ export class Economy {
   snapshot(): EconomySnapshot {
     const stock: Record<string, number> = {};
     const buildings: Record<number, BuildingReport> = {};
+    for (const segment of this.transport.segments) {
+      if (segment.def.sort === 'filter') buildings[segment.id] = { filter: segment.filter };
+    }
     for (const [id, storage] of this.storages) {
       const items = Object.fromEntries(storage.items);
       for (const [item, amount] of storage.items) stock[item] = (stock[item] ?? 0) + amount;

@@ -182,3 +182,17 @@ describe('nora, repartidor e separador', () => {
     expect(GAME_DATA.buildings.get('filter')?.transport?.sort).toBe('filter');
   });
 });
+
+describe('separador no painel', () => {
+  it('o snapshot mostra o item escolhido e o comando troca a escolha', () => {
+    const grid = new Grid(20);
+    const site = new BuildingSite(grid);
+    const economy = new Economy(grid, { x: 19, y: 19 }, { capacity: 10, servants: 0, stock: [] });
+    const filter = site.place('filter', 2, 2, 3);
+    economy.sync(site);
+    const id = filter?.id ?? -1;
+    expect(economy.snapshot().buildings[id]?.filter).toBeNull();
+    expect(economy.setFilter(id, 'wheat')).toBe(true);
+    expect(economy.snapshot().buildings[id]?.filter).toBe('wheat');
+  });
+});
