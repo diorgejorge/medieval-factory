@@ -18,7 +18,13 @@ export interface TransportDef {
   speed: number;
   /** Calha: só passa o item para um tile igual ou mais baixo. */
   gravity: boolean;
+  /** Quanto o item pode subir de um tile para o seguinte (sem o campo, sem limite). Guincho: sobe o relevo. */
+  climb?: number;
+  /** Divisor reparte entre frente, esquerda e direita; filtro manda o item escolhido em frente e os outros para os lados. */
+  sort?: TransportSort;
 }
+
+export type TransportSort = 'split' | 'filter';
 
 export interface SegmentItem {
   item: string;
@@ -32,6 +38,8 @@ export interface SegmentView {
   y: number;
   rotation: Rotation;
   items: SegmentItem[];
+  /** Só no filtro: o item que segue em frente (null até o primeiro item passar). */
+  filter?: string | null;
 }
 
 /**
@@ -41,6 +49,10 @@ export interface SegmentView {
 export class Segment {
   /** Ordenados da saída (t maior) para a entrada. */
   readonly items: SegmentItem[] = [];
+  /** Filtro: item que segue em frente. Sem escolha, o primeiro que chegar vira o filtro. */
+  filter: string | null = null;
+  /** Divisor e filtro: próxima saída a tentar, para repartir por igual. */
+  turn = 0;
 
   constructor(
     readonly id: number,
@@ -67,8 +79,31 @@ export class Segment {
     return true;
   }
 
+  /** Tiles para onde o item da frente pode sair, na ordem de tentativa. */
+  exits(item: string): { x: number; y: number }[] {
+    const ahead = this.next;
+    if (!this.def.sort) return [ahead];
+    const sides = [this.side(1), this.side(3)];
+    if (this.def.sort === 'filter') {
+      this.filter ??= item;
+      if (item === this.filter) return [ahead];
+      return this.turn % 2 === 0 ? sides : [sides[1] ?? ahead, sides[0] ?? ahead];
+    }
+    const all = [ahead, ...sides];
+    const start = this.turn % all.length;
+    return [...all.slice(start), ...all.slice(0, start)];
+  }
+
+  /** Tile ao lado: `quarter` 1 = direita de quem anda, 3 = esquerda. */
+  private side(quarter: 1 | 3): { x: number; y: number } {
+    const { dx, dy } = DIRECTIONS[((this.rotation + quarter) % 4) as Rotation];
+    return { x: this.x + dx, y: this.y + dy };
+  }
+
   view(): SegmentView {
-    return { id: this.id, x: this.x, y: this.y, rotation: this.rotation, items: this.items.map((i) => ({ ...i })) };
+    const view: SegmentView = { id: this.id, x: this.x, y: this.y, rotation: this.rotation, items: this.items.map((i) => ({ ...i })) };
+    if (this.def.sort === 'filter') view.filter = this.filter;
+    return view;
   }
 }
 
@@ -100,10 +135,24 @@ export class TransportNetwork {
     this.byTile.clear();
     for (const segment of segments) {
       const previous = old.get(segment.id);
-      if (previous && previous.rotation === segment.rotation) segment.items.push(...previous.items);
+      if (previous && previous.rotation === segment.rotation) {
+        segment.items.push(...previous.items);
+        segment.filter = previous.filter;
+        segment.turn = previous.turn;
+      }
       this.byTile.set(segment.y * this.grid.size + segment.x, segment);
     }
     this.order = this.downstreamFirst();
+  }
+
+  /** Escolhe o item que o filtro manda em frente. */
+  setFilter(id: number, item: string | null): boolean {
+    for (const segment of this.byTile.values()) {
+      if (segment.id !== id || segment.def.sort !== 'filter') continue;
+      segment.filter = item;
+      return true;
+    }
+    return false;
   }
 
   step(deliver: Receiver): void {
@@ -130,13 +179,22 @@ export class TransportNetwork {
   }
 
   private handOff(segment: Segment, item: string, deliver: Receiver): boolean {
-    const { x, y } = segment.next;
-    const next = this.at(x, y);
-    if (next) {
-      if (segment.def.gravity && this.grid.getHeight(x, y) > this.grid.getHeight(segment.x, segment.y)) return false;
-      return next.push(item);
+    for (const { x, y } of segment.exits(item)) {
+      if (!this.passTo(segment, x, y, item, deliver)) continue;
+      segment.turn++;
+      return true;
     }
-    return deliver(x, y, item);
+    return false;
+  }
+
+  private passTo(segment: Segment, x: number, y: number, item: string, deliver: Receiver): boolean {
+    const next = this.at(x, y);
+    if (!next) return this.grid.isInside(x, y) && deliver(x, y, item);
+    // Nunca devolve para quem está mandando item para cá.
+    if (next.next.x === segment.x && next.next.y === segment.y) return false;
+    const rise = this.grid.getHeight(x, y) - this.grid.getHeight(segment.x, segment.y);
+    const climb = segment.def.gravity ? 0 : (segment.def.climb ?? Infinity);
+    return rise <= climb && next.push(item);
   }
 
   /** Ordena para que cada segmento seja atualizado antes do que alimenta ele. */

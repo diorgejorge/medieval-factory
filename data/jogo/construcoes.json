@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 1 'item' do 'terrain' em volta a cada 'seconds' (dividido pelo nível da ferramenta); 'tool' = tipo e nível mínimo exigidos (sem 'tool', não precisa). 'storage' = armazém com 'capacity' itens. 'transport' = calha ou esteira: anda 'speed' tiles por segundo; com 'gravity', só passa o item para um tile igual ou mais baixo. Nomes de exibição: data/texto/pt-BR/construcoes.json (Roteiro).",
+  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 1 'item' do 'terrain' em volta a cada 'seconds' (dividido pelo nível da ferramenta); 'tool' = tipo e nível mínimo exigidos (sem 'tool', não precisa). 'storage' = armazém com 'capacity' itens. 'transport' = calha ou esteira: anda 'speed' tiles por segundo; com 'gravity', só passa o item para um tile igual ou mais baixo; 'climb' = quanto pode subir de um tile para o seguinte (sem o campo, sem limite); 'sort' = 'split' (divisor: reparte entre frente e lados) ou 'filter' (filtro: o item escolhido segue em frente, os outros vão para os lados). Nomes de exibição: data/texto/pt-BR/construcoes.json (Roteiro).",
   "buildings": [
     { "id": "oven", "era": 1, "width": 2, "height": 2, "frame": "oven_stone" },
     { "id": "hut", "era": 1, "width": 3, "height": 2, "frame": "hut_straw" },
@@ -17,6 +17,9 @@
     { "id": "smelter", "era": 1, "width": 4, "height": 4, "frame": "smelter" },
     { "id": "forge", "era": 2, "width": 4, "height": 4, "frame": "forge" },
     { "id": "chute", "era": 1, "width": 1, "height": 1, "frame": "chute", "transport": { "speed": 3, "gravity": true } },
-    { "id": "belt", "era": 1, "width": 1, "height": 1, "frame": "belt", "transport": { "speed": 1.5, "gravity": false } }
+    { "id": "belt", "era": 1, "width": 1, "height": 1, "frame": "belt", "transport": { "speed": 1.5, "gravity": false, "climb": 2 } },
+    { "id": "hoist", "era": 2, "width": 1, "height": 1, "transport": { "speed": 1, "gravity": false, "climb": 255 } },
+    { "id": "splitter", "era": 1, "width": 1, "height": 1, "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "split" } },
+    { "id": "filter", "era": 1, "width": 1, "height": 1, "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "filter" } }
   ]
 }

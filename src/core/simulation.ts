@@ -13,6 +13,7 @@ export type SimulationCommand =
   | { type: 'removeBuilding'; x: number; y: number }
   | { type: 'rotateBuilding'; x: number; y: number }
   | { type: 'setRecipe'; buildingId: number; recipe: string }
+  | { type: 'setFilter'; buildingId: number; item: string | null }
   | { type: 'trade'; village: number; give: string; receive: string }
   | { type: 'recruit'; village: number };
 
@@ -147,6 +148,9 @@ export class SimulationLoop {
         break;
       case 'setRecipe':
         this.simulation.economy?.setRecipe(command.buildingId, command.recipe);
+        break;
+      case 'setFilter':
+        this.simulation.economy?.setFilter(command.buildingId, command.item);
         break;
       case 'trade':
         this.simulation.economy?.tradeWithVillage(command.village, command.give, command.receive);
