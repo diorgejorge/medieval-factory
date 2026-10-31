@@ -17,7 +17,7 @@ function world(stock = [{ item: 'stone_axe', amount: 1 }], capacity = 100) {
     grid.setTerrain(39, y, Terrain.Rock);
   }
   const site = new BuildingSite(grid);
-  const economy = new Economy(grid, { x: 5, y: 5 }, { capacity, stock });
+  const economy = new Economy(grid, { x: 5, y: 5 }, { capacity, servants: 0, stock });
   return { grid, site, economy };
 }
 

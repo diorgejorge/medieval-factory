@@ -4,12 +4,15 @@ import type { BuildingDef, ItemAmount, ToolKind, ToolTier } from '../data/gameDa
 import { buildingDef, countResourceTiles, footprint, type Building, type BuildingSite } from '../world/buildings';
 import type { Grid } from '../world/grid';
 import { Machine, recipesFor, type MachineStatus } from './machines';
-import { add, markStoragesChanged, storageChanges, used, type Storage } from './storage';
+import { Servant, stepServants, type Demand, type ServantView } from './servants';
+import { add, available, markStoragesChanged, storageChanges, used, type Storage } from './storage';
 
 /** Até onde (em tiles, do centro de uma construção ao da outra) um extrator alcança um armazém. */
 export const STORAGE_RANGE = 24;
 /** Id do armazém da vila do jogador (as construções começam em 1). */
 export const START_STORAGE_ID = 0;
+/** De quantos em quantos ticks os pedidos aos servos são recalculados. */
+const DEMAND_INTERVAL_TICKS = 15;
 
 export type ExtractorStatus = 'working' | 'noTool' | 'noStorage' | 'storageFull' | 'noResource';
 
@@ -36,6 +39,7 @@ export interface EconomySnapshot {
   /** Soma de todos os armazéns. */
   stock: Record<string, number>;
   buildings: Record<number, BuildingReport>;
+  servants: ServantView[];
 }
 
 interface Extractor {
@@ -57,15 +61,19 @@ export class Economy {
   private readonly extractors = new Map<number, Extractor>();
   private readonly machines = new Map<number, Machine>();
   private readonly machineKinds = new Map<number, string>();
+  private readonly servants: Servant[] = [];
+  private demands: Demand[] = [];
+  private ticksUntilDemands = 0;
 
   constructor(
     private readonly grid: Grid,
     startCenter: { x: number; y: number } | null,
-    start: { capacity: number; stock: readonly ItemAmount[] } = GAME_DATA.start,
+    start: { capacity: number; servants: number; stock: readonly ItemAmount[] } = GAME_DATA.start,
   ) {
     if (startCenter) {
       const items = new Map(start.stock.map(({ item, amount }) => [item, amount]));
       this.storages.set(START_STORAGE_ID, { center: startCenter, capacity: start.capacity, items });
+      for (let i = 0; i < start.servants; i++) this.servants.push(new Servant(startCenter.x, startCenter.y));
     }
   }
 
@@ -126,6 +134,12 @@ export class Economy {
       if (machine.isSleeping(storageChanges())) continue;
       machine.step(this.storagesInRange(machine.center), storageChanges());
     }
+    // Pedidos mudam devagar: recalcular a cada meio segundo basta e poupa a simulação.
+    if (--this.ticksUntilDemands <= 0) {
+      this.demands = this.collectDemands();
+      this.ticksUntilDemands = DEMAND_INTERVAL_TICKS;
+    }
+    stepServants(this.servants, this.storages, this.demands);
   }
 
   snapshot(): EconomySnapshot {
@@ -147,7 +161,7 @@ export class Economy {
         progress: machine.progress,
       };
     }
-    return { stock, buildings };
+    return { stock, buildings, servants: this.servants.map((s) => s.view()) };
   }
 
   private stepExtractor(extractor: Extractor): void {
@@ -178,6 +192,55 @@ export class Economy {
     extractor.progressTicks = 0;
     add(target, extractor.def.item, 1);
     if (extractor.tool && --extractor.tool.usesLeft <= 0) extractor.tool = null;
+  }
+
+  /**
+   * O que falta para cada máquina ou extrator parado, pedido ao armazém mais próximo dele.
+   * Os servos trazem de armazéns fora do alcance da construção.
+   */
+  private collectDemands(): Demand[] {
+    const demands: Demand[] = [];
+    const request = (center: { x: number; y: number }, item: string, amount: number) => {
+      const storageId = this.nearestStorageId(center);
+      if (storageId !== null && amount > 0) demands.push({ storageId, item, amount, requester: center, reach: STORAGE_RANGE });
+    };
+    for (const machine of this.machines.values()) {
+      const recipe = machine.recipe;
+      if (!recipe) continue;
+      const storages = this.storagesInRange(machine.center);
+      if (machine.status === 'noInput') {
+        for (const { item, amount } of recipe.inputs) request(machine.center, item, amount - available(storages, item));
+      } else if (machine.status === 'noFuel' && recipe.fuel) {
+        const fuel = recipe.fuel.find((item) => this.totalStock(item) > 0);
+        if (fuel) request(machine.center, fuel, 1);
+      }
+    }
+    for (const extractor of this.extractors.values()) {
+      const required = extractor.def.tool;
+      if (extractor.status !== 'noTool' || !required) continue;
+      const tool = [...GAME_DATA.items.values()].find(
+        (item) => item.tool?.kind === required.kind && item.tool.tier >= required.minTier && this.totalStock(item.id) > 0,
+      );
+      if (tool) request(extractor.center, tool.id, 1);
+    }
+    return demands;
+  }
+
+  private totalStock(item: string): number {
+    return available([...this.storages.values()], item);
+  }
+
+  private nearestStorageId(center: { x: number; y: number }): number | null {
+    let best: number | null = null;
+    let bestDistance = STORAGE_RANGE;
+    for (const [id, storage] of this.storages) {
+      const distance = Math.hypot(storage.center.x - center.x, storage.center.y - center.y);
+      if (distance <= bestDistance) {
+        best = id;
+        bestDistance = distance;
+      }
+    }
+    return best;
   }
 
   /** Nível da ferramenta acelera a extração: ferro trabalha no dobro da velocidade da pedra. */

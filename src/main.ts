@@ -16,6 +16,7 @@ import { BuildGhost } from './render/buildGhost';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 import { ObjectLayer } from './render/objectLayer';
+import { ServantLayer } from './render/servantLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
 import { BuildingPanel, formatItems } from './ui/buildingPanel';
 import { BuildToolbar } from './ui/buildToolbar';
@@ -49,6 +50,8 @@ async function start(): Promise<void> {
     objects.add(mapObjects);
     world.addChild(objects.view);
   }
+  const servantLayer = new ServantLayer();
+  world.addChild(servantLayer.view);
   const ghost = new BuildGhost(objects);
   world.addChild(ghost.view);
   app.stage.addChild(world);
@@ -103,6 +106,7 @@ async function start(): Promise<void> {
     gridRenderer.update(ticker.deltaMS);
     gridRenderer.cull(camera, app.screen.width, app.screen.height);
     objects?.cull(camera, app.screen.width, app.screen.height);
+    servantLayer.update(simulation.snapshot?.economy?.servants ?? []);
 
     sinceHudRefresh += ticker.deltaMS;
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
@@ -120,7 +124,11 @@ function formatHud(fps: number, zoom: number, seed: number, snapshot: Simulation
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
   const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
   const state = snapshot.paused ? 'PAUSADO' : `${snapshot.speed}x`;
-  const stock = snapshot.economy ? `\nEstoque: ${formatItems(snapshot.economy.stock)}` : '';
+  const economy = snapshot.economy;
+  const busy = economy?.servants.filter((servant) => servant.busy).length ?? 0;
+  const stock = economy
+    ? `\nEstoque: ${formatItems(economy.stock)}\nServos: ${busy} trabalhando de ${economy.servants.length}`
+    : '';
   return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n${help}${stock}`;
 }
 
