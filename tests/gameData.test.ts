@@ -7,6 +7,7 @@ import itemNames from '../data/texto/pt-BR/itens.json';
 import { GAME_DATA } from '../src/core/data/data';
 import { GameDataError, parseGameData, type RawGameData } from '../src/core/data/gameData';
 import { Terrain } from '../src/core/world/terrain';
+import objectsAtlas from '../assets/objects/objects.json';
 
 /** Cópia profunda dos dados reais, para estragar um pedaço por teste. */
 function rawCopy() {
@@ -91,6 +92,13 @@ describe('dados do jogo (data/jogo)', () => {
     delete names['bread'];
     const problems = problemsOf({ ...raw, itemNames: { version: 1, items: names } });
     expect(problems).toContain('itens.json "bread": falta o nome em data/texto/pt-BR');
+  });
+
+  it('toda construção com "frame" tem arte no atlas de objetos', () => {
+    const names = new Set([...Object.keys(objectsAtlas.frames), ...Object.keys(objectsAtlas.animations)]);
+    for (const building of GAME_DATA.buildings.values()) {
+      if (building.frame) expect(names, building.id).toContain(building.frame);
+    }
   });
 
   it('usa os nomes do Roteiro', () => {

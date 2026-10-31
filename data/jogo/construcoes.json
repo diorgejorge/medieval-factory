@@ -6,15 +6,15 @@
     { "id": "hut", "era": 1, "width": 3, "height": 2, "frame": "hut_straw" },
     { "id": "house", "era": 1, "width": 4, "height": 2, "frame": "house_thatch" },
     { "id": "watermill", "era": 2, "width": 2, "height": 2, "frame": "watermill", "needsWater": true },
-    { "id": "storage", "era": 1, "width": 2, "height": 2 },
-    { "id": "workbench", "era": 1, "width": 2, "height": 2 },
-    { "id": "lumberjack", "era": 1, "width": 2, "height": 2, "extracts": { "item": "wood", "terrain": "forest", "minTool": 1 } },
-    { "id": "quarry", "era": 1, "width": 2, "height": 2, "extracts": { "item": "stone", "terrain": "rock", "minTool": 1 } },
-    { "id": "mine", "era": 1, "width": 2, "height": 2, "extracts": { "item": "iron_ore", "terrain": "ore_iron", "minTool": 1 } },
-    { "id": "farm", "era": 1, "width": 3, "height": 3, "extracts": { "item": "wheat", "terrain": "grass", "minTool": 1 } },
-    { "id": "mill", "era": 1, "width": 2, "height": 2 },
-    { "id": "charcoal_kiln", "era": 2, "width": 2, "height": 2 },
-    { "id": "smelter", "era": 2, "width": 2, "height": 2 },
-    { "id": "forge", "era": 2, "width": 2, "height": 2 }
+    { "id": "storage", "era": 1, "width": 2, "height": 2, "frame": "storage" },
+    { "id": "workbench", "era": 1, "width": 2, "height": 2, "frame": "workbench" },
+    { "id": "lumberjack", "era": 1, "width": 2, "height": 2, "frame": "lumberjack", "extracts": { "item": "wood", "terrain": "forest", "minTool": 1 } },
+    { "id": "quarry", "era": 1, "width": 2, "height": 2, "frame": "quarry", "extracts": { "item": "stone", "terrain": "rock", "minTool": 1 } },
+    { "id": "mine", "era": 1, "width": 2, "height": 2, "frame": "mine", "extracts": { "item": "iron_ore", "terrain": "ore_iron", "minTool": 1 } },
+    { "id": "farm", "era": 1, "width": 3, "height": 3, "frame": "farm", "extracts": { "item": "wheat", "terrain": "grass", "minTool": 1 } },
+    { "id": "mill", "era": 1, "width": 2, "height": 2, "frame": "mill" },
+    { "id": "charcoal_kiln", "era": 2, "width": 2, "height": 2, "frame": "charcoal_kiln" },
+    { "id": "smelter", "era": 2, "width": 2, "height": 2, "frame": "smelter" },
+    { "id": "forge", "era": 2, "width": 2, "height": 2, "frame": "forge" }
   ]
 }

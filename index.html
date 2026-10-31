@@ -23,11 +23,12 @@
       #panel .hint { margin-top: 8px; font: 11px monospace; color: #7a5a3a; }
       #toolbar {
         position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); padding: 6px 8px;
+        width: max-content; max-width: calc(100vw - 32px);
         font: 13px Georgia, serif; color: #2b1d12; background: #ead8b1; text-align: center;
         border: 3px solid #5a3a22; border-radius: 6px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
       }
       #toolbar button {
-        margin: 0 3px; padding: 4px 10px; font: inherit; color: inherit; cursor: pointer;
+        margin: 2px 3px; padding: 4px 10px; font: inherit; color: inherit; cursor: pointer;
         background: #d9c08c; border: 2px solid #5a3a22; border-radius: 4px;
       }
       #toolbar button.active { background: #8fbf5a; }
