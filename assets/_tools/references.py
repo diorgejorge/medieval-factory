@@ -24,13 +24,15 @@ TILE = 16
 OVERHANG_PX = 4  # a arte pode passar 2 px de cada lado do terreno ocupado, nunca mais que isso
 HD_DENSITY = 2  # alta definição: 2 pixels da arte por pixel do chão (o render desenha na metade do tamanho)
 SOURCE_WIDTH = 288  # largura guardada em assets/source: folga para qualquer tamanho final
+SCENERY_WIDTHS = {"tree_round": 2 * TILE, "tree_pine": 2 * TILE}  # árvores: copa de 2 tiles, como as do pacote
 BUILDINGS = Path(__file__).resolve().parents[2] / "data" / "jogo" / "construcoes.json"
 
 
 def footprint_widths(data: Path = BUILDINGS) -> dict[str, int]:
     """Largura final de cada construção: o terreno ocupado (data/jogo) mais a folga."""
     buildings = json.loads(data.read_text())["buildings"]
-    return {b.get("frame", b["id"]): b["width"] * TILE + OVERHANG_PX for b in buildings}
+    widths = {b.get("frame", b["id"]): b["width"] * TILE + OVERHANG_PX for b in buildings}
+    return widths | SCENERY_WIDTHS
 
 
 def remove_background(img: Image.Image) -> Image.Image:
@@ -124,8 +126,23 @@ def add_outline(img: Image.Image) -> Image.Image:
 def reference_frames(source: Path) -> dict[str, Image.Image]:
     """Um frame por imagem em `source` (nome do arquivo = frame da construção), na largura do terreno, em HD_DENSITY."""
     widths = footprint_widths()
-    return {path.stem: pixelate(brighten(strip_base(Image.open(path).convert("RGBA"))), widths[path.stem] * HD_DENSITY)
-            for path in sorted(source.glob("*.png"))}
+    frames = {}
+    for path in sorted(source.glob("*.png")):
+        img = Image.open(path).convert("RGBA")
+        base_free = cut_below_trunk(img) if path.stem in SCENERY_WIDTHS else strip_base(img)
+        frames[path.stem] = pixelate(brighten(base_free), widths[path.stem] * HD_DENSITY)
+    return frames
+
+
+def cut_below_trunk(img: Image.Image) -> Image.Image:
+    """Árvore em maquete: corta o losango da base logo abaixo do tronco (linha mais estreita acima do losango)."""
+    alpha = img.getchannel("A").load()
+    w, h = img.size
+    widths = [sum(1 for x in range(w) if alpha[x, y]) for y in range(h)]
+    widest = max(range(h * 7 // 10, h), key=lambda y: widths[y])  # meio do losango, no terço de baixo
+    trunk = min((y for y in range(h // 2, widest) if widths[y]), key=lambda y: widths[y])
+    cut = min(h, trunk + h // 40)  # um pouco de tronco abaixo da linha mais estreita
+    return img.crop((0, 0, w, cut))
 
 
 def import_reference(image: Path, name: str, source: Path) -> Path:

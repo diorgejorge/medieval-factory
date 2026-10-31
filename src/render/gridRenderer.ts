@@ -5,7 +5,7 @@ import type { Grid } from '../core/world/grid';
 import { Terrain } from '../core/world/terrain';
 import type { Atlas } from './atlas';
 import type { Camera } from './camera';
-import { ATLAS_VARIANTS, TERRAIN_FRAME_PREFIX, transitionFrame } from './terrainAtlas';
+import { TERRAIN_FRAME_PREFIX, terrainVariant, transitionFrame } from './terrainAtlas';
 import { paintChunk } from './terrainPixels';
 
 const CHUNK_SIZE_PX = CHUNK_SIZE_TILES * TILE_SIZE_PX;
@@ -17,7 +17,6 @@ const RIPPLE_SEED = 0x51bb;
 /** Quanto o relevo clareia/escurece cada tile: ajuda a ler colinas e vales. */
 const RELIEF_SHADE_RANGE = 0.3;
 const MAX_HEIGHT = 255;
-const VARIANT_SEED = 0x7ea1;
 
 /**
  * Cada chunk vira uma textura pintada uma única vez; no frame só alternamos a visibilidade
@@ -154,8 +153,7 @@ function drawChunkFromAtlas(
   firstY: number,
 ): void {
   forEachChunkTile(grid, firstX, firstY, (x, y, dx, dy) => {
-    const variant = hash2d(x, y, VARIANT_SEED) % ATLAS_VARIANTS;
-    drawFrame(context, atlas, `${TERRAIN_FRAME_PREFIX[grid.getTerrain(x, y)]}_${variant}`, dx, dy);
+    drawFrame(context, atlas, `${TERRAIN_FRAME_PREFIX[grid.getTerrain(x, y)]}_${terrainVariant(x, y)}`, dx, dy);
   });
 
   // Os cantos vão de firstX até firstX + CHUNK inclusive: as transições da borda passam para o vizinho.

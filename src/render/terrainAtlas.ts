@@ -1,7 +1,7 @@
 import { Terrain, type TerrainType } from '../core/world/terrain';
 import { loadAtlas, type Atlas } from './atlas';
 
-/** Prefixo dos frames de cada terreno no atlas; as variantes são `<prefixo>_0` … `_3`. */
+/** Prefixo dos frames de cada terreno no atlas; as variantes são `<prefixo>_0` … `_63`. */
 export const TERRAIN_FRAME_PREFIX: Readonly<Record<TerrainType, string>> = {
   [Terrain.Grass]: 'grass',
   [Terrain.Sand]: 'sand',
@@ -12,7 +12,14 @@ export const TERRAIN_FRAME_PREFIX: Readonly<Record<TerrainType, string>> = {
   [Terrain.Dirt]: 'dirt',
 };
 
-export const ATLAS_VARIANTS = 4;
+/** Lado (em tiles) da textura contínua de cada terreno: o atlas guarda os tiles dela, da esquerda para a direita e de cima para baixo. */
+export const TEXTURE_SIDE_TILES = 8;
+export const ATLAS_VARIANTS = TEXTURE_SIDE_TILES * TEXTURE_SIDE_TILES;
+
+/** Variante pela posição: tiles vizinhos usam pedaços vizinhos da textura, então o chão fica contínuo. */
+export function terrainVariant(x: number, y: number): number {
+  return (y % TEXTURE_SIDE_TILES) * TEXTURE_SIDE_TILES + (x % TEXTURE_SIDE_TILES);
+}
 
 /** Pares com tiles de transição no atlas (`<a>_<b>_<máscara>`), na ordem em que aparecem no nome. */
 const TRANSITION_PAIRS: readonly (readonly [TerrainType, TerrainType])[] = [
