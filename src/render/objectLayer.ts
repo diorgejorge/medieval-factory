@@ -116,13 +116,12 @@ export class ObjectLayer {
     const y = Math.round(object.y * TILE_SIZE_PX);
     sprite.position.set(x - Math.floor(first.w / 2), y - bounds.bottom - 1);
 
-    // Sombra colada à base: na largura do terreno ocupado (construções) ou da silhueta (árvores).
-    const shadowWidth = object.footprintWidth ? object.footprintWidth * TILE_SIZE_PX : bounds.right - bounds.left + 1;
-    const shadowLeft = object.footprintWidth ? x - shadowWidth / 2 : sprite.x + bounds.left;
-    const shadow = new Sprite(this.shadowTexture(shadowWidth));
+    // Sombra colada à base, na largura da silhueta. Construções não têm: a arte já assenta no chão.
+    const shadow = new Sprite(this.shadowTexture(bounds.right - bounds.left + 1));
+    shadow.renderable = !object.noShadow;
     shadow.tint = SHADOW_COLOR;
     shadow.alpha = SHADOW_ALPHA;
-    shadow.position.set(shadowLeft + SHADOW_OFFSET_X_PX, y - SHADOW_ABOVE_PX);
+    shadow.position.set(sprite.x + bounds.left + SHADOW_OFFSET_X_PX, y - SHADOW_ABOVE_PX);
     return { group, sprite, shadow, x, y };
   }
 

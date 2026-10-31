@@ -71,7 +71,7 @@ export function footprint(kind: BuildingKind, rotation: Rotation): { width: numb
 export function buildingObject(building: Building): MapObject {
   const { width, height } = footprint(building.kind, building.rotation);
   const frame = `${buildingDef(building.kind).frame ?? building.kind}_r${building.rotation}`;
-  return { frame, x: building.x + width / 2, y: building.y + height, footprintWidth: width };
+  return { frame, x: building.x + width / 2, y: building.y + height, noShadow: true };
 }
 
 export function rotateClockwise(rotation: Rotation): Rotation {

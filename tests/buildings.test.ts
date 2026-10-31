@@ -70,7 +70,7 @@ describe('BuildingSite: regras de ocupação', () => {
       frame: 'house_thatch_r0',
       x: 3,
       y: 3,
-      footprintWidth: 4,
+      noShadow: true,
     });
   });
 });
