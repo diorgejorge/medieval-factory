@@ -2,7 +2,7 @@
 
 Importar uma imagem nova (uma vez): `python3 assets/_tools/references.py <imagem> <id>` tira o fundo claro ligado
 à borda, recorta e guarda `assets/source/<id>.png` numa resolução intermediária (leve para o repositório).
-No build, cada PNG é reduzido (Lanczos), tem a transparência cortada em 50%, o contraste realçado, a paleta
+No build, cada PNG perde o tablado da maquete, é clareado, reduzido (Lanczos), tem a transparência cortada em 50%, o contraste realçado, a paleta
 limitada e o contorno de 1 px redesenhado para casar com o resto do atlas.
 """
 
@@ -17,6 +17,8 @@ OUTLINE = (0x14, 0x1B, 0x1B, 255)
 BACKGROUND_MIN = 225  # canal mínimo para contar como fundo claro
 COLORS = 32
 CONTRAST = 1.15  # devolve o contraste que a redução tira
+BRIGHTNESS, SATURATION = 1.18, 1.1  # aproxima das cores claras do terreno
+SIDE_FACE = 24  # altura máxima (px na fonte) das laterais de terra do tablado
 DEFAULT_WIDTH = 72  # largura final em px; a fazenda (3x3) é maior para ler bem
 WIDTHS = {"farm": 88}
 SOURCE_SCALE = 4  # resolução guardada em assets/source, relativa à largura final
@@ -39,6 +41,46 @@ def remove_background(img: Image.Image) -> Image.Image:
         px[x, y] = (0, 0, 0, 0)
         queue.extend(((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
     return rgba
+
+
+def is_grass(c: tuple[int, ...]) -> bool:
+    return c[1] > c[0] + 10 and c[1] > c[2] + 8
+
+
+def strip_base(img: Image.Image) -> Image.Image:
+    """Tira o tablado da maquete: as laterais de terra embaixo e a grama do topo ligada a elas.
+
+    Assim o prédio assenta direto no terreno do jogo, em vez de virar uma maquete solta por cima.
+    """
+    img = img.copy()
+    px, (w, h) = img.load(), img.size
+    queue: deque[tuple[int, int]] = deque()
+    for x in range(w):  # de baixo para cima em cada coluna, até achar a grama do topo
+        bottom = next((y for y in range(h - 1, -1, -1) if px[x, y][3] > 128), None)
+        if bottom is None:
+            continue
+        for y in range(bottom, max(bottom - SIDE_FACE, -1), -1):
+            if is_grass(px[x, y]):
+                queue.append((x, y))
+                break
+            px[x, y] = (0, 0, 0, 0)
+    seen: set[tuple[int, int]] = set()
+    while queue:  # grama ligada à borda (musgo do telhado fica, por não estar ligado)
+        x, y = queue.popleft()
+        if (x, y) in seen or not (0 <= x < w and 0 <= y < h):
+            continue
+        seen.add((x, y))
+        if px[x, y][3] <= 128 or not is_grass(px[x, y]):
+            continue
+        px[x, y] = (0, 0, 0, 0)
+        queue.extend(((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
+    return img
+
+
+def brighten(img: Image.Image) -> Image.Image:
+    rgb = ImageEnhance.Color(ImageEnhance.Brightness(img.convert("RGB")).enhance(BRIGHTNESS)).enhance(SATURATION)
+    rgb.putalpha(img.getchannel("A"))
+    return rgb
 
 
 def pixelate(img: Image.Image, width: int) -> Image.Image:
@@ -72,7 +114,8 @@ def add_outline(img: Image.Image) -> Image.Image:
 
 def reference_frames(source: Path) -> dict[str, Image.Image]:
     """Um frame por imagem em `source` (nome do arquivo = id da construção), na largura de WIDTHS."""
-    return {path.stem: pixelate(Image.open(path).convert("RGBA"), WIDTHS.get(path.stem, DEFAULT_WIDTH))
+    return {path.stem: pixelate(brighten(strip_base(Image.open(path).convert("RGBA"))),
+                                WIDTHS.get(path.stem, DEFAULT_WIDTH))
             for path in sorted(source.glob("*.png"))}
 
 

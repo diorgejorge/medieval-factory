@@ -104,7 +104,7 @@ o que não existe no pacote é desenhado com as cores dele (contorno `#141b1b`, 
 
 Vêm das imagens de referência do usuário. Para importar uma imagem nova (ou trocar uma existente):
 `python3 assets/_tools/references.py <imagem> <id>`, com o id de `data/jogo/construcoes.json`. Isso tira o fundo claro,
-recorta e guarda `assets/source/<id>.png` numa resolução intermediária. O build reduz para pixel art (Lanczos),
+recorta e guarda `assets/source/<id>.png` numa resolução intermediária. O build tira o tablado da maquete (laterais de terra e grama da base), para o prédio assentar direto no terreno, clareia as cores, reduz para pixel art (Lanczos),
 realça o contraste, limita a 32 cores e redesenha o contorno de 1 px.
 
 | Frame | Tamanho | Footprint |
