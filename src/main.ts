@@ -74,9 +74,18 @@ async function start(): Promise<void> {
 
   const toolbar = new BuildToolbar(toolbarElement, (tool) => build.select(tool));
   const build = new BuildControls(simulation, site, camera, ghost, toolbar, app.canvas);
+  // Construções do jogador na camada de desenho, com "working" para a Visual animar só quem produz.
+  let workingKey = '';
+  const drawBuildings = () => {
+    const reports = simulation.snapshot?.economy?.buildings ?? {};
+    objects?.replaceGroup(
+      'buildings',
+      site.all.map((b) => ({ ...buildingObject(b), working: reports[b.id]?.status === 'working' })),
+    );
+  };
   simulation.onBuildingsChanged = (buildings) => {
     site.replaceAll(buildings);
-    objects?.replaceGroup('buildings', buildings.map(buildingObject));
+    drawBuildings();
     build.refresh();
   };
 
@@ -120,6 +129,12 @@ async function start(): Promise<void> {
       hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
       buildingPanel.refresh(simulation.snapshot?.economy);
       villagePanel.refresh(simulation.snapshot?.economy);
+      const reports = simulation.snapshot?.economy?.buildings ?? {};
+      const nextWorkingKey = site.all.filter((b) => reports[b.id]?.status === 'working').map((b) => b.id).join();
+      if (nextWorkingKey !== workingKey) {
+        workingKey = nextWorkingKey;
+        drawBuildings();
+      }
       const snapshotEra = simulation.snapshot?.era ?? era;
       if (snapshotEra !== era) {
         era = snapshotEra;

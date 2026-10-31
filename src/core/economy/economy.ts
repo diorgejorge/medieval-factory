@@ -5,8 +5,9 @@ import { buildingDef, countResourceTiles, footprint, type Building, type Buildin
 import type { Grid } from '../world/grid';
 import { Machine, recipesFor, type MachineStatus } from './machines';
 import { Servant, stepServants, type Demand, type ServantView } from './servants';
-import { add, available, markStoragesChanged, storageChanges, used, type Storage } from './storage';
+import { add, available, freeSpace, markStoragesChanged, storageChanges, used, type Storage } from './storage';
 import { recruit, trade, type VillageState, type VillageView } from './villageTrade';
+import { Segment, TransportNetwork, type SegmentView } from './transport';
 
 /** Até onde (em tiles, do centro de uma construção ao da outra) um extrator alcança um armazém. */
 export const STORAGE_RANGE = 24;
@@ -43,6 +44,8 @@ export interface EconomySnapshot {
   servants: ServantView[];
   /** Mesma ordem dos vilarejos do mapa. */
   villages: VillageView[];
+  /** Calhas e esteiras com os itens em cima (t de 0 a 1 ao longo do tile). */
+  segments: SegmentView[];
 }
 
 interface Extractor {
@@ -53,6 +56,8 @@ interface Extractor {
   progressTicks: number;
   tool: HeldTool | null;
   status: ExtractorStatus;
+  /** Tile da calha ou esteira de saída; com ela, o produto vai para a fila em vez do armazém. */
+  outputTile: { x: number; y: number } | null;
 }
 
 /**
@@ -69,6 +74,8 @@ export class Economy {
   private readonly home: { x: number; y: number } | null;
   private demands: Demand[] = [];
   private ticksUntilDemands = 0;
+  private readonly transport: TransportNetwork;
+  private site: BuildingSite | null = null;
 
   constructor(
     private readonly grid: Grid,
@@ -77,6 +84,7 @@ export class Economy {
     villages: readonly { produces: readonly string[]; wants: readonly string[]; population: number }[] = [],
   ) {
     this.home = startCenter;
+    this.transport = new TransportNetwork(grid);
     this.villages = villages.map((v) => ({ produces: v.produces, wants: v.wants, population: v.population, result: null, requests: 0 }));
     if (startCenter) {
       const items = new Map(start.stock.map(({ item, amount }) => [item, amount]));
@@ -87,16 +95,21 @@ export class Economy {
 
   /** Acompanha as construções do terreno: cria o estado das novas e descarta o das removidas. */
   sync(site: BuildingSite): void {
+    this.site = site;
     const alive = new Set<number>([START_STORAGE_ID]);
+    const segments: Segment[] = [];
     for (const building of site.all) {
       alive.add(building.id);
       const def = buildingDef(building.kind);
       const center = buildingCenter(building);
-      if (def.storage && !this.storages.has(building.id)) {
-        this.storages.set(building.id, { center, capacity: def.storage.capacity, items: new Map() });
-      }
+      if (def.transport) segments.push(new Segment(building.id, building.x, building.y, building.rotation, def.transport));
+      const storage = this.storages.get(building.id);
+      if (storage) storage.center = center;
+      else if (def.storage) this.storages.set(building.id, { center, capacity: def.storage.capacity, items: new Map() });
       const recipes = recipesFor(building.kind);
-      if (recipes.length > 0 && !this.machines.has(building.id)) {
+      const machine = this.machines.get(building.id);
+      if (machine) machine.center = center;
+      else if (recipes.length > 0) {
         this.machines.set(building.id, new Machine(center, recipes[0] ?? null));
         this.machineKinds.set(building.id, building.kind);
       }
@@ -109,6 +122,7 @@ export class Economy {
           progressTicks: 0,
           tool: null,
           status: 'working',
+          outputTile: null,
         });
       } else if (extractor) {
         // Girar muda a forma e, com ela, o terreno em volta.
@@ -116,6 +130,8 @@ export class Economy {
         extractor.resourceTiles = countResourceTiles(this.grid, building, extractor.def.terrain);
       }
     }
+    this.transport.rebuild(segments);
+    this.connectToTransport(site);
     for (const id of this.storages.keys()) if (!alive.has(id)) this.storages.delete(id);
     for (const id of this.extractors.keys()) if (!alive.has(id)) this.extractors.delete(id);
     for (const id of this.machines.keys()) {
@@ -124,6 +140,54 @@ export class Economy {
       this.machineKinds.delete(id);
     }
     markStoragesChanged();
+  }
+
+  /**
+   * Liga máquinas e extratores às calhas e esteiras encostadas neles: a que sai da construção
+   * recebe o produto; a que entra nela entrega insumos (e a máquina deixa de dormir).
+   */
+  private connectToTransport(site: BuildingSite): void {
+    for (const building of site.all) {
+      const machine = this.machines.get(building.id);
+      const extractor = this.extractors.get(building.id);
+      if (!machine && !extractor) continue;
+      const { output, hasInput } = this.transportAround(building);
+      if (extractor) extractor.outputTile = output;
+      if (machine) {
+        machine.connected = output !== null || hasInput;
+        machine.emit = output ? (item) => this.transport.at(output.x, output.y)?.push(item) ?? false : null;
+      }
+    }
+  }
+
+  private transportAround(building: Building): { output: { x: number; y: number } | null; hasInput: boolean } {
+    const { width, height } = footprint(building.kind, building.rotation);
+    const inside = (x: number, y: number) =>
+      x >= building.x && x < building.x + width && y >= building.y && y < building.y + height;
+    let output: { x: number; y: number } | null = null;
+    let hasInput = false;
+    for (let y = building.y - 1; y <= building.y + height; y++) {
+      for (let x = building.x - 1; x <= building.x + width; x++) {
+        const diagonal = (x < building.x || x >= building.x + width) && (y < building.y || y >= building.y + height);
+        const segment = inside(x, y) || diagonal ? null : this.transport.at(x, y);
+        if (!segment) continue;
+        if (inside(segment.next.x, segment.next.y)) hasInput = true;
+        else output ??= { x, y };
+      }
+    }
+    return { output, hasInput };
+  }
+
+  /** Item chegando ao fim de uma calha ou esteira: entra na máquina ou no armazém daquele tile. */
+  private receive(x: number, y: number, item: string): boolean {
+    const building = this.site?.buildingAt(x, y);
+    if (!building) return false;
+    const machine = this.machines.get(building.id);
+    if (machine) return machine.accept(item);
+    const storage = this.storages.get(building.id);
+    if (!storage || freeSpace(storage) <= 0) return false;
+    add(storage, item, 1);
+    return true;
   }
 
   /** Troca com um vilarejo; o produto vai para a vila do jogador. */
@@ -153,6 +217,7 @@ export class Economy {
 
   /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
+    this.transport.step((x, y, item) => this.receive(x, y, item));
     for (const extractor of this.extractors.values()) this.stepExtractor(extractor);
     for (const machine of this.machines.values()) {
       if (machine.isSleeping(storageChanges())) continue;
@@ -190,6 +255,7 @@ export class Economy {
       buildings,
       servants: this.servants.map((s) => s.view()),
       villages: this.villages.map(({ population, result, requests }) => ({ population, result, requests })),
+      segments: [...this.transport.segments].map((segment) => segment.view()),
     };
   }
 
@@ -199,7 +265,8 @@ export class Economy {
       return;
     }
     const storages = this.storagesInRange(extractor.center);
-    if (storages.length === 0) {
+    const belt = extractor.outputTile && this.transport.at(extractor.outputTile.x, extractor.outputTile.y);
+    if (storages.length === 0 && !belt) {
       extractor.status = 'noStorage';
       return;
     }
@@ -209,8 +276,9 @@ export class Economy {
       extractor.status = 'noTool';
       return;
     }
-    const target = storages.find((s) => used(s) < s.capacity);
-    if (!target) {
+    // Com esteira de saída o produto vai para ela; sem, para o armazém mais perto com espaço.
+    const target = belt ? null : storages.find((s) => used(s) < s.capacity);
+    if (belt ? !belt.canAccept() : !target) {
       extractor.status = 'storageFull';
       return;
     }
@@ -219,7 +287,8 @@ export class Economy {
     extractor.progressTicks += this.toolTier(extractor.tool);
     if (extractor.progressTicks < extractor.def.seconds * TICKS_PER_SECOND) return;
     extractor.progressTicks = 0;
-    add(target, extractor.def.item, 1);
+    if (belt) belt.push(extractor.def.item);
+    else if (target) add(target, extractor.def.item, 1);
     if (extractor.tool && --extractor.tool.usesLeft <= 0) extractor.tool = null;
   }
 

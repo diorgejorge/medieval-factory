@@ -35,9 +35,10 @@ export function trade(village: VillageState, give: string, receive: string, stor
     village.wants.includes(give) &&
     village.produces.includes(receive) &&
     available(storages, give) >= TRADE_AMOUNT &&
-    freeSpace(home) + (home.items.get(give) ?? 0) >= TRADE_AMOUNT;
+    // O item dado sai primeiro da vila (home): o que sair dela abre espaço para o produto.
+    freeSpace(home) + Math.min(TRADE_AMOUNT, home.items.get(give) ?? 0) >= TRADE_AMOUNT;
   if (ok) {
-    take(storages, give, TRADE_AMOUNT);
+    take([home, ...storages.filter((s) => s !== home)], give, TRADE_AMOUNT);
     add(home, receive, TRADE_AMOUNT);
   }
   village.result = ok ? 'tradeAccepted' : 'tradeRefused';
