@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "note": "Receitas: a construção 'building' transforma 'inputs' em 'outputs' em 'seconds'. 'fuel' = combustíveis aceitos (itens com 'fuel').",
+  "recipes": [
+    { "id": "split_firewood", "building": "workbench", "seconds": 3, "inputs": [{ "item": "wood", "amount": 1 }], "outputs": [{ "item": "firewood", "amount": 2 }] },
+    { "id": "stone_axe", "building": "workbench", "seconds": 6, "inputs": [{ "item": "wood", "amount": 1 }, { "item": "stone", "amount": 2 }], "outputs": [{ "item": "stone_axe", "amount": 1 }] },
+    { "id": "stone_pickaxe", "building": "workbench", "seconds": 6, "inputs": [{ "item": "wood", "amount": 1 }, { "item": "stone", "amount": 2 }], "outputs": [{ "item": "stone_pickaxe", "amount": 1 }] },
+    { "id": "grind_flour", "building": "mill", "seconds": 4, "inputs": [{ "item": "wheat", "amount": 2 }], "outputs": [{ "item": "flour", "amount": 1 }] },
+    { "id": "bake_bread", "building": "oven", "seconds": 6, "fuel": ["firewood", "charcoal"], "inputs": [{ "item": "flour", "amount": 1 }], "outputs": [{ "item": "bread", "amount": 2 }] },
+    { "id": "burn_charcoal", "building": "charcoal_kiln", "seconds": 10, "inputs": [{ "item": "wood", "amount": 4 }], "outputs": [{ "item": "charcoal", "amount": 2 }] },
+    { "id": "smelt_iron", "building": "smelter", "seconds": 8, "fuel": ["charcoal"], "inputs": [{ "item": "iron_ore", "amount": 2 }], "outputs": [{ "item": "iron_ingot", "amount": 1 }] },
+    { "id": "iron_axe", "building": "forge", "seconds": 8, "fuel": ["charcoal"], "inputs": [{ "item": "iron_ingot", "amount": 2 }, { "item": "wood", "amount": 1 }], "outputs": [{ "item": "iron_axe", "amount": 1 }] },
+    { "id": "iron_pickaxe", "building": "forge", "seconds": 8, "fuel": ["charcoal"], "inputs": [{ "item": "iron_ingot", "amount": 2 }, { "item": "wood", "amount": 1 }], "outputs": [{ "item": "iron_pickaxe", "amount": 1 }] }
+  ]
+}

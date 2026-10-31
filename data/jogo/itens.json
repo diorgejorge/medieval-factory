@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "note": "Itens do jogo. Nomes de exibição: data/texto/pt-BR/itens.json (Roteiro). 'trade' = vilarejos produzem/pedem. 'fuel' = segundos de queima. 'tool' = nível (1 pedra, 2 ferro, 3 aço) e usos.",
+  "items": [
+    { "id": "wood", "era": 1, "category": "resource", "trade": true },
+    { "id": "stone", "era": 1, "category": "resource", "trade": true },
+    { "id": "wheat", "era": 1, "category": "resource", "trade": true },
+    { "id": "flour", "era": 1, "category": "intermediate", "trade": true },
+    { "id": "bread", "era": 1, "category": "food", "trade": true },
+    { "id": "firewood", "era": 1, "category": "fuel", "fuel": 8, "trade": true },
+    { "id": "fish", "era": 1, "category": "food", "trade": true },
+    { "id": "wool", "era": 1, "category": "resource", "trade": true },
+    { "id": "iron_ore", "era": 1, "category": "resource", "trade": true },
+    { "id": "clay", "era": 1, "category": "resource", "trade": true },
+    { "id": "stone_axe", "era": 1, "category": "tool", "tool": { "tier": 1, "uses": 40 } },
+    { "id": "stone_pickaxe", "era": 1, "category": "tool", "tool": { "tier": 1, "uses": 40 } },
+    { "id": "charcoal", "era": 2, "category": "fuel", "fuel": 20 },
+    { "id": "iron_ingot", "era": 2, "category": "intermediate" },
+    { "id": "iron_axe", "era": 2, "category": "tool", "tool": { "tier": 2, "uses": 150 } },
+    { "id": "iron_pickaxe", "era": 2, "category": "tool", "tool": { "tier": 2, "uses": 150 } }
+  ]
+}

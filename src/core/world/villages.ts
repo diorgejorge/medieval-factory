@@ -1,12 +1,14 @@
+import { GAME_DATA } from '../data/data';
 import { Rng } from '../random/rng';
 import type { Grid } from './grid';
 import { placeStartingVillage, scatterTrees, type MapObject, type StartingVillage } from './mapObjects';
 import { findPath, type Tile } from './pathfinding';
 import { Terrain, type TerrainType } from './terrain';
 
-/** Itens que os vilarejos produzem e pedem. Os nomes de exibição ficam na UI. */
-export const VILLAGE_GOODS = ['wood', 'stone', 'wheat', 'flour', 'bread', 'firewood', 'fish', 'wool', 'iron_ore', 'clay'] as const;
-export type VillageGood = (typeof VILLAGE_GOODS)[number];
+/** Itens que os vilarejos produzem e pedem: os marcados com "trade" em data/jogo/itens.json. */
+export const VILLAGE_GOODS: readonly string[] = [...GAME_DATA.items.values()].filter((item) => item.trade).map((item) => item.id);
+/** Id de um item em data/jogo/itens.json. */
+export type VillageGood = string;
 
 export interface VillageNames {
   prefixes: readonly string[];

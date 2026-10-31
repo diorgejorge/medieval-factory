@@ -1,21 +1,19 @@
+import { GAME_DATA } from '../data/data';
+import type { BuildingDef } from '../data/gameData';
 import type { Grid } from './grid';
 import { Terrain } from './terrain';
 import type { MapObject } from './mapObjects';
 import type { Area } from './villages';
 
-/**
- * Construções disponíveis. Provisório: na frente 7 viram dados em JSON.
- * Tamanho em tiles na rotação 0; girar 90° troca largura e altura.
- */
-export const BUILDINGS = {
-  oven: { width: 2, height: 2, frame: 'oven_stone', needsWater: false },
-  hut: { width: 3, height: 2, frame: 'hut_straw', needsWater: false },
-  house: { width: 4, height: 2, frame: 'house_thatch', needsWater: false },
-  watermill: { width: 2, height: 2, frame: 'watermill', needsWater: true },
-} as const;
+/** Id de uma construção em data/jogo/construcoes.json. */
+export type BuildingKind = string;
 
-export type BuildingKind = keyof typeof BUILDINGS;
-export const BUILDING_KINDS = Object.keys(BUILDINGS) as BuildingKind[];
+/** Definição da construção; erro se o id não existir (ids vêm dos dados ou de comandos já conferidos). */
+export function buildingDef(kind: BuildingKind): BuildingDef {
+  const def = GAME_DATA.buildings.get(kind);
+  if (!def) throw new RangeError(`Construção desconhecida: ${kind}`);
+  return def;
+}
 
 /**
  * Para onde a frente da construção olha, girando no sentido horário: 0 = sul (de frente para a câmera,
@@ -34,17 +32,18 @@ export interface Building {
 }
 
 /** Por que não dá para construir ali; a UI traduz em texto. */
-export type PlacementProblem = 'outside' | 'water' | 'forest' | 'occupied' | 'reserved' | 'needsWater';
+export type PlacementProblem = 'unknown' | 'outside' | 'water' | 'forest' | 'occupied' | 'reserved' | 'needsWater';
 
+/** Tamanho em tiles; girar 90° troca largura e altura. */
 export function footprint(kind: BuildingKind, rotation: Rotation): { width: number; height: number } {
-  const { width, height } = BUILDINGS[kind];
+  const { width, height } = buildingDef(kind);
   return rotation % 2 === 0 ? { width, height } : { width: height, height: width };
 }
 
 /** Objeto para a camada de desenho: centro da base, embaixo do terreno ocupado. */
 export function buildingObject(building: Building): MapObject {
   const { width, height } = footprint(building.kind, building.rotation);
-  const frame = `${BUILDINGS[building.kind].frame}_r${building.rotation}`;
+  const frame = `${buildingDef(building.kind).frame ?? building.kind}_r${building.rotation}`;
   return { frame, x: building.x + width / 2, y: building.y + height };
 }
 
@@ -81,6 +80,7 @@ export class BuildingSite {
 
   /** Primeiro problema que impede construir ali, ou null se pode. `ignoreId` permite girar no lugar. */
   check(kind: BuildingKind, x: number, y: number, rotation: Rotation, ignoreId = 0): PlacementProblem | null {
+    if (!GAME_DATA.buildings.has(kind)) return 'unknown';
     const { width, height } = footprint(kind, rotation);
     for (let ty = y; ty < y + height; ty++) {
       for (let tx = x; tx < x + width; tx++) {
@@ -88,7 +88,7 @@ export class BuildingSite {
         if (problem) return problem;
       }
     }
-    if (BUILDINGS[kind].needsWater && !this.touchesWater(x, y, width, height)) return 'needsWater';
+    if (buildingDef(kind).needsWater && !this.touchesWater(x, y, width, height)) return 'needsWater';
     return null;
   }
 
