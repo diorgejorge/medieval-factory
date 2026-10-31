@@ -16,6 +16,9 @@
     "smelter": "Fundição",
     "forge": "Forja",
     "belt": "Esteira de roletes",
-    "chute": "Calha de madeira"
+    "chute": "Calha de madeira",
+    "hoist": "Nora",
+    "splitter": "Repartidor",
+    "filter": "Separador"
   }
 }
