@@ -13,6 +13,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from machines import machine_frames
+from references import reference_frames
 
 ASSETS = Path(__file__).resolve().parent.parent
 VENDOR = ASSETS / "vendor" / "ninja-adventure"
@@ -326,9 +327,10 @@ def build() -> None:
     write_atlas(terrain, ASSETS / "terrain" / "terrain.json", cols=16,
                 animations={"water_ripple": [f"water_ripple_{i}" for i in range(4)]})
     objects, animations = object_frames()
-    machines, machine_animations = machine_frames(HOUSE, NATURE)
+    machines, machine_animations = machine_frames(NATURE)
     objects.update(machines)
     animations.update(machine_animations)
+    objects.update(reference_frames(ASSETS / "source"))
     write_atlas(objects, ASSETS / "objects" / "objects.json", cols=8,
                 animations=animations, anchor={"x": 0.5, "y": 1.0})
 
