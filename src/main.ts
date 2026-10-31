@@ -21,6 +21,7 @@ import { ObjectLayer } from './render/objectLayer';
 import { ServantLayer } from './render/servantLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
 import { BuildingPanel, formatItems } from './ui/buildingPanel';
+import { RoutePicker, type RouteEndpointOption } from './ui/routePicker';
 import { BuildToolbar } from './ui/buildToolbar';
 import { eraName, showEraNotice } from './ui/eraNotice';
 import { VillagePanel } from './ui/villagePanel';
@@ -95,10 +96,22 @@ async function start(): Promise<void> {
     trade: (village, give, receive) => simulation.send({ type: 'trade', village, give, receive }),
     recruit: (village) => simulation.send({ type: 'recruit', village }),
   });
+  // Pontas de rota das carroças: a vila, os armazéns construídos e os vilarejos vizinhos.
+  const routeOptions = (): RouteEndpointOption[] => [
+    { endpoint: { storage: START_STORAGE_ID }, name: UI_TEXT.hud.ownVillage },
+    ...site.all
+      .filter((b) => buildingDef(b.kind).storage)
+      .map((b) => ({ endpoint: { storage: b.id }, name: `${buildingDef(b.kind).name} ${b.id}` })),
+    ...villages.map((v, index) => ({ endpoint: { village: index }, name: v.name, produces: v.produces, wants: v.wants })),
+  ];
+  const routePicker = new RoutePicker(routeOptions, (buildingId, route) =>
+    simulation.send({ type: 'setCartRoute', buildingId, ...route }),
+  );
   const buildingPanel = new BuildingPanel(
     panel,
     (buildingId, recipe) => simulation.send({ type: 'setRecipe', buildingId, recipe }),
     (buildingId, item) => simulation.send({ type: 'setFilter', buildingId, item }),
+    routePicker,
   );
   bindClicks(app.canvas, (screen) => {
     if (build.click(screen)) return;

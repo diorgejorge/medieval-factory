@@ -2,6 +2,7 @@ import { GAME_DATA, UI_TEXT } from '../core/data/data';
 import { fillText } from '../core/data/interfaceText';
 import type { BuildingReport, EconomySnapshot, ExtractorStatus } from '../core/economy/economy';
 import type { MachineStatus } from '../core/economy/machines';
+import type { RoutePicker } from './routePicker';
 
 /** Um texto por status (interface.json); o tipo garante que nenhum status fica sem texto. */
 const STATUS_TEXT: Readonly<Record<ExtractorStatus | MachineStatus, string>> = UI_TEXT.buildingStatus;
@@ -49,6 +50,7 @@ export class BuildingPanel {
     private readonly element: HTMLElement,
     private readonly onSetRecipe: (buildingId: number, recipe: string) => void,
     private readonly onSetFilter: (buildingId: number, item: string | null) => void,
+    private readonly routePicker: RoutePicker | null = null,
   ) {
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Escape') this.hide();
@@ -60,7 +62,7 @@ export class BuildingPanel {
     this.title = title;
     this.recipesKey = '';
     this.filterKey = '';
-    this.element.replaceChildren(this.info, this.recipeButtons, this.filterButtons);
+    this.element.replaceChildren(this.info, this.recipeButtons, this.filterButtons, ...(this.routePicker ? [this.routePicker.element] : []));
     this.refresh(economy);
     this.element.hidden = false;
   }
@@ -100,6 +102,7 @@ export class BuildingPanel {
     this.info.replaceChildren(...lines);
     this.renderRecipeButtons(report);
     this.renderFilterButtons(report);
+    this.routePicker?.render(this.openId, report.route);
   }
 
   /** Separador: um botão por item, mais "o primeiro que chegar". */

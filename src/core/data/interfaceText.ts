@@ -58,9 +58,14 @@ export const INTERFACE_KEYS = {
     recipeItem: ['quantidade', 'item'],
     recipeItemSeparator: [],
     recipeFuel: ['combustiveis'],
-    // Do painel de separador, que ainda vai ser feito: já conferidos aqui.
+    // Separador e pátio das carroças.
     filterItem: ['item'],
     filterAny: [],
+    route: ['origem', 'destino'],
+    routeCargo: ['item'],
+    routeNone: [],
+    routePickOrigin: [],
+    routePickDestination: [],
   },
   villagePanel: {
     population: ['populacao'],
