@@ -1,7 +1,10 @@
-import { GAME_DATA } from '../core/data/data';
+import { GAME_DATA, UI_TEXT } from '../core/data/data';
+import { fillText } from '../core/data/interfaceText';
 import type { EconomySnapshot } from '../core/economy/economy';
 import { RECRUIT_FOOD, TRADE_AMOUNT, type VillageResult } from '../core/economy/villageTrade';
 import type { Village, VillageGood } from '../core/world/villages';
+
+const TEXT = UI_TEXT.villagePanel;
 
 function label(item: VillageGood): string {
   return GAME_DATA.items.get(item)?.name ?? item;
@@ -69,9 +72,9 @@ export class VillagePanel {
     const lines = [
       el('h2', village.name),
       el('p', temperament ? `“${fill(temperament.greeting)}”` : '', 'quote'),
-      el('p', `População: ${state?.population ?? village.population}`),
-      el('p', `Produz: ${village.produces.map(label).join(', ')}`),
-      el('p', `Pede: ${village.wants.map(label).join(', ')}`),
+      el('p', fillText(TEXT.population, { populacao: state?.population ?? village.population })),
+      el('p', fillText(TEXT.produces, { itens: village.produces.map(label).join(', ') })),
+      el('p', fillText(TEXT.wants, { itens: village.wants.map(label).join(', ') })),
     ];
     if (temperament && firstWant) {
       lines.push(el('p', `“${fill(temperament.request, label(firstWant).toLocaleLowerCase('pt-BR'))}”`, 'quote'));
@@ -87,14 +90,14 @@ export class VillagePanel {
     for (const give of village.wants) {
       for (const receive of village.produces) {
         buttons.push(
-          button(`Dar ${TRADE_AMOUNT} ${label(give)} → receber ${TRADE_AMOUNT} ${label(receive)}`, () =>
+          button(fillText(TEXT.trade, { quantidade: TRADE_AMOUNT, dar: label(give), receber: label(receive) }), () =>
             this.onAction.trade(index, give, receive),
           ),
         );
       }
     }
-    buttons.push(button(`Recrutar um servo (${RECRUIT_FOOD} de comida)`, () => this.onAction.recruit(index)));
-    buttons.push(el('p', '[Esc] fechar', 'hint'));
+    buttons.push(button(fillText(TEXT.recruit, { comida: RECRUIT_FOOD }), () => this.onAction.recruit(index)));
+    buttons.push(el('p', UI_TEXT.common.close, 'hint'));
     return buttons;
   }
 }
@@ -108,7 +111,8 @@ function answer(temperament: Temperament, result: VillageResult): string {
     case 'recruited':
       return temperament.recruit;
     case 'recruitRefused':
-      return `Hoje ninguém de {vilarejo} vai: precisa de ${RECRUIT_FOOD} de comida e de gente sobrando.`;
+      // {vilarejo} fica para o `fill` do painel, como nas falas do temperamento.
+      return fillText(TEXT.recruitRefused, { comida: RECRUIT_FOOD });
   }
 }
 

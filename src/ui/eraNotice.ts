@@ -1,4 +1,5 @@
 import erasText from '../../data/texto/pt-BR/eras.json';
+import { UI_TEXT } from '../core/data/data';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV'];
 
@@ -17,7 +18,7 @@ export function showEraNotice(element: HTMLElement, era: number): void {
   intro.textContent = text ? `“${text.intro}”` : '';
   const hint = document.createElement('p');
   hint.className = 'hint';
-  hint.textContent = 'Novas construções na barra. [Esc] fechar';
+  hint.textContent = UI_TEXT.eraNotice.hint;
   element.replaceChildren(title, intro, hint);
   element.hidden = false;
   const close = (event: KeyboardEvent) => {

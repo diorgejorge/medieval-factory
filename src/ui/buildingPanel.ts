@@ -1,18 +1,11 @@
-import { GAME_DATA } from '../core/data/data';
+import { GAME_DATA, UI_TEXT } from '../core/data/data';
+import { fillText } from '../core/data/interfaceText';
 import type { BuildingReport, EconomySnapshot, ExtractorStatus } from '../core/economy/economy';
 import type { MachineStatus } from '../core/economy/machines';
 
-const STATUS_TEXT: Readonly<Record<ExtractorStatus | MachineStatus, string>> = {
-  working: 'Trabalhando',
-  noTool: 'Parado: falta ferramenta no armazém',
-  noStorage: 'Parado: nenhum armazém por perto',
-  storageFull: 'Parado: armazém cheio',
-  noResource: 'Parado: não há o recurso em volta',
-  noRecipe: 'Parado: escolha uma receita',
-  noInput: 'Parado: faltam insumos no armazém',
-  noFuel: 'Parado: falta combustível no armazém',
-  outputFull: 'Parado: sem espaço no armazém para o produto',
-};
+/** Um texto por status (interface.json); o tipo garante que nenhum status fica sem texto. */
+const STATUS_TEXT: Readonly<Record<ExtractorStatus | MachineStatus, string>> = UI_TEXT.buildingStatus;
+const TEXT = UI_TEXT.buildingPanel;
 
 /** "2 Trigo → 1 Farinha", montado dos dados (receitas não têm nome próprio). */
 export function describeRecipe(recipeId: string): string {
@@ -21,7 +14,7 @@ export function describeRecipe(recipeId: string): string {
   const list = (amounts: readonly { item: string; amount: number }[]) =>
     amounts.map(({ item, amount }) => `${amount} ${itemName(item)}`).join(' + ');
   const fuel = recipe.fuel ? ` (queima ${recipe.fuel.map(itemName).join(' ou ')})` : '';
-  return `${list(recipe.inputs)} → ${list(recipe.outputs)}${fuel}`;
+  return fillText(TEXT.recipeFormat, { entradas: list(recipe.inputs), saidas: list(recipe.outputs) }) + fuel;
 }
 
 export function itemName(item: string): string {
@@ -31,7 +24,9 @@ export function itemName(item: string): string {
 /** Lista "Madeira 20 · Pedra 10" para o HUD e os painéis. */
 export function formatItems(items: Readonly<Record<string, number>>): string {
   const entries = Object.entries(items).filter(([, amount]) => amount > 0);
-  return entries.length > 0 ? entries.map(([item, amount]) => `${itemName(item)} ${amount}`).join(' · ') : 'vazio';
+  const { itemAmount, itemSeparator, empty } = UI_TEXT.common;
+  if (entries.length === 0) return empty;
+  return entries.map(([item, amount]) => fillText(itemAmount, { item: itemName(item), quantidade: amount })).join(itemSeparator);
 }
 
 /**
@@ -73,9 +68,9 @@ export class BuildingPanel {
     if (this.openId === null) return;
     const report: BuildingReport = economy?.buildings[this.openId] ?? {};
     const lines = [el('h2', this.title)];
-    if (report.recipe) lines.push(el('p', `Receita: ${describeRecipe(report.recipe)}`));
+    if (report.recipe) lines.push(el('p', fillText(TEXT.recipe, { receita: describeRecipe(report.recipe) })));
     if (report.progress !== undefined && report.status === 'working') {
-      lines.push(el('p', `Andamento: ${Math.round(report.progress * 100)}%`));
+      lines.push(el('p', fillText(TEXT.progress, { progresso: Math.round(report.progress * 100) })));
     }
     if (report.status) lines.push(el('p', STATUS_TEXT[report.status], report.status === 'working' ? '' : 'warning'));
     if (report.tool !== undefined) {
@@ -83,9 +78,12 @@ export class BuildingPanel {
     }
     if (report.items) {
       const total = Object.values(report.items).reduce((sum, amount) => sum + amount, 0);
-      lines.push(el('p', `Guardado: ${total} de ${report.capacity ?? 0}`), el('p', formatItems(report.items)));
+      lines.push(
+        el('p', fillText(TEXT.stored, { total, capacidade: report.capacity ?? 0 })),
+        el('p', formatItems(report.items)),
+      );
     }
-    lines.push(el('p', '[Esc] fechar', 'hint'));
+    lines.push(el('p', UI_TEXT.common.close, 'hint'));
     this.info.replaceChildren(...lines);
     this.renderRecipeButtons(report);
   }
