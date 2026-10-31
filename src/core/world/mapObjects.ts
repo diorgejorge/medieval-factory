@@ -12,6 +12,8 @@ export interface MapObject {
   y: number;
   /** Sem sombra desenhada pelo motor (construções do jogador: a arte já assenta no chão). */
   noShadow?: boolean;
+  /** Máquina ou extrator produzindo agora: a camada de desenho pode animar só nesse caso. */
+  working?: boolean;
 }
 
 export const TREES = {

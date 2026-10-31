@@ -23,11 +23,30 @@ export class Machine {
   private pending: ItemAmount[] = [];
   /** Versão dos armazéns quando dormiu; -1 = acordada. */
   private sleptAt = -1;
+  /** Insumos que chegaram por calha ou esteira, usados antes dos do armazém. */
+  readonly buffer: Storage;
+  /** Esteira de saída: o produto vai para ela em vez do armazém. */
+  emit: ((item: string) => boolean) | null = null;
+  /** Ligada a calhas ou esteiras: não dorme, porque a fila muda sem passar por armazém. */
+  connected = false;
 
   constructor(
-    readonly center: { x: number; y: number },
+    public center: { x: number; y: number },
     public recipe: RecipeDef | null,
-  ) {}
+  ) {
+    this.buffer = { center, capacity: Infinity, items: new Map() };
+  }
+
+  /** Recebe um item de uma calha ou esteira, se a receita usa e ainda cabe (até 2 receitas de estoque). */
+  accept(item: string): boolean {
+    const recipe = this.recipe;
+    if (!recipe) return false;
+    const input = recipe.inputs.find((i) => i.item === item);
+    const limit = input ? input.amount * 2 : recipe.fuel?.includes(item) ? 2 : 0;
+    if ((this.buffer.items.get(item) ?? 0) >= limit) return false;
+    add(this.buffer, item, 1);
+    return true;
+  }
 
   /** Troca a receita; o que estava em andamento se perde (os insumos já foram consumidos). */
   setRecipe(recipe: RecipeDef): void {
@@ -42,12 +61,13 @@ export class Machine {
   }
 
   /** Um tick. `storages` = armazéns ao alcance, do mais perto ao mais longe; `version` muda a cada alteração neles. */
-  step(storages: readonly Storage[], version: number): void {
+  step(inRange: readonly Storage[], version: number): void {
     if (this.sleptAt === version) return;
     this.sleptAt = -1;
     const recipe = this.recipe;
     if (!recipe) return this.sleep('noRecipe', version);
-    if (storages.length === 0) return this.sleep('noStorage', version);
+    if (inRange.length === 0 && !this.connected) return this.sleep('noStorage', version);
+    const storages = [this.buffer, ...inRange];
     if (this.pending.length > 0 && !this.deliver(storages)) return this.sleep('outputFull', version);
     if (!this.crafting) {
       if (!recipe.inputs.every(({ item, amount }) => available(storages, item) >= amount)) {
@@ -75,7 +95,7 @@ export class Machine {
 
   private sleep(status: MachineStatus, version: number): void {
     this.status = status;
-    this.sleptAt = version;
+    if (!this.connected) this.sleptAt = version;
   }
 
   private hasFuel(recipe: RecipeDef, storages: readonly Storage[]): boolean {
@@ -91,10 +111,16 @@ export class Machine {
     return true;
   }
 
-  /** Entrega o produto pronto no armazém mais perto que tenha espaço para tudo. */
+  /** Entrega o produto pronto: na esteira de saída, um por vez, ou no armazém mais perto com espaço para tudo. */
   private deliver(storages: readonly Storage[]): boolean {
+    if (this.emit) {
+      const next = this.pending.find((p) => p.amount > 0);
+      if (next && this.emit(next.item)) next.amount--;
+      this.pending = this.pending.filter((p) => p.amount > 0);
+      return this.pending.length === 0;
+    }
     const total = this.pending.reduce((sum, { amount }) => sum + amount, 0);
-    const target = storages.find((storage) => freeSpace(storage) >= total);
+    const target = storages.find((storage) => storage !== this.buffer && freeSpace(storage) >= total);
     if (!target) return false;
     for (const { item, amount } of this.pending) add(target, item, amount);
     this.pending = [];

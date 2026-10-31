@@ -38,6 +38,8 @@ export interface BuildingDef {
   extracts?: { item: string; terrain: TerrainType; seconds: number; tool?: { kind: ToolKind; minTier: ToolTier } };
   /** Armazém: guarda até `capacity` itens somados. */
   storage?: { capacity: number };
+  /** Calha ou esteira 1×1: leva itens na direção da rotação. */
+  transport?: { speed: number; gravity: boolean };
 }
 
 export interface ItemAmount {
@@ -251,6 +253,18 @@ function parseBuilding(
       } else if (tool !== undefined) {
         problems.push(`${where}: "extracts.tool" deve ser { kind, minTier }`);
       }
+    }
+  }
+  if (entry['transport'] !== undefined) {
+    const transport = entry['transport'];
+    if (isObject(transport)) {
+      building.transport = {
+        speed: requirePositive(transport, 'speed', `${where} transport`, problems),
+        gravity: transport['gravity'] === true,
+      };
+      if (building.width !== 1 || building.height !== 1) problems.push(`${where}: calha/esteira deve ser 1×1`);
+    } else {
+      problems.push(`${where}: "transport" deve ser { speed, gravity }`);
     }
   }
   if (entry['storage'] !== undefined) {

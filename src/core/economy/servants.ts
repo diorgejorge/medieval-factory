@@ -1,5 +1,5 @@
 import { TICKS_PER_SECOND } from '../config';
-import { add, type Storage } from './storage';
+import { add, freeSpace, type Storage } from './storage';
 
 /** Tiles por segundo de um servo andando. */
 export const SERVANT_SPEED = 4;
@@ -98,9 +98,16 @@ function moveServant(servant: Servant, storages: ReadonlyMap<number, Storage>): 
     if (servant.carrying === 0) servant.job = null;
     else job.phase = 'drop';
   } else {
-    add(target, job.item, servant.carrying);
-    servant.carrying = 0;
-    servant.job = null;
+    // Só larga o que cabe; o resto vai para outro armazém com espaço (ou espera, se não houver).
+    const dropped = Math.min(servant.carrying, freeSpace(target));
+    add(target, job.item, dropped);
+    servant.carrying -= dropped;
+    if (servant.carrying === 0) {
+      servant.job = null;
+      return;
+    }
+    const other = nearestWithSpace(storages, job.to, servant);
+    if (other !== null) job.to = other;
   }
 }
 
@@ -118,6 +125,21 @@ function walkTowards(servant: Servant, point: { x: number; y: number }): boolean
   servant.x += (dx / distance) * step;
   servant.y += (dy / distance) * step;
   return false;
+}
+
+/** Armazém com espaço mais perto do servo, sem ser `except`. */
+function nearestWithSpace(storages: ReadonlyMap<number, Storage>, except: number, servant: Servant): number | null {
+  let best: number | null = null;
+  let bestDistance = Infinity;
+  for (const [id, storage] of storages) {
+    if (id === except || freeSpace(storage) <= 0) continue;
+    const distance = Math.hypot(storage.center.x - servant.x, storage.center.y - servant.y);
+    if (distance < bestDistance) {
+      best = id;
+      bestDistance = distance;
+    }
+  }
+  return best;
 }
 
 /** Quanto do item já está indo para o armazém (pego ou por pegar). */
