@@ -21,7 +21,7 @@ self.onmessage = (event: MessageEvent<InitMessage | CommandMessage>) => {
   if (message.kind === 'init') {
     const world = createWorld(message.seed, MAP_SIZE_TILES, villageTexts.names);
     const { start, villages } = world.settlements;
-    const economy = new Economy(world.grid, start?.center ?? null, GAME_DATA.start, villages);
+    const economy = new Economy(world.grid, start?.center ?? null, GAME_DATA.start, villages, start?.area ?? null);
     loop = new SimulationLoop(new Simulation(world.site, economy));
   } else {
     loop?.enqueue(message.command);

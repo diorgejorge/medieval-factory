@@ -9,6 +9,8 @@ import { toolsOf, type ToolEntry } from './itemIndex';
 import { add, available, createStorage, freeSpace, used, type Storage } from './storage';
 import { recruit, trade, type VillageState, type VillageView } from './villageTrade';
 import { Segment, TransportNetwork, type SegmentView } from './transport';
+import { CartFleet, validRoute, type CartRoute, type CartView, type CartWorld } from './carts';
+import type { Area } from '../world/villages';
 
 /** Até onde (em tiles, do centro de uma construção ao da outra) um extrator alcança um armazém. */
 export const STORAGE_RANGE = 24;
@@ -38,6 +40,9 @@ export interface BuildingReport {
   capacity?: number;
   /** Separador: item que segue em frente (null = o primeiro que chegar). */
   filter?: string | null;
+  /** Pátio das carroças: rota atual (null = nenhuma) e as carroças dele. */
+  route?: CartRoute | null;
+  carts?: CartView[];
 }
 
 export interface EconomySnapshot {
@@ -49,6 +54,8 @@ export interface EconomySnapshot {
   villages: VillageView[];
   /** Calhas e esteiras com os itens em cima (t de 0 a 1 ao longo do tile). */
   segments: SegmentView[];
+  /** Carroças de todos os pátios: centro em tiles (fracionário) e direção do movimento. */
+  carts: CartView[];
 }
 
 interface Extractor {
@@ -81,16 +88,43 @@ export class Economy {
   private site: BuildingSite | null = null;
   /** Armazéns ao alcance de cada máquina ou extrator (por id), do mais perto ao mais longe. */
   private readonly ranges = new Map<number, readonly Storage[]>();
+  private readonly carts = new CartFleet();
+  private readonly cartWorld: CartWorld;
+  private readonly villageAreas: (Area | null)[];
 
+  /**
+   * `startArea` é o terreno da vila do jogador (por onde as carroças chegam ao armazém inicial);
+   * sem ele, vale o tile do centro. A `area` de cada vilarejo serve do mesmo jeito.
+   */
   constructor(
     private readonly grid: Grid,
     startCenter: { x: number; y: number } | null,
     start: { capacity: number; servants: number; stock: readonly ItemAmount[] } = GAME_DATA.start,
-    villages: readonly { produces: readonly string[]; wants: readonly string[]; population: number }[] = [],
+    villages: readonly { produces: readonly string[]; wants: readonly string[]; population: number; area?: Area }[] = [],
+    startArea: Area | null = null,
   ) {
     this.home = startCenter;
     this.transport = new TransportNetwork(grid);
     this.villages = villages.map((v) => ({ produces: v.produces, wants: v.wants, population: v.population, result: null, requests: 0 }));
+    this.villageAreas = villages.map((v) => v.area ?? null);
+    const homeArea =
+      startArea ?? (startCenter ? { left: Math.floor(startCenter.x), top: Math.floor(startCenter.y), width: 1, height: 1 } : null);
+    this.cartWorld = {
+      grid,
+      isRoad: (x, y) => {
+        const building = this.site?.buildingAt(x, y);
+        return building !== null && building !== undefined && buildingDef(building.kind).road === true;
+      },
+      storage: (id) => this.storages.get(id),
+      storageArea: (id) => {
+        if (!this.storages.has(id)) return null;
+        if (id === START_STORAGE_ID) return homeArea;
+        const building = this.site?.all.find((b) => b.id === id);
+        return building ? areaOf(building) : null;
+      },
+      village: (index) => this.villages[index],
+      villageArea: (index) => this.villageAreas[index] ?? null,
+    };
     if (startCenter) {
       const items = new Map(start.stock.map(({ item, amount }) => [item, amount]));
       this.storages.set(START_STORAGE_ID, createStorage(startCenter, start.capacity, items));
@@ -103,10 +137,12 @@ export class Economy {
     this.site = site;
     const alive = new Set<number>([START_STORAGE_ID]);
     const segments: Segment[] = [];
+    const yards = new Map<number, { area: Area; def: NonNullable<BuildingDef['carts']> }>();
     for (const building of site.all) {
       alive.add(building.id);
       const def = buildingDef(building.kind);
       const center = buildingCenter(building);
+      if (def.carts) yards.set(building.id, { area: areaOf(building), def: def.carts });
       if (def.transport) segments.push(new Segment(building.id, building.x, building.y, building.rotation, def.transport));
       const storage = this.storages.get(building.id);
       if (storage) storage.center = center;
@@ -145,6 +181,7 @@ export class Economy {
       this.machineKinds.delete(id);
     }
     this.cacheRanges();
+    this.carts.sync(yards);
   }
 
   /**
@@ -242,6 +279,17 @@ export class Economy {
     return this.transport.setFilter(buildingId, item);
   }
 
+  /**
+   * Dá ao pátio `buildingId` uma rota em loop (null tira a rota e as carroças param onde estão).
+   * Recusa rota impossível: ponta inexistente ou troca que o vilarejo não aceita (ver validRoute).
+   */
+  setCartRoute(buildingId: number, route: CartRoute | null): boolean {
+    if (!this.carts.has(buildingId)) return false;
+    if (route && (!GAME_DATA.items.has(route.item) || (route.back !== undefined && !GAME_DATA.items.has(route.back)))) return false;
+    if (route && !validRoute(route, this.cartWorld)) return false;
+    return this.carts.setRoute(buildingId, route);
+  }
+
   /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
     this.transport.step((x, y, item) => this.receive(x, y, item));
@@ -253,6 +301,7 @@ export class Economy {
       this.ticksUntilDemands = DEMAND_INTERVAL_TICKS;
     }
     stepServants(this.servants, this.storages, this.demands);
+    this.carts.step(this.cartWorld);
   }
 
   snapshot(): EconomySnapshot {
@@ -277,12 +326,17 @@ export class Economy {
         progress: machine.progress,
       };
     }
+    for (const building of this.site?.all ?? []) {
+      const report = this.carts.report(building.id);
+      if (report) buildings[building.id] = report;
+    }
     return {
       stock,
       buildings,
       servants: this.servants.map((s) => s.view()),
       villages: this.villages.map(({ population, result, requests }) => ({ population, result, requests })),
       segments: [...this.transport.segments].map((segment) => segment.view()),
+      carts: this.carts.views(),
     };
   }
 
@@ -402,3 +456,9 @@ export class Economy {
   }
 }
 
+
+/** Terreno ocupado pela construção, já com a forma girada. */
+function areaOf(building: Building): Area {
+  const { width, height } = footprint(building.kind, building.rotation);
+  return { left: building.x, top: building.y, width, height };
+}

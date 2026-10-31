@@ -3,6 +3,7 @@ import { GAME_DATA } from './data/data';
 import { FixedStepClock } from './time/fixedStepClock';
 import { RateMeter } from './time/rateMeter';
 import type { Economy, EconomySnapshot } from './economy/economy';
+import type { CartEndpoint } from './economy/carts';
 import type { Building, BuildingKind, BuildingSite, Rotation } from './world/buildings';
 
 /** Únicas entradas que alteram a simulação: facilita replay, undo e multiplayer no futuro. */
@@ -15,7 +16,10 @@ export type SimulationCommand =
   | { type: 'setRecipe'; buildingId: number; recipe: string }
   | { type: 'setFilter'; buildingId: number; item: string | null }
   | { type: 'trade'; village: number; give: string; receive: string }
-  | { type: 'recruit'; village: number };
+  | { type: 'recruit'; village: number }
+  /** Rota em loop de um pátio das carroças (ver CartRoute); clearCartRoute tira a rota. */
+  | { type: 'setCartRoute'; buildingId: number; from: CartEndpoint; to: CartEndpoint; item: string; back?: string }
+  | { type: 'clearCartRoute'; buildingId: number };
 
 /** Estado publicado para a main thread a cada avanço. */
 export interface SimulationSnapshot {
@@ -157,6 +161,14 @@ export class SimulationLoop {
         break;
       case 'recruit':
         this.simulation.economy?.recruitFromVillage(command.village);
+        break;
+      case 'setCartRoute': {
+        const { from, to, item, back } = command;
+        this.simulation.economy?.setCartRoute(command.buildingId, back === undefined ? { from, to, item } : { from, to, item, back });
+        break;
+      }
+      case 'clearCartRoute':
+        this.simulation.economy?.setCartRoute(command.buildingId, null);
         break;
     }
   }

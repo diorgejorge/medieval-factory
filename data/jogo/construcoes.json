@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 1 'item' do 'terrain' em volta a cada 'seconds' (dividido pelo nível da ferramenta); 'tool' = tipo e nível mínimo exigidos (sem 'tool', não precisa). 'storage' = armazém com 'capacity' itens. 'transport' = calha ou esteira: anda 'speed' tiles por segundo; com 'gravity', só passa o item para um tile igual ou mais baixo; 'climb' = quanto pode subir de um tile para o seguinte (sem o campo, sem limite); 'sort' = 'split' (divisor: reparte entre frente e lados) ou 'filter' (filtro: o item escolhido segue em frente, os outros vão para os lados). Nomes de exibição: data/texto/pt-BR/construcoes.json (Roteiro).",
+  "note": "Construções. Tamanho em tiles na rotação 0. 'frame' = arte no atlas de objetos (sem frame, ainda não aparece na barra). 'extracts' = extrator: tira 1 'item' do 'terrain' em volta a cada 'seconds' (dividido pelo nível da ferramenta); 'tool' = tipo e nível mínimo exigidos (sem 'tool', não precisa). 'storage' = armazém com 'capacity' itens. 'transport' = calha ou esteira: anda 'speed' tiles por segundo; com 'gravity', só passa o item para um tile igual ou mais baixo; 'climb' = quanto pode subir de um tile para o seguinte (sem o campo, sem limite); 'sort' = 'split' (divisor: reparte entre frente e lados) ou 'filter' (filtro: o item escolhido segue em frente, os outros vão para os lados). 'road' = estrada 1×1 por onde andam as carroças. 'carts' = pátio com 'count' carroças, cada uma levando até 'capacity' itens a 'speed' tiles por segundo. Nomes de exibição: data/texto/pt-BR/construcoes.json (Roteiro).",
   "buildings": [
     { "id": "oven", "era": 1, "width": 4, "height": 4, "frame": "oven_stone" },
     { "id": "hut", "era": 1, "width": 4, "height": 4, "frame": "hut_straw" },
@@ -20,6 +20,8 @@
     { "id": "belt", "era": 1, "width": 1, "height": 1, "frame": "belt", "transport": { "speed": 1.5, "gravity": false, "climb": 2 } },
     { "id": "hoist", "era": 2, "width": 1, "height": 1, "frame": "hoist", "transport": { "speed": 1, "gravity": false, "climb": 255 } },
     { "id": "splitter", "era": 1, "width": 1, "height": 1, "frame": "splitter", "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "split" } },
-    { "id": "filter", "era": 1, "width": 1, "height": 1, "frame": "filter", "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "filter" } }
+    { "id": "filter", "era": 1, "width": 1, "height": 1, "frame": "filter", "transport": { "speed": 2, "gravity": false, "climb": 2, "sort": "filter" } },
+    { "id": "road", "era": 1, "width": 1, "height": 1, "road": true },
+    { "id": "cart_yard", "era": 1, "width": 4, "height": 4, "carts": { "count": 1, "capacity": 20, "speed": 3 } }
   ]
 }
