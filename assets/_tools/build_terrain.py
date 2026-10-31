@@ -18,6 +18,7 @@ from items import item_frames
 from terrain_art import terrain_frames
 from machines import machine_frames
 from references import HD_DENSITY, reference_frames
+from roads import road_and_yard_frames
 from transport import transport_frames
 
 ASSETS = Path(__file__).resolve().parent.parent
@@ -393,6 +394,7 @@ def build() -> None:
     animations.update(transport_animations)
     carts, cart_animations = cart_frames()
     objects.update(carts)
+    objects.update(road_and_yard_frames())
     animations.update(cart_animations)
     items = json.loads((ASSETS.parent / "data" / "jogo" / "itens.json").read_text())["items"]
     objects.update(item_frames([item["id"] for item in items]))
