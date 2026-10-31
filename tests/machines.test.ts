@@ -62,7 +62,7 @@ describe('máquinas com receitas', () => {
     const { site, economy } = setup([{ item: 'firewood', amount: 20 }], 500);
     site.place('farm', 2, 2, 0);
     site.place('mill', 6, 6, 0);
-    site.place('oven', 9, 6, 0);
+    site.place('oven', 10, 6, 0);
     economy.sync(site);
     run(economy, 120);
     expect(economy.snapshot().stock['bread'] ?? 0).toBeGreaterThan(0);

@@ -79,11 +79,11 @@ describe('máquinas ligadas por esteira', () => {
     const site = new BuildingSite(grid);
     // Sem armazém ao alcance: tudo tem de passar pelas esteiras.
     const economy = new Economy(grid, { x: 39, y: 39 }, { capacity: 50, servants: 0, stock: [] });
-    site.place('farm', 0, 0, 0); // 3×3 em (0..2, 0..2)
-    for (let x = 3; x <= 5; x++) site.place('belt', x, 1, 3); // leste até o moinho
-    site.place('mill', 6, 0, 0); // 2×2 em (6..7, 0..1)
-    for (let x = 8; x <= 9; x++) site.place('belt', x, 1, 3);
-    site.place('storage', 10, 0, 0); // 2×2 em (10..11, 0..1)
+    site.place('farm', 0, 0, 0); // 4×4 em (0..3, 0..3)
+    for (let x = 4; x <= 6; x++) site.place('belt', x, 1, 3); // leste até o moinho
+    site.place('mill', 7, 0, 0); // 4×4 em (7..10, 0..3)
+    for (let x = 11; x <= 12; x++) site.place('belt', x, 1, 3);
+    site.place('storage', 13, 0, 0); // 4×4 em (13..16, 0..3)
     economy.sync(site);
 
     const farmSeconds = GAME_DATA.buildings.get('farm')?.extracts?.seconds ?? 0;

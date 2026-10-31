@@ -16,7 +16,7 @@ function farApart(stock: { item: string; amount: number }[], servants = 2) {
   const site = new BuildingSite(grid);
   const economy = new Economy(grid, { x: 5, y: 5 }, { capacity: 200, servants, stock });
   const storage = site.place('storage', 60, 60, 0);
-  const mill = site.place('mill', 63, 60, 0);
+  const mill = site.place('mill', 64, 60, 0);
   economy.sync(site);
   return { site, economy, storage, mill };
 }
@@ -54,7 +54,7 @@ describe('servos', () => {
     const site = new BuildingSite(grid);
     const economy = new Economy(grid, { x: 5, y: 5 }, { capacity: 200, servants: 1, stock: [{ item: 'stone_axe', amount: 1 }] });
     site.place('storage', 74, 60, 0);
-    const lumberjack = site.place('lumberjack', 76, 62, 0);
+    const lumberjack = site.place('lumberjack', 75, 64, 0);
     economy.sync(site);
     run(economy, 40);
     const report = economy.snapshot().buildings[lumberjack?.id ?? -1];
