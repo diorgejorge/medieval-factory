@@ -4,6 +4,7 @@ import { compareDrawOrder, type MapObject } from '../core/world/mapObjects';
 import type { Atlas, AtlasFrame } from './atlas';
 import type { Camera } from './camera';
 import { nearestTexture } from './gridRenderer';
+import { connectTransport } from './transportTiles';
 
 /** Cor `ink` da paleta; a sombra é o único caso de semitransparência (docs/ESTILO.md). */
 const SHADOW_COLOR = 0x22182a;
@@ -59,7 +60,7 @@ export class ObjectLayer {
    * O grupo permite trocar um conjunto inteiro depois (ex.: as construções do jogador).
    */
   add(objects: readonly MapObject[], group = 'map'): void {
-    for (const object of objects) {
+    for (const object of connectTransport(objects, (name) => this.hasFrame(name))) {
       const placed = this.createSprite(object, group);
       if (placed) this.placed.push(placed);
     }
@@ -167,9 +168,13 @@ export class ObjectLayer {
     return { group, sprite, shadow, x, y };
   }
 
+  private hasFrame(name: string): boolean {
+    return this.atlas.animations.has(name) || this.atlas.frames.has(name);
+  }
+
   /** Sem a arte de uma direção (`<frame>_r<n>`), usa a arte padrão do objeto. */
   private resolveFrame(name: string): string {
-    if (this.atlas.animations.has(name) || this.atlas.frames.has(name)) return name;
+    if (this.hasFrame(name)) return name;
     return name.replace(/_r\d+$/, '');
   }
 

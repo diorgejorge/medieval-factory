@@ -13,7 +13,9 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+from cart import cart_frames
 from items import item_frames
+from terrain_art import terrain_frames
 from machines import machine_frames
 from references import HD_DENSITY, reference_frames
 from transport import transport_frames
@@ -294,6 +296,31 @@ def object_frames() -> tuple[dict[str, Image.Image], dict[str, list[str]]]:
     return frames, animations
 
 
+TREES = ("tree_round", "tree_pine")
+
+
+def with_tree_variants(frames: dict[str, Image.Image]) -> dict[str, Image.Image]:
+    """Árvore própria vira as duas variantes do mapa (`_0` e `_1` espelhada), como as do pacote."""
+    for tree in TREES:
+        if tree in frames:
+            img = frames.pop(tree)
+            frames[f"{tree}_0"], frames[f"{tree}_1"] = img, ImageOps.mirror(img)
+    return frames
+
+
+def replace_placeholders(objects: dict[str, Image.Image], animations: dict[str, list[str]], own: set[str]) -> None:
+    """Tira do atlas o provisório do pacote que a arte própria substitui: giros (_rN) e animações.
+
+    Sem os giros, o render usa a arte própria em todas as rotações; sem a animação, ela não ganha da imagem parada.
+    """
+    for name in own:
+        for key in [k for k in animations if k == name or k.startswith(f"{name}_r")]:
+            for frame in animations.pop(key):
+                objects.pop(frame, None)
+        for rotation in range(1, 4):
+            objects.pop(f"{name}_r{rotation}", None)
+
+
 # ---------- saída ----------
 
 def shelf_pack(sizes: list[tuple[int, int]], max_width: int) -> tuple[list[tuple[int, int]], int, int]:
@@ -354,6 +381,7 @@ def write_atlas(frames: dict[str, Image.Image], out: Path, max_width: int,
 def build() -> None:
     terrain = {f"{name}_{i}": img for name, imgs in base_frames().items() for i, img in enumerate(imgs)}
     terrain.update(transition_frames())
+    terrain.update(terrain_frames())  # texturas próprias (djorge) por cima do provisório do pacote
     write_atlas(terrain, ASSETS / "terrain" / "terrain.json", max_width=16 * (TILE + 2 * PAD),
                 animations={"water_ripple": [f"water_ripple_{i}" for i in range(4)]})
     objects, animations = object_frames()
@@ -363,10 +391,14 @@ def build() -> None:
     transport, transport_animations = transport_frames()
     objects.update(transport)
     animations.update(transport_animations)
+    carts, cart_animations = cart_frames()
+    objects.update(carts)
+    animations.update(cart_animations)
     items = json.loads((ASSETS.parent / "data" / "jogo" / "itens.json").read_text())["items"]
     objects.update(item_frames([item["id"] for item in items]))
-    buildings = reference_frames(ASSETS / "source")
+    buildings = with_tree_variants(reference_frames(ASSETS / "source"))
     own = own_buildings(OWN_ART / "buildings")
+    replace_placeholders(objects, animations, set(buildings) | set(own))
     objects.update(buildings)
     objects.update(own)
     write_atlas(objects, ASSETS / "objects" / "objects.json", max_width=1024,

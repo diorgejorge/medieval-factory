@@ -60,25 +60,29 @@ Construções antigas continuam com suas cores; a era nova acrescenta, não repi
 
 ## Terreno
 
+Texturas próprias do usuário (`assets/_tools/terrain_art.py`, fontes em `assets/source/terrain/`): cada uma vira uma
+textura contínua de 128×128 cortada em 8×8 tiles. A variante sai da posição, `(y % 8) * 8 + (x % 8)`, para a textura
+seguir sem emenda de um tile para o outro.
+
 | Frame | Variantes | Uso |
 |---|---|---|
-| `grass` | 4 | Campo aberto |
-| `dirt` | 4 | Solo exposto, trilhas |
-| `sand` | 4 | Margens |
-| `water` | 4 (iguais) | Rio e lago |
+| `grass` | 64 | Campo aberto |
+| `dirt` | 64 | Trilhas (terra batida, marrom) |
+| `sand` | 64 | Margens |
+| `water` | 64 | Rio e lago |
 | `water_ripple` | 4 quadros | Ondinha animada; salpicar em ~1 de cada 7 tiles de água |
-| `forest` | 4 | Chão de floresta (grama escura); as árvores são objetos |
-| `rock` | 4 | Pedra sobre terra |
-| `ore_iron`, `ore_coal`, `ore_copper`, `ore_zinc` | 4 cada | Jazida: pedra com minério sobre terra |
-| `clay` | 4 | Barro sobre terra |
-
-Variante escolhida por hash de (x, y).
+| `forest` | 64 | Chão de floresta (a grama mais escura); as árvores são objetos |
+| `rock` | 64 | Monte de pedra (16 px) sobre terra |
+| `ore_iron` | 64 | Monte de minério com pontos dourados e azuis sobre terra |
+| `ore_coal`, `ore_copper`, `ore_zinc`, `clay` | 4 | Ainda do pacote (sem uso no mapa atual) |
 
 ### Transições (dual grid)
 
-Frames `<a>_<b>_<máscara>`, máscara 0–15: bits dos cantos com o terreno `a`
+Frames `<a>_<b>_<máscara>`, máscara 1–14: bits dos cantos com o terreno `a`
 (1 = NO, 2 = NE, 4 = SO, 8 = SE). Pares: `grass_dirt`, `grass_sand`, `grass_water`, `sand_water`.
-Desenhados **deslocados meio tile**: cada tile de transição fica entre 4 células do mapa.
+Desenhados **deslocados meio tile**: cada tile de transição fica entre 4 células do mapa. Gerados por um campo
+bilinear dos 4 cantos: só os pixels que mudam o tile de baixo são pintados (o resto é transparente), com borda escura
+no lado de `a` e espuma clara na água.
 Num canto com água e outros dois terrenos, a terra firme conta como areia (margem), para não sobrar um quadrado de água.
 
 ## Objetos do mapa
@@ -123,6 +127,25 @@ fica no primeiro quadro da animação.
 Peças de 16×16 rentes ao chão, de borda a borda no sentido do fluxo para emendar com a vizinha. Rotação do contrato:
 `chute`/`belt` = fluxo para o sul, `_r1` oeste, `_r2` norte, `_r3` leste. A calha é parada, com setas no canal; a esteira
 tem 4 quadros (ripas andando no sentido do fluxo).
+
+Encaixe automático (`src/render/transportTiles.ts`): com uma peça despejando por trás, fica reta; só pelo lado, vira
+curva `<m>_turn_<entra><sai>` (8 por material, letras n/s/e/w); sem ninguém despejando, ganha a tampa do começo
+`<m>_start_<sai>`.
+
+Peças da frente 14, no mesmo esquema de rotação: `hoist` (guincho/nora, 16×24, roda animada em 4 quadros, base de
+calha que emenda), `splitter` (divisor em T) e `filter` (grade de ferro com bandeirinha).
+
+### Árvores e construções próprias
+
+Árvores (`tree_round`, `tree_pine`) e as construções da vila (`hut_straw`, `house_thatch`, `oven_stone`, `watermill`)
+também vêm das imagens do usuário, em alta definição. A árvore perde o losango da maquete logo abaixo do tronco; o
+`_1` é o `_0` espelhado. A arte própria tira do atlas os giros (`_rN`) e as animações do pacote que ela substitui.
+
+### Carroça (`assets/_tools/cart.py`)
+
+`cart_e`, `cart_s`, `cart_w`, `cart_n`, 2 quadros cada: burro do pacote (`vendor/ninja-adventure/animals/`) puxando uma
+caçamba desenhada por nós. O pacote não tem o burro de costas; `cart_n` usa o de frente com focinho e olhos trocados
+pelo cinza do pelo. É unidade móvel: o render desenha pela posição e direção do snapshot (frente 17).
 
 ### Ícones dos itens (`assets/_tools/items.py`)
 
