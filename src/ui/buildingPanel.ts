@@ -42,10 +42,13 @@ export class BuildingPanel {
   private readonly info = document.createElement('div');
   private readonly recipeButtons = document.createElement('div');
   private recipesKey = '';
+  private readonly filterButtons = document.createElement('div');
+  private filterKey = '';
 
   constructor(
     private readonly element: HTMLElement,
     private readonly onSetRecipe: (buildingId: number, recipe: string) => void,
+    private readonly onSetFilter: (buildingId: number, item: string | null) => void,
   ) {
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Escape') this.hide();
@@ -56,7 +59,8 @@ export class BuildingPanel {
     this.openId = id;
     this.title = title;
     this.recipesKey = '';
-    this.element.replaceChildren(this.info, this.recipeButtons);
+    this.filterKey = '';
+    this.element.replaceChildren(this.info, this.recipeButtons, this.filterButtons);
     this.refresh(economy);
     this.element.hidden = false;
   }
@@ -76,6 +80,9 @@ export class BuildingPanel {
       lines.push(el('p', fillText(TEXT.progress, { progresso: Math.round(report.progress * 100) })));
     }
     if (report.status) lines.push(el('p', STATUS_TEXT[report.status], report.status === 'working' ? '' : 'warning'));
+    if (report.filter !== undefined) {
+      lines.push(el('p', report.filter ? fillText(TEXT.filterItem, { item: itemName(report.filter) }) : TEXT.filterAny));
+    }
     if (report.tool !== undefined) {
       const tool = report.tool
         ? fillText(TEXT.tool, { item: itemName(report.tool.item), usos: report.tool.usesLeft })
@@ -92,6 +99,29 @@ export class BuildingPanel {
     lines.push(el('p', UI_TEXT.common.close, 'hint'));
     this.info.replaceChildren(...lines);
     this.renderRecipeButtons(report);
+    this.renderFilterButtons(report);
+  }
+
+  /** Separador: um botão por item, mais "o primeiro que chegar". */
+  private renderFilterButtons(report: BuildingReport): void {
+    const key = `${this.openId}:${report.filter === undefined ? '-' : String(report.filter)}`;
+    if (key === this.filterKey) return;
+    this.filterKey = key;
+    const id = this.openId;
+    if (report.filter === undefined || id === null) {
+      this.filterButtons.replaceChildren();
+      return;
+    }
+    const choices: (string | null)[] = [null, ...GAME_DATA.items.keys()];
+    this.filterButtons.replaceChildren(
+      ...choices.map((item) => {
+        const button = document.createElement('button');
+        button.textContent = item ? itemName(item) : TEXT.filterAny;
+        button.classList.toggle('active', item === report.filter);
+        button.addEventListener('click', () => this.onSetFilter(id, item));
+        return button;
+      }),
+    );
   }
 
   /** Botões só são recriados quando a escolha muda, para o clique não se perder no meio da atualização. */

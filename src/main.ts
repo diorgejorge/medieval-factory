@@ -95,8 +95,10 @@ async function start(): Promise<void> {
     trade: (village, give, receive) => simulation.send({ type: 'trade', village, give, receive }),
     recruit: (village) => simulation.send({ type: 'recruit', village }),
   });
-  const buildingPanel = new BuildingPanel(panel, (buildingId, recipe) =>
-    simulation.send({ type: 'setRecipe', buildingId, recipe }),
+  const buildingPanel = new BuildingPanel(
+    panel,
+    (buildingId, recipe) => simulation.send({ type: 'setRecipe', buildingId, recipe }),
+    (buildingId, item) => simulation.send({ type: 'setFilter', buildingId, item }),
   );
   bindClicks(app.canvas, (screen) => {
     if (build.click(screen)) return;
