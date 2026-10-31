@@ -28,9 +28,15 @@ export interface SimulationSnapshot {
   buildingsVersion: number;
   /** Só vem quando `buildingsVersion` mudou desde o último snapshot. */
   buildings?: Building[];
-  /** Estoque e estado de extratores e armazéns. */
+  /**
+   * Estoque e estado de extratores e armazéns. Vem a ~4 Hz (ECONOMY_INTERVAL_MS) e logo após
+   * qualquer comando; sem ele, vale o último recebido.
+   */
   economy?: EconomySnapshot;
 }
+
+/** Intervalo mínimo entre dois envios da economia (montar o snapshot dela custa caro). */
+export const ECONOMY_INTERVAL_MS = 250;
 
 /** O mundo simulado. Por enquanto conta ticks e guarda as construções; os sistemas entram nas próximas frentes. */
 export class Simulation {
@@ -63,6 +69,10 @@ export class Simulation {
 /** Liga relógio fixo, comandos e simulação. Sem dependência de Worker, para ser testável. */
 export class SimulationLoop {
   private lastPublishedBuildings = -1;
+  private nowMs = 0;
+  private lastEconomyMs = -Infinity;
+  /** Um comando foi aplicado desde o último envio da economia: a tela precisa ver o efeito já. */
+  private economyDirty = true;
   private readonly clock = new FixedStepClock(TICK_MS, MAX_TICKS_PER_ADVANCE);
   private readonly upsMeter = new RateMeter();
   private readonly pendingCommands: SimulationCommand[] = [];
@@ -82,6 +92,7 @@ export class SimulationLoop {
     const ticks = this.paused ? 0 : this.clock.advance(elapsedMs * this.speed);
     for (let i = 0; i < ticks; i++) this.simulation.step();
     this.upsMeter.record(ticks, nowMs);
+    this.nowMs = nowMs;
     return ticks;
   }
 
@@ -94,7 +105,11 @@ export class SimulationLoop {
       era: this.simulation.era,
       buildingsVersion: this.simulation.buildingsVersion,
     };
-    if (this.simulation.economy) snapshot.economy = this.simulation.economy.snapshot();
+    if (this.simulation.economy && (this.economyDirty || this.nowMs - this.lastEconomyMs >= ECONOMY_INTERVAL_MS)) {
+      snapshot.economy = this.simulation.economy.snapshot();
+      this.lastEconomyMs = this.nowMs;
+      this.economyDirty = false;
+    }
     if (this.simulation.buildingsVersion !== this.lastPublishedBuildings && this.simulation.site) {
       snapshot.buildings = this.simulation.site.all;
       this.lastPublishedBuildings = this.simulation.buildingsVersion;
@@ -103,6 +118,7 @@ export class SimulationLoop {
   }
 
   private applyPendingCommands(): void {
+    if (this.pendingCommands.length > 0) this.economyDirty = true;
     for (const command of this.pendingCommands) this.apply(command);
     this.pendingCommands.length = 0;
   }

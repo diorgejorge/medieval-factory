@@ -1,4 +1,4 @@
-import { GAME_DATA } from '../data/data';
+import { foodItems } from './itemIndex';
 import { add, available, freeSpace, take, type Storage } from './storage';
 
 /** Itens por troca: o jogador dá TRADE_AMOUNT do que o vilarejo pede e recebe o mesmo tanto do que ele produz. */
@@ -48,7 +48,7 @@ export function trade(village: VillageState, give: string, receive: string, stor
 
 /** Recrutar: paga RECRUIT_FOOD de comida (qualquer item "food", na ordem dos dados) e o vilarejo perde um morador. */
 export function recruit(village: VillageState, storages: readonly Storage[]): boolean {
-  const foods = [...GAME_DATA.items.values()].filter((item) => item.category === 'food').map((item) => item.id);
+  const foods = foodItems();
   const totalFood = foods.reduce((sum, item) => sum + available(storages, item), 0);
   const ok = village.population > MIN_POPULATION && totalFood >= RECRUIT_FOOD;
   if (ok) {

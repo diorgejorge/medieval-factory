@@ -68,6 +68,12 @@ export function footprint(kind: BuildingKind, rotation: Rotation): { width: numb
   return rotation % 2 === 0 ? { width, height } : { width: height, height: width };
 }
 
+/** Centro do terreno ocupado, em tiles; usa a forma girada (girar mantém o canto superior esquerdo). */
+export function buildingCenter(building: Pick<Building, 'kind' | 'x' | 'y' | 'rotation'>): { x: number; y: number } {
+  const { width, height } = footprint(building.kind, building.rotation);
+  return { x: building.x + width / 2, y: building.y + height / 2 };
+}
+
 /** Objeto para a camada de desenho: centro da base, embaixo do terreno ocupado. */
 export function buildingObject(building: Building): MapObject {
   const { width, height } = footprint(building.kind, building.rotation);

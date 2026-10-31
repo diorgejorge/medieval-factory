@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TICKS_PER_SECOND } from '../src/core/config';
 import { GAME_DATA } from '../src/core/data/data';
 import { Economy } from '../src/core/economy/economy';
+import { Machine, recipesFor } from '../src/core/economy/machines';
+import { add, createStorage } from '../src/core/economy/storage';
 import { Simulation, SimulationLoop } from '../src/core/simulation';
 import { BuildingSite } from '../src/core/world/buildings';
 import { Grid } from '../src/core/world/grid';
@@ -109,5 +111,51 @@ describe('máquinas com receitas', () => {
     const mill = site.place('mill', 6, 6, 0);
     economy.sync(site);
     expect(economy.setRecipe(mill?.id ?? -1, 'bake_bread')).toBe(false);
+  });
+});
+
+describe('máquina dormente', () => {
+  it('só acorda quando muda um armazém ao alcance (ou com wake)', () => {
+    const recipe = GAME_DATA.recipes.get('grind_flour');
+    if (!recipe) throw new Error('receita grind_flour sumiu');
+    const near = createStorage({ x: 0, y: 0 }, 100);
+    const far = createStorage({ x: 99, y: 99 }, 100);
+    const machine = new Machine({ x: 0, y: 0 }, recipe);
+    machine.step([near]);
+    expect(machine.status).toBe('noInput');
+    expect(machine.isSleeping([near])).toBe(true);
+
+    add(far, 'wheat', 10);
+    expect(machine.isSleeping([near])).toBe(true);
+
+    machine.wake();
+    expect(machine.isSleeping([near])).toBe(false);
+    machine.step([near]);
+    expect(machine.isSleeping([near])).toBe(true);
+
+    add(near, 'wheat', 10);
+    expect(machine.isSleeping([near])).toBe(false);
+    machine.step([near]);
+    expect(machine.status).toBe('working');
+  });
+
+  it('o alcance é recalculado e a máquina acorda quando um armazém novo é construído perto', () => {
+    const grid = new Grid(60);
+    const site = new BuildingSite(grid);
+    const economy = new Economy(grid, { x: 2, y: 2 }, { capacity: 100, servants: 0, stock: [{ item: 'wheat', amount: 4 }] });
+    const mill = site.place('mill', 50, 50, 0);
+    economy.sync(site);
+    run(economy, 1);
+    expect(economy.snapshot().buildings[mill?.id ?? -1]?.status).toBe('noStorage');
+    expect(site.place('storage', 44, 50, 0)).not.toBeNull();
+    economy.sync(site);
+    economy.step();
+    expect(economy.snapshot().buildings[mill?.id ?? -1]?.status).toBe('noInput');
+  });
+
+  it('recipesFor monta a lista uma vez por construção', () => {
+    expect(recipesFor('mill')).toBe(recipesFor('mill'));
+    expect(recipesFor('workbench').map((r) => r.id)).toEqual(['split_firewood', 'stone_axe', 'stone_pickaxe']);
+    expect(recipesFor('nada')).toEqual([]);
   });
 });
