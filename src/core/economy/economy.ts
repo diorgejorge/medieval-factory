@@ -1,6 +1,6 @@
 import { TICKS_PER_SECOND } from '../config';
 import { GAME_DATA } from '../data/data';
-import type { BuildingDef, ItemAmount, ToolKind, ToolTier } from '../data/gameData';
+import { PRODUCE_TARGET, VILLAGE_TARGET, type BuildingDef, type ItemAmount, type ToolKind, type ToolTier } from '../data/gameData';
 import { buildingCenter, buildingDef, countResourceTiles, footprint, type Building, type BuildingSite } from '../world/buildings';
 import type { Grid } from '../world/grid';
 import { Machine, recipesFor, type MachineStatus } from './machines';
@@ -9,6 +9,7 @@ import { toolsOf, type ToolEntry } from './itemIndex';
 import { add, available, createStorage, freeSpace, used, type Storage } from './storage';
 import { recruit, trade, type VillageState, type VillageView } from './villageTrade';
 import { Segment, TransportNetwork, type SegmentView } from './transport';
+import { buildNetworks, type PowerNetwork } from './torque';
 import { CartFleet, validRoute, type CartRoute, type CartView, type CartWorld } from './carts';
 import type { Area } from '../world/villages';
 
@@ -18,8 +19,18 @@ export const STORAGE_RANGE = 24;
 export const START_STORAGE_ID = 0;
 /** De quantos em quantos ticks os pedidos aos servos são recalculados. */
 const DEMAND_INTERVAL_TICKS = 15;
+/** Até onde (em tiles, do centro da vila ao da fonte) uma fonte conta para os decretos. */
+export const TOWN_RANGE = 12;
+/** Quanto o camponês do jogador carrega nas mãos de uma vez. */
+export const HAND_CAPACITY = 10;
+/** Máquina com força da rede de eixos trabalha esse tanto mais rápido. */
+export const TORQUE_SPEEDUP = 2;
+/** Por quanto tempo a fonte segue jorrando depois da última água que chegou. */
+const SINK_ACTIVE_TICKS = 5 * TICKS_PER_SECOND;
 
 export type ExtractorStatus = 'working' | 'noTool' | 'noStorage' | 'storageFull' | 'noResource';
+/** Fonte: jorrando (água chegou há pouco), seca, ou longe demais da vila para contar. */
+export type SinkStatus = 'working' | 'dry' | 'farFromTown';
 
 export interface HeldTool {
   item: string;
@@ -28,7 +39,11 @@ export interface HeldTool {
 
 /** O que a tela precisa saber de cada construção com economia. */
 export interface BuildingReport {
-  status?: ExtractorStatus | MachineStatus;
+  status?: ExtractorStatus | MachineStatus | SinkStatus;
+  /** Fonte: quanto já chegou nela no total. */
+  delivered?: number;
+  /** Rede de eixos da construção: força gerada e pedida na rede inteira. */
+  torque?: { supply: number; demand: number; powered: boolean };
   /** Receita atual e as possíveis, para máquinas. */
   recipe?: string | null;
   recipes?: string[];
@@ -56,6 +71,30 @@ export interface EconomySnapshot {
   segments: SegmentView[];
   /** Carroças de todos os pátios: centro em tiles (fracionário) e direção do movimento. */
   carts: CartView[];
+  /** O que o camponês do jogador carrega. */
+  hand: { item: string | null; amount: number };
+}
+
+/** Economia num jogo salvo (ver Economy.save). */
+export interface EconomySave {
+  storages: [number, [string, number][]][];
+  servants: number;
+  villages: number[];
+  hand: { item: string | null; amount: number };
+  deliveries: [string, number][];
+  tools: [number, HeldTool][];
+  recipes: [number, string][];
+  filters: [number, string][];
+  routes: [number, CartRoute][];
+}
+
+interface Sink {
+  kind: string;
+  item: string;
+  /** Longe demais da vila: recusa tudo. */
+  far: boolean;
+  delivered: number;
+  lastDeliveryTick: number;
 }
 
 interface Extractor {
@@ -91,6 +130,14 @@ export class Economy {
   private readonly carts = new CartFleet();
   private readonly cartWorld: CartWorld;
   private readonly villageAreas: (Area | null)[];
+  private readonly sinks = new Map<number, Sink>();
+  /** Total entregue em fontes, por construção e item (`kind:item`); remover a fonte não apaga. */
+  private readonly deliveries = new Map<string, number>();
+  private ticks = 0;
+  /** O que o camponês do jogador leva nas mãos. */
+  private readonly hand: { item: string | null; amount: number } = { item: null, amount: 0 };
+  /** Rede de eixos de cada construção que faz parte de uma (por id). */
+  private power = new Map<number, PowerNetwork>();
 
   /**
    * `startArea` é o terreno da vila do jogador (por onde as carroças chegam ao armazém inicial);
@@ -123,6 +170,7 @@ export class Economy {
         return building ? areaOf(building) : null;
       },
       village: (index) => this.villages[index],
+      delivered: (item, amount) => this.count(`${VILLAGE_TARGET}:${item}`, amount),
       villageArea: (index) => this.villageAreas[index] ?? null,
     };
     if (startCenter) {
@@ -143,6 +191,12 @@ export class Economy {
       const def = buildingDef(building.kind);
       const center = buildingCenter(building);
       if (def.carts) yards.set(building.id, { area: areaOf(building), def: def.carts });
+      if (def.sink) {
+        const far = !this.home || Math.hypot(this.home.x - center.x, this.home.y - center.y) > TOWN_RANGE;
+        const sink = this.sinks.get(building.id);
+        if (sink) sink.far = far;
+        else this.sinks.set(building.id, { kind: building.kind, item: def.sink.item, far, delivered: 0, lastDeliveryTick: -Infinity });
+      }
       if (def.transport) segments.push(new Segment(building.id, building.x, building.y, building.rotation, def.transport));
       const storage = this.storages.get(building.id);
       if (storage) storage.center = center;
@@ -151,7 +205,11 @@ export class Economy {
       const machine = this.machines.get(building.id);
       if (machine) machine.center = center;
       else if (recipes.length > 0) {
-        this.machines.set(building.id, new Machine(center, recipes[0] ?? null));
+        const created = new Machine(center, recipes[0] ?? null);
+        created.onCraft = (outputs) => {
+          for (const { item, amount } of outputs) this.count(`${PRODUCE_TARGET}:${item}`, amount);
+        };
+        this.machines.set(building.id, created);
         this.machineKinds.set(building.id, building.kind);
       }
       const extractor = this.extractors.get(building.id);
@@ -175,6 +233,7 @@ export class Economy {
     this.connectToTransport(site);
     for (const id of this.storages.keys()) if (!alive.has(id)) this.storages.delete(id);
     for (const id of this.extractors.keys()) if (!alive.has(id)) this.extractors.delete(id);
+    for (const id of this.sinks.keys()) if (!alive.has(id)) this.sinks.delete(id);
     for (const id of this.machines.keys()) {
       if (alive.has(id)) continue;
       this.machines.delete(id);
@@ -182,6 +241,7 @@ export class Economy {
     }
     this.cacheRanges();
     this.carts.sync(yards);
+    this.connectPower(site);
   }
 
   /**
@@ -241,12 +301,147 @@ export class Economy {
   private receive(x: number, y: number, item: string): boolean {
     const building = this.site?.buildingAt(x, y);
     if (!building) return false;
+    const sink = this.sinks.get(building.id);
+    if (sink) return this.deliver(sink, item);
     const machine = this.machines.get(building.id);
-    if (machine) return machine.accept(item);
+    if (machine) {
+      const accepted = machine.accept(item);
+      if (accepted) this.count(`${building.kind}:${item}`, 1);
+      return accepted;
+    }
     const storage = this.storages.get(building.id);
     if (!storage || freeSpace(storage) <= 0) return false;
     add(storage, item, 1);
     return true;
+  }
+
+  /** Fonte recebe só o item dela e só perto da vila; cada um conta para os decretos. */
+  private deliver(sink: Sink, item: string): boolean {
+    if (sink.far || item !== sink.item) return false;
+    sink.delivered++;
+    sink.lastDeliveryTick = this.ticks;
+    this.count(`${sink.kind}:${item}`, 1);
+    return true;
+  }
+
+  private count(key: string, amount: number): void {
+    this.deliveries.set(key, (this.deliveries.get(key) ?? 0) + amount);
+  }
+
+  /**
+   * Quanto de `item` já chegou em `target` desde o começo do jogo: um tipo de construção (por calha
+   * ou esteira), VILLAGE_TARGET (vilarejos, por carroça) ou PRODUCE_TARGET (feito em qualquer lugar).
+   */
+  deliveredTo(target: string, item: string): number {
+    return this.deliveries.get(`${target}:${item}`) ?? 0;
+  }
+
+  /** Refaz as redes de eixos e dá a velocidade de cada máquina (só quando as construções mudam). */
+  private connectPower(site: BuildingSite): void {
+    const parts = site.all.flatMap((building) => {
+      const torque = buildingDef(building.kind).torque;
+      if (!torque) return [];
+      const { width, height } = footprint(building.kind, building.rotation);
+      return [{ id: building.id, x: building.x, y: building.y, width, height, ...torque }];
+    });
+    this.power = buildNetworks(parts);
+    for (const [id, machine] of this.machines) {
+      const network = this.power.get(id);
+      machine.speed = network?.powered ? TORQUE_SPEEDUP : 1;
+    }
+  }
+
+  /** Construções do tipo com força da rede de eixos. */
+  poweredCount(kind: string): number {
+    return (this.site?.all ?? []).filter((b) => b.kind === kind && buildingDef(b.kind).torque?.need && this.power.get(b.id)?.powered).length;
+  }
+
+  /** Construções do tipo com o centro a até TOWN_RANGE do centro da vila. */
+  builtNearTown(kind: string): number {
+    const home = this.home;
+    if (!home) return 0;
+    return (this.site?.all ?? []).filter((b) => {
+      if (b.kind !== kind) return false;
+      const center = buildingCenter(b);
+      return Math.hypot(center.x - home.x, center.y - home.y) <= TOWN_RANGE;
+    }).length;
+  }
+
+  /** Quanto do item está guardado agora nos armazéns do tipo. */
+  storedIn(kind: string, item: string): number {
+    let total = 0;
+    for (const building of this.site?.all ?? []) {
+      if (building.kind === kind) total += this.storages.get(building.id)?.items.get(item) ?? 0;
+    }
+    return total;
+  }
+
+  /**
+   * Colheita à mão: 1 do item que algum extrator tira desse terreno (madeira da floresta, pedra
+   * da rocha...) vai para as mãos do camponês, até HAND_CAPACITY e um item por vez.
+   */
+  gatherByHand(x: number, y: number): string | null {
+    if (!this.grid.isInside(x, y)) return null;
+    const item = handGatherItem(this.grid.getTerrain(x, y));
+    if (!item || this.hand.amount >= HAND_CAPACITY || (this.hand.item !== null && this.hand.item !== item)) return null;
+    this.hand.item = item;
+    this.hand.amount++;
+    this.count(`${PRODUCE_TARGET}:${item}`, 1);
+    return item;
+  }
+
+  /** O camponês larga o que carrega no armazém `storageId` (o que não couber fica nas mãos). */
+  depositHand(storageId: number): number {
+    const storage = this.storages.get(storageId);
+    const { item } = this.hand;
+    if (!storage || !item) return 0;
+    const amount = Math.min(this.hand.amount, freeSpace(storage));
+    add(storage, item, amount);
+    this.hand.amount -= amount;
+    if (this.hand.amount === 0) this.hand.item = null;
+    return amount;
+  }
+
+  /**
+   * Estado para salvar o jogo: o que guarda valor (estoques, ferramentas, rotas, escolhas e contas).
+   * O que está a caminho (itens nas esteiras, cargas de servos e carroças, receita pela metade) se perde.
+   */
+  save(): EconomySave {
+    const report = this.snapshot().buildings;
+    const ids = (this.site?.all ?? []).map((b) => b.id);
+    return {
+      storages: [...this.storages].map(([id, storage]) => [id, [...storage.items]]),
+      servants: this.servants.length,
+      villages: this.villages.map((v) => v.population),
+      hand: { ...this.hand },
+      deliveries: [...this.deliveries],
+      tools: [...this.extractors].flatMap(([id, e]) => (e.tool ? [[id, { ...e.tool }] as [number, HeldTool]] : [])),
+      recipes: [...this.machines].flatMap(([id, m]) => (m.recipe ? [[id, m.recipe.id] as [number, string]] : [])),
+      filters: ids.flatMap((id) => (report[id]?.filter ? [[id, report[id].filter] as [number, string]] : [])),
+      routes: ids.flatMap((id) => (report[id]?.route ? [[id, report[id].route] as [number, CartRoute]] : [])),
+    };
+  }
+
+  /** Devolve o estado salvo; chamar depois de sync() com as construções do jogo salvo. */
+  restore(state: EconomySave): void {
+    for (const [id, items] of state.storages) {
+      const storage = this.storages.get(id);
+      if (storage) storage.items = new Map(items.filter(([item]) => GAME_DATA.items.has(item)));
+    }
+    while (this.servants.length < state.servants && this.home) this.servants.push(new Servant(this.home.x, this.home.y));
+    state.villages.forEach((population, index) => {
+      const village = this.villages[index];
+      if (village) village.population = population;
+    });
+    Object.assign(this.hand, state.hand);
+    for (const [key, amount] of state.deliveries) this.deliveries.set(key, amount);
+    for (const [id, tool] of state.tools) {
+      const extractor = this.extractors.get(id);
+      if (extractor) extractor.tool = { ...tool };
+    }
+    for (const [id, recipe] of state.recipes) this.setRecipe(id, recipe);
+    for (const [id, item] of state.filters) this.setFilter(id, item);
+    for (const [id, route] of state.routes) this.setCartRoute(id, route);
   }
 
   /** Troca com um vilarejo; o produto vai para a vila do jogador. */
@@ -292,6 +487,7 @@ export class Economy {
 
   /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
+    this.ticks++;
     this.transport.step((x, y, item) => this.receive(x, y, item));
     for (const [id, extractor] of this.extractors) this.stepExtractor(extractor, this.rangeOf(id));
     for (const [id, machine] of this.machines) machine.step(this.rangeOf(id));
@@ -326,6 +522,17 @@ export class Economy {
         progress: machine.progress,
       };
     }
+    for (const [id, sink] of this.sinks) {
+      const status = sink.far ? 'farFromTown' : this.ticks - sink.lastDeliveryTick <= SINK_ACTIVE_TICKS ? 'working' : 'dry';
+      buildings[id] = { status, delivered: sink.delivered };
+    }
+    for (const [id, network] of this.power) {
+      const report = buildings[id] ?? {};
+      report.torque = { supply: network.supply, demand: network.demand, powered: network.powered };
+      // Fontes e engrenagens só giram quando a rede move alguma máquina.
+      if (!this.machines.has(id) && network.powered) report.status = 'working';
+      buildings[id] = report;
+    }
     for (const building of this.site?.all ?? []) {
       const report = this.carts.report(building.id);
       if (report) buildings[building.id] = report;
@@ -337,6 +544,7 @@ export class Economy {
       villages: this.villages.map(({ population, result, requests }) => ({ population, result, requests })),
       segments: [...this.transport.segments].map((segment) => segment.view()),
       carts: this.carts.views(),
+      hand: { ...this.hand },
     };
   }
 
@@ -367,6 +575,7 @@ export class Economy {
     extractor.progressTicks += this.toolTier(extractor.tool);
     if (extractor.progressTicks < extractor.def.seconds * TICKS_PER_SECOND) return;
     extractor.progressTicks = 0;
+    this.count(`${PRODUCE_TARGET}:${extractor.def.item}`, 1);
     if (belt) belt.push(extractor.def.item);
     else if (target) add(target, extractor.def.item, 1);
     if (extractor.tool && --extractor.tool.usesLeft <= 0) extractor.tool = null;
@@ -456,6 +665,14 @@ export class Economy {
   }
 }
 
+
+/** Item que se colhe à mão num terreno: o do primeiro extrator que trabalha nele (ver construcoes.json). */
+export function handGatherItem(terrain: number): string | null {
+  for (const building of GAME_DATA.buildings.values()) {
+    if (building.extracts?.terrain === terrain) return building.extracts.item;
+  }
+  return null;
+}
 
 /** Terreno ocupado pela construção, já com a forma girada. */
 function areaOf(building: Building): Area {

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "note": "Decretos do rei (frente 18). A cada 'cycleSeconds' de jogo o rei manda um decreto da era atual, em ordem, alternando os tipos. 'goal' é um de três: { build, amount } = construções do tipo perto da vila; { stock, in, amount } = item guardado agora em armazéns do tipo 'in'; { powered, amount } = máquinas do tipo com força da rede de eixos; ou 'amount' de 'deliver' chegando em 'to' durante o ciclo: um tipo de construção (só conta o que chega por calha ou esteira), 'village' (entregue a vilarejos por carroça) ou 'produce' (feito em qualquer lugar). Cumprir dá 'reward.favor'; o prazo acabar tira 'penalty.favor'. 'favor' começa em 'start' e vai de 0 a 'max'. Textos: data/texto/pt-BR/decretos.json (Roteiro), mesmo 'id'.",
+  "cycleSeconds": 900,
+  "favor": { "start": 50, "max": 100 },
+  "decrees": [
+    {
+      "id": "canalizar-agua",
+      "type": "engenharia",
+      "era": 1,
+      "goal": { "deliver": "water", "to": "fountain", "amount": 100 },
+      "reward": { "favor": 15 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "poco-da-vila",
+      "type": "benfeitoria",
+      "era": 1,
+      "goal": { "build": "well", "amount": 1 },
+      "reward": { "favor": 10 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "celeiro-real",
+      "type": "benfeitoria",
+      "era": 1,
+      "goal": { "stock": "wheat", "in": "granary", "amount": 100 },
+      "reward": { "favor": 15 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "padaria-sem-servos",
+      "type": "engenharia",
+      "era": 2,
+      "goal": { "deliver": "flour", "to": "oven", "amount": 60 },
+      "reward": { "favor": 15 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "moinho-de-vento",
+      "type": "engenharia",
+      "era": 2,
+      "goal": { "powered": "forge", "amount": 1 },
+      "reward": { "favor": 15 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "rota-do-pao",
+      "type": "producao",
+      "era": 2,
+      "goal": { "deliver": "bread", "to": "village", "amount": 40 },
+      "reward": { "favor": 15 },
+      "penalty": { "favor": 10 }
+    },
+    {
+      "id": "guarda-florestal",
+      "type": "producao",
+      "era": 2,
+      "goal": { "deliver": "iron_axe", "to": "produce", "amount": 10 },
+      "reward": { "favor": 20 },
+      "penalty": { "favor": 10 }
+    }
+  ]
+}

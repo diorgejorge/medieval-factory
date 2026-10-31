@@ -50,6 +50,8 @@ export interface CartWorld {
   storageArea(id: number): Area | null;
   village(index: number): VillageState | undefined;
   villageArea(index: number): Area | null;
+  /** Carroça entregou `amount` de `item` num vilarejo (conta para os decretos). */
+  delivered?(item: string, amount: number): void;
 }
 
 /** Na estrada todo tile custa o mesmo, qualquer que seja o terreno embaixo. */
@@ -316,6 +318,7 @@ function arrive(cart: Cart, yard: CartYard, route: CartRoute, world: CartWorld):
     const village = world.village(endpoint.village);
     if (village && cart.amount > 0 && cart.item && village.wants.includes(cart.item)) {
       const paid = cart.amount;
+      world.delivered?.(cart.item, paid);
       cart.amount = 0;
       if (load !== undefined && village.produces.includes(load)) {
         cart.item = load;

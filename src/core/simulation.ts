@@ -2,7 +2,8 @@ import { GAME_SPEEDS, MAX_TICKS_PER_ADVANCE, TICK_MS, type GameSpeed } from './c
 import { GAME_DATA } from './data/data';
 import { FixedStepClock } from './time/fixedStepClock';
 import { RateMeter } from './time/rateMeter';
-import type { Economy, EconomySnapshot } from './economy/economy';
+import { KingCourt, type CourtSave, type DecreeView } from './decrees';
+import type { Economy, EconomySave, EconomySnapshot } from './economy/economy';
 import type { CartEndpoint } from './economy/carts';
 import type { Building, BuildingKind, BuildingSite, Rotation } from './world/buildings';
 
@@ -19,7 +20,11 @@ export type SimulationCommand =
   | { type: 'recruit'; village: number }
   /** Rota em loop de um pátio das carroças (ver CartRoute); clearCartRoute tira a rota. */
   | { type: 'setCartRoute'; buildingId: number; from: CartEndpoint; to: CartEndpoint; item: string; back?: string }
-  | { type: 'clearCartRoute'; buildingId: number };
+  | { type: 'clearCartRoute'; buildingId: number }
+  /** O camponês do jogador colhe à mão no tile (x, y): 1 item do recurso daquele terreno. */
+  | { type: 'gather'; x: number; y: number }
+  /** O camponês larga o que carrega no armazém (ou na vila, START_STORAGE_ID). */
+  | { type: 'deposit'; storageId: number };
 
 /** Estado publicado para a main thread a cada avanço. */
 export interface SimulationSnapshot {
@@ -38,6 +43,19 @@ export interface SimulationSnapshot {
    * qualquer comando; sem ele, vale o último recebido.
    */
   economy?: EconomySnapshot;
+  /** Decreto atual do rei, prazo e favor (só com economia). */
+  decree?: DecreeView;
+}
+
+/** Jogo salvo: a seed refaz o mapa; o resto é o que o jogador construiu e juntou. */
+export interface SaveData {
+  version: 1;
+  seed: number;
+  tick: number;
+  era: number;
+  buildings: Building[];
+  economy: EconomySave | null;
+  court: CourtSave | null;
 }
 
 /** Intervalo mínimo entre dois envios da economia (montar o snapshot dela custa caro). */
@@ -48,18 +66,49 @@ export class Simulation {
   tick = 0;
   era = 1;
   buildingsVersion = 0;
+  /** Os decretos do rei; sem economia, não há o que entregar. */
+  readonly court: KingCourt | null;
 
   constructor(
     readonly site: BuildingSite | null = null,
     readonly economy: Economy | null = null,
   ) {
     if (site) economy?.sync(site);
+    this.court = economy ? new KingCourt(GAME_DATA.challenges, economy) : null;
   }
 
   step(): void {
     this.tick++;
     this.economy?.step();
     this.advanceEra();
+    this.court?.step(this.era);
+  }
+
+  save(seed: number): SaveData {
+    return {
+      version: 1,
+      seed,
+      tick: this.tick,
+      era: this.era,
+      buildings: this.site?.all ?? [],
+      economy: this.economy?.save() ?? null,
+      court: this.court?.save() ?? null,
+    };
+  }
+
+  /** Carrega um jogo salvo num mundo recém-gerado com a mesma seed. */
+  load(data: SaveData): void {
+    this.tick = data.tick;
+    this.era = data.era;
+    if (this.site) {
+      this.site.era = data.era;
+      // Construção que não existe mais nos dados (renomeada ou removida) fica de fora.
+      this.site.replaceAll(data.buildings.filter((b) => GAME_DATA.buildings.has(b.kind)));
+      this.economy?.sync(this.site);
+    }
+    if (data.economy) this.economy?.restore(data.economy);
+    if (data.court) this.court?.restore(data.court);
+    this.buildingsVersion++;
   }
 
   /** A era seguinte abre na primeira vez que o item dela aparece num armazém (data/jogo/eras.json). */
@@ -110,6 +159,7 @@ export class SimulationLoop {
       era: this.simulation.era,
       buildingsVersion: this.simulation.buildingsVersion,
     };
+    if (this.simulation.court) snapshot.decree = this.simulation.court.view();
     if (this.simulation.economy && (this.economyDirty || this.nowMs - this.lastEconomyMs >= ECONOMY_INTERVAL_MS)) {
       snapshot.economy = this.simulation.economy.snapshot();
       this.lastEconomyMs = this.nowMs;
@@ -169,6 +219,12 @@ export class SimulationLoop {
       }
       case 'clearCartRoute':
         this.simulation.economy?.setCartRoute(command.buildingId, null);
+        break;
+      case 'gather':
+        this.simulation.economy?.gatherByHand(command.x, command.y);
+        break;
+      case 'deposit':
+        this.simulation.economy?.depositHand(command.storageId);
         break;
     }
   }

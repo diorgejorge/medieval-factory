@@ -1,6 +1,7 @@
 import erasText from '../../data/texto/pt-BR/eras.json';
 import { UI_TEXT } from '../core/data/data';
 import { fillText, quoteText } from '../core/data/interfaceText';
+import { eraLetter, letterElements } from './kingLetters';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV'];
 
@@ -22,7 +23,8 @@ export function showEraNotice(element: HTMLElement, era: number): void {
   const hint = document.createElement('p');
   hint.className = 'hint';
   hint.textContent = UI_TEXT.eraNotice.hint;
-  element.replaceChildren(title, intro, hint);
+  const letter = eraLetter(era);
+  element.replaceChildren(title, intro, ...(letter ? letterElements(letter) : []), hint);
   element.hidden = false;
   const close = (event: KeyboardEvent) => {
     if (event.code !== 'Escape') return;

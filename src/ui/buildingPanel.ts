@@ -1,11 +1,11 @@
 import { GAME_DATA, UI_TEXT } from '../core/data/data';
 import { fillText } from '../core/data/interfaceText';
-import type { BuildingReport, EconomySnapshot, ExtractorStatus } from '../core/economy/economy';
+import type { BuildingReport, EconomySnapshot, ExtractorStatus, SinkStatus } from '../core/economy/economy';
 import type { MachineStatus } from '../core/economy/machines';
 import type { RoutePicker } from './routePicker';
 
 /** Um texto por status (interface.json); o tipo garante que nenhum status fica sem texto. */
-const STATUS_TEXT: Readonly<Record<ExtractorStatus | MachineStatus, string>> = UI_TEXT.buildingStatus;
+const STATUS_TEXT: Readonly<Record<ExtractorStatus | MachineStatus | SinkStatus, string>> = UI_TEXT.buildingStatus;
 const TEXT = UI_TEXT.buildingPanel;
 
 /** "2 Trigo → 1 Farinha", montado dos dados (receitas não têm nome próprio). */
@@ -40,6 +40,7 @@ export function formatItems(items: Readonly<Record<string, number>>): string {
 export class BuildingPanel {
   private openId: number | null = null;
   private title = '';
+  private description = '';
   private readonly info = document.createElement('div');
   private readonly recipeButtons = document.createElement('div');
   private recipesKey = '';
@@ -57,9 +58,11 @@ export class BuildingPanel {
     });
   }
 
-  show(id: number, title: string, economy: EconomySnapshot | undefined): void {
+  /** `description` é a dica do Roteiro (descricoes.json), mostrada logo abaixo do nome. */
+  show(id: number, title: string, economy: EconomySnapshot | undefined, description = ''): void {
     this.openId = id;
     this.title = title;
+    this.description = description;
     this.recipesKey = '';
     this.filterKey = '';
     this.element.replaceChildren(this.info, this.recipeButtons, this.filterButtons, ...(this.routePicker ? [this.routePicker.element] : []));
@@ -77,11 +80,16 @@ export class BuildingPanel {
     if (this.openId === null) return;
     const report: BuildingReport = economy?.buildings[this.openId] ?? {};
     const lines = [el('h2', this.title)];
+    if (this.description) lines.push(el('p', this.description, 'quote'));
     if (report.recipe) lines.push(el('p', fillText(TEXT.recipe, { receita: describeRecipe(report.recipe) })));
     if (report.progress !== undefined && report.status === 'working') {
       lines.push(el('p', fillText(TEXT.progress, { progresso: Math.round(report.progress * 100) })));
     }
     if (report.status) lines.push(el('p', STATUS_TEXT[report.status], report.status === 'working' ? '' : 'warning'));
+    if (report.torque) {
+      const { supply, demand, powered } = report.torque;
+      lines.push(el('p', powered ? fillText(TEXT.torque, { uso: demand, forca: supply }) : TEXT.torqueOff, powered ? '' : 'warning'));
+    }
     if (report.filter !== undefined) {
       lines.push(el('p', report.filter ? fillText(TEXT.filterItem, { item: itemName(report.filter) }) : TEXT.filterAny));
     }

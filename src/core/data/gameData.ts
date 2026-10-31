@@ -26,9 +26,15 @@ export interface ItemDef {
   trade?: boolean;
 }
 
+/** Grupos da barra de construção; os nomes vêm de interface.json (toolbar.categories). */
+export const BUILDING_CATEGORIES = ['housing', 'extraction', 'production', 'logistics'] as const;
+export type BuildingCategory = (typeof BUILDING_CATEGORIES)[number];
+
 export interface BuildingDef {
   id: string;
   name: string;
+  /** Grupo da construção na barra. */
+  category: BuildingCategory;
   era: Era;
   width: number;
   height: number;
@@ -45,6 +51,51 @@ export interface BuildingDef {
   road?: boolean;
   /** Pátio: `count` carroças, cada uma leva até `capacity` itens a `speed` tiles por segundo. */
   carts?: { count: number; capacity: number; speed: number };
+  /** Fonte: só recebe `item` por calha ou esteira e conta cada entrega (decretos do rei). */
+  sink?: { item: string };
+  /** Arte usada enquanto a construção trabalha (a fonte com água). */
+  frameActive?: string;
+  /** Rede de eixos: força gerada (`supply`) ou pedida (`need`); os dois zero = engrenagem, só liga. */
+  torque?: { supply: number; need: number };
+}
+
+/**
+ * Meta de um decreto: `deliver` = `amount` de um item chegando em `to` durante o ciclo; `build` =
+ * `amount` construções do tipo perto da vila; `stock` = `amount` do item guardado em construções `in`.
+ */
+export type DecreeGoal =
+  | { kind: 'deliver'; deliver: string; to: string; amount: number }
+  | { kind: 'build'; build: string; amount: number }
+  | { kind: 'stock'; stock: string; in: string; amount: number }
+  | { kind: 'powered'; powered: string; amount: number };
+
+/** Item de que a meta fala (para os textos), se houver. */
+export function goalItem(goal: DecreeGoal): string | null {
+  return goal.kind === 'deliver' ? goal.deliver : goal.kind === 'stock' ? goal.stock : null;
+}
+
+/** Alvos especiais de decreto: entregar em vilarejos (por carroça) ou só produzir, em qualquer lugar. */
+export const VILLAGE_TARGET = 'village';
+export const PRODUCE_TARGET = 'produce';
+
+/**
+ * Um decreto do rei (data/jogo/desafios.json): `amount` de `deliver` chegando em `to`, que é um
+ * tipo de construção (por calha ou esteira), VILLAGE_TARGET ou PRODUCE_TARGET.
+ */
+export interface DecreeDef {
+  id: string;
+  type: string;
+  era: Era;
+  goal: DecreeGoal;
+  reward: { favor: number };
+  penalty: { favor: number };
+}
+
+/** Ciclos do rei: um decreto a cada `cycleSeconds`; o favor vai de 0 a `favor.max`. */
+export interface ChallengesDef {
+  cycleSeconds: number;
+  favor: { start: number; max: number };
+  decrees: DecreeDef[];
 }
 
 export interface ItemAmount {
@@ -70,6 +121,8 @@ export interface GameData {
   start: { capacity: number; servants: number; stock: ItemAmount[] };
   /** O que abre cada era (data/jogo/eras.json), em ordem. */
   eras: { id: Era; unlockItem: string }[];
+  /** Decretos do rei (data/jogo/desafios.json). */
+  challenges: ChallengesDef;
 }
 
 /** Os arquivos de data/jogo e os nomes de data/texto/pt-BR, como vêm do disco (ainda sem conferir). */
@@ -81,6 +134,7 @@ export interface RawGameData {
   buildingNames: unknown;
   start: unknown;
   eras: unknown;
+  challenges: unknown;
 }
 
 export class GameDataError extends Error {
@@ -122,8 +176,94 @@ export function parseGameData(raw: RawGameData): GameData {
   );
   const start = parseStart(raw.start, items, problems);
   const eras = parseEras(raw.eras, items, problems);
+  const challenges = parseChallenges(raw.challenges, items, buildings, problems);
   if (problems.length > 0) throw new GameDataError(problems);
-  return { items, buildings, recipes, start, eras };
+  return { items, buildings, recipes, start, eras, challenges };
+}
+
+function parseChallenges(
+  file: unknown,
+  items: ReadonlyMap<string, ItemDef>,
+  buildings: ReadonlyMap<string, BuildingDef>,
+  problems: string[],
+): ChallengesDef {
+  const where = 'desafios.json';
+  const empty: ChallengesDef = { cycleSeconds: 1, favor: { start: 0, max: 1 }, decrees: [] };
+  const list = isObject(file) ? file['decrees'] : undefined;
+  if (!isObject(file) || typeof file['version'] !== 'number' || !Array.isArray(list) || !isObject(file['favor'])) {
+    problems.push(`${where}: precisa de "version" (número), "favor" e da lista "decrees"`);
+    return empty;
+  }
+  const favor = { start: requireCount(file['favor'], 'start', where, problems), max: requirePositiveInt(file['favor'], 'max', where, problems) };
+  if (favor.start > favor.max) problems.push(`${where}: "favor.start" passa de "favor.max"`);
+  const ids = new Set<string>();
+  const decrees = list.flatMap((entry: unknown): DecreeDef[] => {
+    const goal = isObject(entry) ? entry['goal'] : undefined;
+    if (!isObject(entry) || typeof entry['id'] !== 'string' || !isObject(goal) || !isObject(entry['reward']) || !isObject(entry['penalty'])) {
+      problems.push(`${where}: cada decreto é { id, type, era, goal, reward, penalty }`);
+      return [];
+    }
+    const id = entry['id'];
+    const at = `${where} "${id}"`;
+    if (ids.has(id)) problems.push(`${at}: id repetido`);
+    ids.add(id);
+    const parsedGoal = parseGoal(goal, at, items, buildings, problems);
+    return [
+      {
+        id,
+        type: requireString(entry, 'type', at, problems),
+        era: requireOneOf(entry, 'era', ERAS, at, problems),
+        goal: parsedGoal,
+        reward: { favor: requireCount(entry['reward'], 'favor', at, problems) },
+        penalty: { favor: requireCount(entry['penalty'], 'favor', at, problems) },
+      },
+    ];
+  });
+  return { cycleSeconds: requirePositive(file, 'cycleSeconds', where, problems), favor, decrees };
+}
+
+function parseGoal(
+  goal: Record<string, unknown>,
+  at: string,
+  items: ReadonlyMap<string, ItemDef>,
+  buildings: ReadonlyMap<string, BuildingDef>,
+  problems: string[],
+): DecreeGoal {
+  const amount = requirePositiveInt(goal, 'amount', at, problems);
+  const building = (key: string): string => {
+    const id = goal[key];
+    if (typeof id !== 'string' || !buildings.has(id)) problems.push(`${at}: "goal.${key}" deve ser uma construção de construcoes.json`);
+    return String(id);
+  };
+  if (goal['build'] !== undefined) return { kind: 'build', build: building('build'), amount };
+  if (goal['powered'] !== undefined) {
+    const powered = building('powered');
+    if (!buildings.get(powered)?.torque?.need) problems.push(`${at}: "goal.powered" deve pedir força ("torque.need")`);
+    return { kind: 'powered', powered, amount };
+  }
+  if (goal['stock'] !== undefined) {
+    const stock = requireItem(goal, 'stock', items, at, problems);
+    const into = building('in');
+    if (!buildings.get(into)?.storage) problems.push(`${at}: "goal.in" deve ser um armazém (com "storage")`);
+    return { kind: 'stock', stock, in: into, amount };
+  }
+  const to = goal['to'];
+  const special = to === VILLAGE_TARGET || to === PRODUCE_TARGET;
+  if (typeof to !== 'string' || (!special && !buildings.has(to))) {
+    problems.push(`${at}: "goal.to" deve ser uma construção, "${VILLAGE_TARGET}" ou "${PRODUCE_TARGET}"`);
+  }
+  const deliver = requireItem(goal, 'deliver', items, at, problems);
+  const sink = typeof to === 'string' ? buildings.get(to)?.sink : undefined;
+  if (sink && sink.item !== deliver) problems.push(`${at}: a construção "${String(to)}" não recebe "${deliver}"`);
+  return { kind: 'deliver', deliver, to: String(to), amount };
+}
+
+/** Inteiro zero ou maior. */
+function requireCount(entry: Record<string, unknown>, key: string, where: string, problems: string[]): number {
+  const value = entry[key];
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
+  problems.push(`${where}: "${key}" deve ser um inteiro zero ou maior`);
+  return 0;
 }
 
 function parseEras(file: unknown, items: ReadonlyMap<string, ItemDef>, problems: string[]): GameData['eras'] {
@@ -232,6 +372,7 @@ function parseBuilding(
   const building: BuildingDef = {
     id: entry['id'] as string,
     name: requireName(entry['id'] as string, names, where, problems),
+    category: requireOneOf(entry, 'category', BUILDING_CATEGORIES, where, problems),
     era: requireOneOf(entry, 'era', ERAS, where, problems),
     width: requireSide(entry, 'width', where, problems),
     height: requireSide(entry, 'height', where, problems),
@@ -304,6 +445,23 @@ function parseBuilding(
       problems.push(`${where}: "carts" deve ser { count, capacity, speed }`);
     }
   }
+  if (entry['sink'] !== undefined) {
+    const sink = entry['sink'];
+    if (isObject(sink)) building.sink = { item: requireItem(sink, 'item', items, `${where} sink`, problems) };
+    else problems.push(`${where}: "sink" deve ser { item }`);
+  }
+  if (entry['torque'] !== undefined) {
+    const torque = entry['torque'];
+    if (isObject(torque)) {
+      building.torque = {
+        supply: torque['supply'] === undefined ? 0 : requirePositiveInt(torque, 'supply', `${where} torque`, problems),
+        need: torque['need'] === undefined ? 0 : requirePositiveInt(torque, 'need', `${where} torque`, problems),
+      };
+    } else {
+      problems.push(`${where}: "torque" deve ser { supply?, need? }`);
+    }
+  }
+  if (entry['frameActive'] !== undefined) building.frameActive = requireString(entry, 'frameActive', where, problems);
   return problems.length === before ? building : null;
 }
 

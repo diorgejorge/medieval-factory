@@ -2,20 +2,20 @@
 e filtro (filter).
 
 Rotação no contrato do core (sentido horário a partir do sul): r0 = fluxo para o sul, r1 oeste, r2 norte,
-r3 leste. Calha e esteira atravessam o tile de borda a borda no sentido do fluxo para emendar com a vizinha.
+r3 leste. Calha e esteira (retas, curvas, T e cruz) vêm de conveyor.py; aqui ficam as peças montadas sobre a
+calha.
 """
 
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
 
 from PIL import Image, ImageOps
 
+from conveyor import conveyor_sequences
 from machines import FIRE, FRAMES, IRON, OUTLINE, WOOD, Color, Sprite
 
 TILE = 16
-LEATHER = ((0x3A, 0x26, 0x22), (0x5A, 0x3C, 0x30))
 
 
 def fill(sp: Sprite, x0: int, y0: int, x1: int, y1: int, color: Color) -> None:
@@ -95,41 +95,6 @@ def chute_south() -> Image.Image:
     for cy in (3, 11):
         for dx, dy in ((0, 0), (1, 1), (2, 2), (3, 2), (4, 1), (5, 0)):
             sp.put(5 + dx, cy + dy, WOOD[1])
-    return sp.image()
-
-
-# ---------- esteira ----------
-
-def belt_east(frame: int) -> Image.Image:
-    sp = Sprite(TILE, TILE)
-    fill(sp, 0, 3, 15, 3, OUTLINE)
-    fill(sp, 0, 4, 15, 4, WOOD[2])      # trilho de trás
-    fill(sp, 0, 5, 15, 9, LEATHER[0])   # lona
-    for x in range(TILE):               # ripas andando para o leste
-        if (x - frame) % FRAMES == 0:
-            fill(sp, x, 5, x, 9, LEATHER[1])
-    fill(sp, 0, 10, 15, 10, WOOD[2])    # trilho da frente
-    fill(sp, 0, 11, 15, 12, WOOD[1])
-    for x in (3, 11):                   # cabeças dos roletes
-        sp.put(x, 11, IRON[2])
-        sp.put(x, 12, IRON[0])
-    fill(sp, 0, 13, 15, 13, OUTLINE)
-    return sp.image()
-
-
-def belt_south(frame: int) -> Image.Image:
-    sp = Sprite(TILE, TILE)
-    fill(sp, 2, 0, 2, 15, OUTLINE)
-    fill(sp, 3, 0, 3, 15, WOOD[2])
-    fill(sp, 4, 0, 11, 15, LEATHER[0])
-    for y in range(TILE):               # ripas andando para o sul
-        if (y - frame) % FRAMES == 0:
-            fill(sp, 4, y, 11, y, LEATHER[1])
-    fill(sp, 12, 0, 12, 15, WOOD[1])
-    fill(sp, 13, 0, 13, 15, OUTLINE)
-    for y in (3, 11):
-        sp.put(3, y, IRON[2])
-        sp.put(12, y, IRON[0])
     return sp.image()
 
 
@@ -294,142 +259,8 @@ def filter_east() -> Image.Image:
     return over(body, flag(13, 12, -1))
 
 
-# ---------- curvas e começos ----------
-# Peças de encaixe da calha e da esteira. A curva `turn_<de><para>` abre só nos lados por onde a carga entra
-# e sai, com as mesmas linhas e colunas das peças retas nas bordas abertas; o começo `start_<para>` é a reta
-# fechada atrás por uma tábua, para a primeira peça da linha não parecer cortada.
-
-SIDES = {"n": (0, -1), "s": (0, 1), "w": (-1, 0), "e": (1, 0)}
-TURNS = [a + b for a in SIDES for b in SIDES
-         if a != b and SIDES[a] != tuple(-c for c in SIDES[b])]
-LIT, SHADE = WOOD[2], WOOD[1]
-
-# Por par de lados abertos (horizontal + vertical): canal e paredes como retângulos (x0, y0, x1, y1).
-# Parede de fora no canto oposto às aberturas, parede de dentro no canto entre elas; luz do noroeste.
-CORNER_CHANNEL = {
-    "ws": ((0, 5, 11, 9), (4, 10, 11, 15)),
-    "es": ((4, 5, 15, 9), (4, 10, 11, 15)),
-    "wn": ((0, 5, 11, 9), (4, 0, 11, 4)),
-    "en": ((4, 5, 15, 9), (4, 0, 11, 4)),
-}
-CORNER_WALLS = {
-    "ws": ((0, 3, 13, 3, OUTLINE), (13, 3, 13, 15, OUTLINE),         # fora: trás e direita
-           (0, 4, 12, 4, LIT), (12, 5, 12, 15, SHADE),
-           (0, 10, 3, 10, LIT), (3, 11, 3, 15, LIT),                  # dentro: borda e parede iluminada
-           (0, 11, 2, 12, SHADE), (0, 13, 2, 13, OUTLINE), (2, 14, 2, 15, OUTLINE)),
-    "es": ((2, 3, 15, 3, OUTLINE), (2, 3, 2, 15, OUTLINE),           # fora: trás e esquerda
-           (3, 4, 15, 4, LIT), (3, 5, 3, 15, LIT),
-           (12, 10, 15, 10, LIT), (12, 11, 12, 15, SHADE),            # dentro: borda e parede na sombra
-           (13, 11, 15, 12, SHADE), (13, 13, 15, 13, OUTLINE), (13, 14, 13, 15, OUTLINE)),
-    "wn": ((13, 0, 13, 13, OUTLINE), (0, 13, 13, 13, OUTLINE),       # fora: direita e frente
-           (12, 0, 12, 9, SHADE), (0, 10, 12, 10, LIT), (0, 11, 12, 12, SHADE),
-           (0, 3, 2, 3, OUTLINE), (2, 0, 2, 2, OUTLINE),              # dentro: canto do fundo
-           (0, 4, 3, 4, LIT), (3, 0, 3, 3, LIT)),
-    "en": ((2, 0, 2, 13, OUTLINE), (2, 13, 15, 13, OUTLINE),         # fora: esquerda e frente
-           (3, 0, 3, 9, LIT), (3, 10, 15, 10, LIT), (3, 11, 15, 12, SHADE),
-           (13, 3, 15, 3, OUTLINE), (13, 0, 13, 2, OUTLINE),          # dentro: canto do fundo
-           (12, 0, 12, 3, SHADE), (12, 4, 15, 4, LIT)),
-}
-
-# Seta do fluxo da calha no braço de saída, com o mesmo desenho das setas das retas.
-CHEVRON = {
-    "e": ((12, 5), ((0, 0), (1, 1), (2, 2), (1, 3), (0, 4))),
-    "w": ((1, 5), ((2, 0), (1, 1), (0, 2), (1, 3), (2, 4))),
-    "s": ((5, 11), ((0, 0), (1, 1), (2, 2), (3, 2), (4, 1), (5, 0))),
-    "n": ((5, 1), ((0, 2), (1, 1), (2, 0), (3, 0), (4, 1), (5, 2))),
-}
-
-# Tábua do fim, pelo lado de trás: em cima da peça a borda e a face de dentro, embaixo a face da frente.
-END_BOARD = {
-    "n": ((2, 0, 13, 0, OUTLINE), (3, 1, 12, 1, LIT), (4, 2, 11, 2, SHADE)),
-    "s": ((2, 15, 13, 15, OUTLINE), (3, 12, 12, 12, LIT), (3, 13, 12, 14, SHADE)),
-    "w": ((0, 3, 0, 13, OUTLINE), (1, 4, 1, 10, LIT)),
-    "e": ((15, 3, 15, 13, OUTLINE), (14, 4, 14, 10, SHADE)),
-}
-OPPOSITE = {"n": "s", "s": "n", "w": "e", "e": "w"}
-
-
-def corner_key(turn: str) -> str:
-    """Par de lados abertos da curva, sempre o horizontal primeiro ("ws", "es", "wn", "en")."""
-    return "".join(sorted(turn, key=lambda side: side in "ns"))
-
-
-def corner_step(key: str, x: int, y: int) -> int:
-    """Passo 0..15 do pixel ao longo da curva, contado da borda horizontal até a vertical.
-
-    Nos braços é a distância até a borda, como nas retas; no quadrado do canto vem do ângulo em volta da
-    quina de dentro, para as ripas girarem na curva sem quebrar a cadência de 4 px das vizinhas.
-    """
-    h, v = key
-    sx, sy = (-1 if h == "w" else 1), (1 if v == "s" else -1)
-    if (h == "w" and x < 4) or (h == "e" and x > 11):
-        return x if h == "w" else 15 - x
-    if (v == "s" and y > 9) or (v == "n" and y < 5):
-        return y if v == "s" else 15 - y
-    pivot_x, pivot_y = (4 if h == "w" else 12), (10 if v == "s" else 5)
-    dx, dy = x + 0.5 - pivot_x, y + 0.5 - pivot_y
-    turn = math.atan2(-sx * dx, -sy * dy) / (math.pi / 2)
-    end = 10 if v == "s" else 11
-    return min(end - 1, 4 + int(max(0.0, turn) * (end - 4)))
-
-
-def corner(turn: str, channel: Color, slat: Color | None = None, frame: int = 0) -> Image.Image:
-    """Curva que entra por `turn[0]` e sai por `turn[1]`; com `slat`, ripas da esteira andando no fluxo."""
-    key = corner_key(turn)
-    sp = Sprite(TILE, TILE)
-    for x0, y0, x1, y1 in CORNER_CHANNEL[key]:
-        fill(sp, x0, y0, x1, y1, channel)
-        if slat is None:
-            continue
-        for y in range(y0, y1 + 1):
-            for x in range(x0, x1 + 1):
-                step = corner_step(key, x, y)
-                if turn[0] != key[0]:
-                    step = 15 - step
-                if (step - frame) % FRAMES == 0:
-                    sp.put(x, y, slat)
-    for x0, y0, x1, y1, color in CORNER_WALLS[key]:
-        fill(sp, x0, y0, x1, y1, color)
-    return sp.image()
-
-
-def chute_turn(turn: str) -> Image.Image:
-    sp = Sprite(TILE, TILE)
-    (x0, y0), pixels = CHEVRON[turn[1]]
-    for dx, dy in pixels:
-        sp.put(x0 + dx, y0 + dy, WOOD[1])
-    return over(corner(turn, WOOD[0]), sp.image())
-
-
-def belt_turn(turn: str, frame: int) -> Image.Image:
-    return corner(turn, LEATHER[0], LEATHER[1], frame)
-
-
-def start(straight: Image.Image, flow: str) -> Image.Image:
-    """Reta com fluxo para `flow` fechada atrás pela tábua do fim."""
-    sp = Sprite(TILE, TILE)
-    for x0, y0, x1, y1, color in END_BOARD[OPPOSITE[flow]]:
-        fill(sp, x0, y0, x1, y1, color)
-    return over(straight, sp.image())
-
-
-def fittings(name: str, straights: dict[str, list[Image.Image]],
-             turn: Callable[[str, int], Image.Image], frames: int) -> dict[str, list[Image.Image]]:
-    """Curvas e começos de um material a partir das retas já giradas e do desenho da curva por quadro."""
-    by_flow = {"s": name, "w": f"{name}_r1", "n": f"{name}_r2", "e": f"{name}_r3"}
-    pieces = {f"{name}_turn_{t}": [turn(t, f) for f in range(frames)] for t in TURNS}
-    pieces.update({f"{name}_start_{d}": [start(img, d) for img in straights[by_flow[d]]] for d in by_flow})
-    return pieces
-
-
 def transport_frames() -> tuple[dict[str, Image.Image], dict[str, list[str]]]:
-    sequences: dict[str, list[Image.Image]] = {}
-    chute = directions([chute_south()], [chute_east()], "chute")
-    belt = directions([belt_south(f) for f in range(FRAMES)], [belt_east(f) for f in range(FRAMES)], "belt")
-    sequences.update(chute)
-    sequences.update(belt)
-    sequences.update(fittings("chute", chute, lambda t, _: chute_turn(t), 1))
-    sequences.update(fittings("belt", belt, belt_turn, FRAMES))
+    sequences: dict[str, list[Image.Image]] = conveyor_sequences()
     sequences.update(directions([hoist_south(f) for f in range(FRAMES)],
                                 [hoist_east(f) for f in range(FRAMES)], "hoist",
                                 north=[hoist_north(f) for f in range(FRAMES)]))

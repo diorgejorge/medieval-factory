@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "letters": [
+    { "id": "abertura-ciclo-a", "speaker": "rei", "title": "Um novo ciclo", "text": "Mais um ciclo, mais uma ordem. Sua Majestade confia no vale. Por enquanto." },
+    { "id": "abertura-ciclo-b", "speaker": "arauto", "title": "Carta selada", "text": "Trago outra carta com três selos. Meu cavalo pediu para não vir, mas veio." },
+    { "id": "abertura-ciclo-c", "speaker": "rei", "title": "Por ordem de Sua Majestade", "text": "O reino precisa, o vale entrega. Assim funciona Alvermarca. Leia com atenção e não demore." },
+    { "id": "favor-alto", "speaker": "rei", "title": "Sua Majestade está contente", "text": "Seu favor está em {favor}. O rei falou bem do vale no banquete. Duas vezes." },
+    { "id": "favor-baixo", "speaker": "rei", "title": "Sua Majestade está atento", "text": "Seu favor caiu para {favor}. O rei não está bravo. Está anotando." },
+    { "id": "favor-zerado", "speaker": "arauto", "title": "Uma conversa séria", "text": "O rei está decepcionado e mandou dizer isso em voz alta. O vale continua seu. Mas ele vai olhar mais de perto." },
+    { "id": "era-ferro", "speaker": "ferreira", "title": "A Era do Ferro", "text": "Vi sua primeira barra. Torta, mas é ferro. A Guilda dos Ferreiros está de olho no vale." },
+    { "id": "era-carvao", "speaker": "rei", "title": "A Era do Carvão", "text": "Os vizinhos afiam espadas. Alvermarca precisa de aço, e o vale vai fornecê-lo. Isso não é um pedido." },
+    { "id": "era-vapor", "speaker": "relojoeiro", "title": "A Era do Vapor", "text": "Força sem rio nem vento! Trouxe uma caldeira e três caixas de engrenagens. Não pergunte pela quarta." }
+  ]
+}

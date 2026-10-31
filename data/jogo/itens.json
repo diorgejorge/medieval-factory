@@ -12,6 +12,7 @@
     { "id": "wool", "era": 1, "category": "resource", "trade": true },
     { "id": "iron_ore", "era": 1, "category": "resource", "trade": true },
     { "id": "clay", "era": 1, "category": "resource", "trade": true },
+    { "id": "water", "era": 1, "category": "resource" },
     { "id": "stone_axe", "era": 1, "category": "tool", "tool": { "kind": "axe", "tier": 1, "uses": 40 } },
     { "id": "stone_pickaxe", "era": 1, "category": "tool", "tool": { "kind": "pickaxe", "tier": 1, "uses": 40 } },
     { "id": "charcoal", "era": 2, "category": "fuel", "fuel": 20 },

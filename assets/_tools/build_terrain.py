@@ -14,12 +14,18 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from cart import cart_frames
+from fountain import fountain_frames
+from guild_art import guild_frames
+from next_fronts import next_front_frames
+from characters import character_frames
 from items import item_frames
-from terrain_art import terrain_frames
+from terrain_art import boulder_frames, terrain_frames
 from machines import machine_frames
 from references import HD_DENSITY, reference_frames
+from road_art import road_frames
 from roads import road_and_yard_frames
 from transport import transport_frames
+from water_intake import water_intake_frames
 
 ASSETS = Path(__file__).resolve().parent.parent
 OWN_ART = ASSETS / "vendor" / "djorge"
@@ -394,10 +400,21 @@ def build() -> None:
     animations.update(transport_animations)
     carts, cart_animations = cart_frames()
     objects.update(carts)
+    roads = road_frames()
+    boulders = boulder_frames()
+    objects.update(boulders)
     objects.update(road_and_yard_frames())
+    people, people_animations = character_frames()
+    objects.update(people)
+    animations.update(people_animations)
     animations.update(cart_animations)
     items = json.loads((ASSETS.parent / "data" / "jogo" / "itens.json").read_text())["items"]
-    objects.update(item_frames([item["id"] for item in items]))
+    for frames_and_animations in (water_intake_frames(), fountain_frames(), next_front_frames(), guild_frames()):
+        frames, frame_animations = frames_and_animations
+        objects.update(frames)
+        animations.update(frame_animations)
+    # Ícones desenhados junto com a construção (item_water) não passam pelo items.py.
+    objects.update(item_frames([item["id"] for item in items if f"item_{item['id']}" not in objects]))
     buildings = with_tree_variants(reference_frames(ASSETS / "source"))
     own = own_buildings(OWN_ART / "buildings")
     replace_placeholders(objects, animations, set(buildings) | set(own))
@@ -405,7 +422,7 @@ def build() -> None:
     objects.update(own)
     write_atlas(objects, ASSETS / "objects" / "objects.json", max_width=1024,
                 animations=animations, anchor={"x": 0.5, "y": 1.0},
-                densities={name: HD_DENSITY for name in buildings if name not in own})
+                densities={name: HD_DENSITY for name in [*buildings, *people, *roads, *boulders] if name not in own})
 
 
 if __name__ == "__main__":

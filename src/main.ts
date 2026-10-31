@@ -1,34 +1,46 @@
 import { Application, Container } from 'pixi.js';
 import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
-import { UI_TEXT } from './core/data/data';
+import { DESCRIPTIONS, UI_TEXT } from './core/data/data';
 import { fillText } from './core/data/interfaceText';
 import type { SimulationSnapshot } from './core/simulation';
 import { START_STORAGE_ID } from './core/economy/economy';
-import { buildingDef, buildingObject } from './core/world/buildings';
+import { buildingDef, buildingObject, footprint } from './core/world/buildings';
 import { findNearestGrass } from './core/world/generator';
 import { isClickOnArea, villageAt } from './core/world/villages';
 import { createWorld } from './core/world/world';
 import villageTexts from '../data/texto/pt-BR/vilarejos.json';
 import { BuildControls } from './input/buildControls';
+import { readSave, writeSave } from './bridge/saveStore';
 import { bindClicks } from './input/clickControls';
 import { CameraControls } from './input/cameraControls';
+import { PlayerControls } from './input/playerControls';
+import { GatherControls, type DropPoint } from './input/gatherControls';
+import { Player } from './core/player';
 import { bindSimulationControls } from './input/simulationControls';
 import { BuildGhost } from './render/buildGhost';
+import { CartLayer } from './render/cartLayer';
 import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 import { ObjectLayer } from './render/objectLayer';
+import { scatterBoulders } from './render/scenery';
 import { ServantLayer } from './render/servantLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
 import { BuildingPanel, formatItems } from './ui/buildingPanel';
 import { RoutePicker, type RouteEndpointOption } from './ui/routePicker';
 import { BuildToolbar } from './ui/buildToolbar';
+import { decreeLines, showDecreeNotice } from './ui/decreeNotice';
 import { eraName, showEraNotice } from './ui/eraNotice';
+import { Tutorial } from './ui/tutorial';
 import { VillagePanel } from './ui/villagePanel';
 
 const HUD_REFRESH_MS = 250;
 const INITIAL_ZOOM = 2;
 const SEED_PARAM = 'seed';
+const LOAD_PARAM = 'load';
+/** Por quanto tempo o aviso de jogo salvo fica no HUD. */
+const SAVE_MESSAGE_MS = 3000;
+let saveMessage: { text: string; until: number } | null = null;
 
 async function start(): Promise<void> {
   const host = document.getElementById('game');
@@ -52,10 +64,16 @@ async function start(): Promise<void> {
   const objects = objectsAtlas ? new ObjectLayer(objectsAtlas) : null;
   if (objects) {
     objects.add(mapObjects);
+    objects.add(scatterBoulders(grid));
     world.addChild(objects.view);
   }
-  const servantLayer = new ServantLayer();
+  const carts = objectsAtlas ? new CartLayer(objectsAtlas) : null;
+  if (carts) world.addChild(carts.view);
+  const servantLayer = new ServantLayer(objectsAtlas);
   world.addChild(servantLayer.view);
+  // O camponês do jogador usa o mesmo desenho dos servos.
+  const playerLayer = new ServantLayer(objectsAtlas);
+  world.addChild(playerLayer.view);
   const ghost = new BuildGhost(objects);
   world.addChild(ghost.view);
   app.stage.addChild(world);
@@ -70,8 +88,20 @@ async function start(): Promise<void> {
     app.screen.height,
   );
   const controls = new CameraControls(camera, app.canvas);
+  controls.keyboardPan = false;
+  const player = new Player(start.x + 0.5, start.y + 0.5, grid, (x, y) => {
+    // Estrada não bloqueia: é por onde se anda.
+    const building = site.buildingAt(x, y);
+    return building !== null && !buildingDef(building.kind).road;
+  });
+  const playerControls = new PlayerControls(player);
+  const cameraStart = { x: camera.x, y: camera.y, zoom: camera.zoom };
 
-  const simulation = new SimulationClient(seed);
+  // ?load=1: carrega o jogo salvo (a página já veio com a seed dele).
+  const loading = new URLSearchParams(location.search).get(LOAD_PARAM) === '1';
+  const saved = loading ? await readSave() : null;
+  const simulation = new SimulationClient(seed, saved ?? undefined);
+  bindSaveKeys(simulation, (text) => (saveMessage = { text, until: performance.now() + SAVE_MESSAGE_MS }));
   bindSimulationControls(simulation);
   bindNewMapKey();
 
@@ -83,14 +113,38 @@ async function start(): Promise<void> {
     const reports = simulation.snapshot?.economy?.buildings ?? {};
     objects?.replaceGroup(
       'buildings',
-      site.all.map((b) => ({ ...buildingObject(b), working: reports[b.id]?.status === 'working' })),
+      site.all.map((b) => {
+        const working = reports[b.id]?.status === 'working';
+        return { ...buildingObject(b, working), working };
+      }),
     );
   };
+  // Tutorial da Era I: observa o jogo e avança sozinho (ver ui/tutorial.ts).
+  const tutorialElement = document.createElement('div');
+  tutorialElement.id = 'tutorial';
+  tutorialElement.hidden = true;
+  document.body.appendChild(tutorialElement);
+  const tutorial = new Tutorial(tutorialElement);
+  let removedBuildings = 0;
+  let villageOpened = false;
   simulation.onBuildingsChanged = (buildings) => {
+    if (buildings.length < site.all.length) removedBuildings++;
     site.replaceAll(buildings);
     drawBuildings();
     build.refresh();
   };
+
+  const gatherControls = new GatherControls(player, grid, simulation);
+  // Onde o camponês larga a carga: a vila e os armazéns construídos.
+  const dropPoints = (): DropPoint[] => [
+    ...(village ? [{ storageId: START_STORAGE_ID, area: village.area }] : []),
+    ...site.all
+      .filter((b) => buildingDef(b.kind).storage)
+      .map((b) => {
+        const { width, height } = footprint(b.kind, b.rotation);
+        return { storageId: b.id, area: { left: b.x, top: b.y, width, height } };
+      }),
+  ];
 
   const villagePanel = new VillagePanel(panel, villageTexts.temperaments, {
     trade: (village, give, receive) => simulation.send({ type: 'trade', village, give, receive }),
@@ -122,16 +176,28 @@ async function start(): Promise<void> {
     const neighbor = villageAt(villages, tile.x, tile.y);
     buildingPanel.hide();
     villagePanel.hide();
-    if (building) buildingPanel.show(building.id, buildingDef(building.kind).name, economy);
+    if (building) buildingPanel.show(building.id, buildingDef(building.kind).name, economy, DESCRIPTIONS.buildings[building.kind]);
     else if (village && isClickOnArea(village.area, tile.x, tile.y)) buildingPanel.show(START_STORAGE_ID, UI_TEXT.hud.ownVillage, economy);
-    else if (neighbor) villagePanel.show(neighbor, villages.indexOf(neighbor), economy);
+    else if (neighbor) {
+      villageOpened = true;
+      villagePanel.show(neighbor, villages.indexOf(neighbor), economy);
+    }
   });
 
   let era = 1;
+  let decreeCycle = 0;
+  let decreeFinished = 0;
   toolbar.setEra(era);
   let sinceHudRefresh = 0;
   app.ticker.add((ticker) => {
     controls.update(ticker.deltaMS / 1000);
+    // Andando, a câmera volta a seguir o camponês (arrastar com o mouse ainda solta a câmera).
+    if (playerControls.update(ticker.deltaMS / 1000)) {
+      camera.centerOn({ x: player.x * TILE_SIZE_PX, y: player.y * TILE_SIZE_PX }, app.screen.width, app.screen.height);
+    }
+    const hand = simulation.snapshot?.economy?.hand;
+    gatherControls.update(ticker.deltaMS / 1000, hand?.amount ?? 0, dropPoints());
+    playerLayer.update([{ x: player.x, y: player.y, busy: false, carrying: hand?.item ?? null }]);
     world.scale.set(camera.zoom);
     // Posição em pixels inteiros de tela: evita "tremedeira" e costuras entre chunks na pixel art.
     world.position.set(Math.round(-camera.x * camera.zoom), Math.round(-camera.y * camera.zoom));
@@ -139,11 +205,13 @@ async function start(): Promise<void> {
     gridRenderer.cull(camera, app.screen.width, app.screen.height);
     objects?.cull(camera, app.screen.width, app.screen.height);
     servantLayer.update(simulation.snapshot?.economy?.servants ?? []);
+    carts?.update(simulation.snapshot?.economy?.carts ?? []);
 
     sinceHudRefresh += ticker.deltaMS;
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
       sinceHudRefresh = 0;
-      hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
+      const notice = saveMessage && performance.now() < saveMessage.until ? `\n${saveMessage.text}` : '';
+      hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot) + notice;
       buildingPanel.refresh(simulation.snapshot?.economy);
       villagePanel.refresh(simulation.snapshot?.economy);
       const reports = simulation.snapshot?.economy?.buildings ?? {};
@@ -152,6 +220,15 @@ async function start(): Promise<void> {
         workingKey = nextWorkingKey;
         drawBuildings();
       }
+      const snapshot = simulation.snapshot;
+      tutorial.update({
+        kinds: new Set(site.all.map((b) => b.kind)),
+        removed: removedBuildings,
+        cameraMoved: camera.x !== cameraStart.x || camera.y !== cameraStart.y || camera.zoom !== cameraStart.zoom,
+        villageOpened,
+        timeChanged: snapshot !== null && (snapshot.paused || snapshot.speed !== 1),
+        decreeProgress: (snapshot?.decree?.delivered ?? 0) > 0 || (snapshot?.decree?.finished ?? 0) > 0,
+      });
       const snapshotEra = simulation.snapshot?.era ?? era;
       if (snapshotEra !== era) {
         era = snapshotEra;
@@ -160,6 +237,17 @@ async function start(): Promise<void> {
         buildingPanel.hide();
         villagePanel.hide();
         showEraNotice(panel, era);
+      }
+      // Decreto novo (ou o fim do anterior): a carta do rei no painel.
+      const decree = simulation.snapshot?.decree;
+      if (decree && (decree.cycle !== decreeCycle || decree.finished !== decreeFinished)) {
+        // Resultado novo (cumprido ou prazo esgotado) junto com o decreto seguinte, se ele já chegou.
+        const withResult = decree.finished !== decreeFinished;
+        decreeFinished = decree.finished;
+        decreeCycle = decree.cycle;
+        buildingPanel.hide();
+        villagePanel.hide();
+        showDecreeNotice(panel, decree, withResult);
       }
     }
   });
@@ -179,7 +267,11 @@ function formatHud(fps: number, zoom: number, seed: number, snapshot: Simulation
   const stock = economy
     ? `\n${fillText(text.stock, { itens: formatItems(economy.stock) })}\n${fillText(text.servants, { ocupados: busy, total: economy.servants.length })}`
     : '';
-  return `${render}\n${fillText(text.simLine, { ups, tick: snapshot.tick, estado: state })}\n${text.help}${stock}`;
+  const decree = snapshot.decree ? `\n${decreeLines(snapshot.decree)}` : '';
+  const hand = economy?.hand.item
+    ? `\n${fillText(text.hand, { itens: formatItems({ [economy.hand.item]: economy.hand.amount }) })}`
+    : '';
+  return `${render}\n${fillText(text.simLine, { ups, tick: snapshot.tick, estado: state })}\n${text.help}${stock}${hand}${decree}`;
 }
 
 /** A seed vem da URL (?seed=123) para um mapa poder ser compartilhado; sem ela, sorteia uma. */
@@ -197,7 +289,29 @@ function bindNewMapKey(): void {
     if (event.code !== 'KeyN' || event.repeat) return;
     const url = new URL(location.href);
     url.searchParams.set(SEED_PARAM, String(randomSeed()));
+    url.searchParams.delete(LOAD_PARAM);
     location.assign(url);
+  });
+}
+
+/** K salva o jogo; L recarrega a página com a seed do jogo salvo e o carrega. */
+function bindSaveKeys(simulation: SimulationClient, notify: (text: string) => void): void {
+  window.addEventListener('keydown', (event) => {
+    if (event.code === 'KeyK') {
+      void simulation
+        .requestSave()
+        .then(writeSave)
+        .then(() => notify(UI_TEXT.hud.saved))
+        .catch(() => notify(UI_TEXT.hud.saveFailed));
+    } else if (event.code === 'KeyL') {
+      void readSave().then((data) => {
+        if (!data) return notify(UI_TEXT.hud.noSave);
+        const url = new URL(location.href);
+        url.searchParams.set(SEED_PARAM, String(data.seed));
+        url.searchParams.set(LOAD_PARAM, '1');
+        location.assign(url);
+      });
+    }
   });
 }
 
