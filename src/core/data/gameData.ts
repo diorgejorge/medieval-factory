@@ -41,6 +41,10 @@ export interface BuildingDef {
   storage?: { capacity: number };
   /** Calha, esteira, guincho, divisor ou filtro 1×1: leva itens na direção da rotação. */
   transport?: TransportDef;
+  /** Estrada 1×1: as carroças só andam por ela. */
+  road?: boolean;
+  /** Pátio: `count` carroças, cada uma leva até `capacity` itens a `speed` tiles por segundo. */
+  carts?: { count: number; capacity: number; speed: number };
 }
 
 export interface ItemAmount {
@@ -282,6 +286,23 @@ function parseBuilding(
     const storage = entry['storage'];
     if (isObject(storage)) building.storage = { capacity: requirePositiveInt(storage, 'capacity', `${where} storage`, problems) };
     else problems.push(`${where}: "storage" deve ser { capacity }`);
+  }
+  if (entry['road'] !== undefined) {
+    if (entry['road'] !== true) problems.push(`${where}: "road" deve ser true`);
+    else building.road = true;
+    if (building.width !== 1 || building.height !== 1) problems.push(`${where}: estrada deve ser 1×1`);
+  }
+  if (entry['carts'] !== undefined) {
+    const carts = entry['carts'];
+    if (isObject(carts)) {
+      building.carts = {
+        count: requirePositiveInt(carts, 'count', `${where} carts`, problems),
+        capacity: requirePositiveInt(carts, 'capacity', `${where} carts`, problems),
+        speed: requirePositive(carts, 'speed', `${where} carts`, problems),
+      };
+    } else {
+      problems.push(`${where}: "carts" deve ser { count, capacity, speed }`);
+    }
   }
   return problems.length === before ? building : null;
 }
