@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SimulationLoop, Simulation } from '../src/core/simulation';
-import { BuildingSite, buildingObject, footprint } from '../src/core/world/buildings';
+import { BuildingSite, buildingCenter, buildingObject, footprint } from '../src/core/world/buildings';
 import { Grid } from '../src/core/world/grid';
 import { Terrain } from '../src/core/world/terrain';
 
@@ -99,5 +99,15 @@ describe('comandos de construção na simulação', () => {
     loop.enqueue({ type: 'removeBuilding', x: 2, y: 2 });
     loop.advance(0, 0);
     expect(loop.snapshot().buildings).toEqual([]);
+  });
+});
+
+describe('buildingCenter', () => {
+  it('acompanha a forma girada: girar mantém o canto e troca largura e altura', () => {
+    const s = site();
+    const house = s.place('house', 1, 1, 0); // 4×2
+    expect(house && buildingCenter(house)).toEqual({ x: 3, y: 2 });
+    s.rotateAt(1, 1); // 2×4 no mesmo canto
+    expect(house && buildingCenter(house)).toEqual({ x: 2, y: 3 });
   });
 });

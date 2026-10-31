@@ -1,11 +1,12 @@
 import { TICKS_PER_SECOND } from '../config';
 import { GAME_DATA } from '../data/data';
 import type { BuildingDef, ItemAmount, ToolKind, ToolTier } from '../data/gameData';
-import { buildingDef, countResourceTiles, footprint, type Building, type BuildingSite } from '../world/buildings';
+import { buildingCenter, buildingDef, countResourceTiles, footprint, type Building, type BuildingSite } from '../world/buildings';
 import type { Grid } from '../world/grid';
 import { Machine, recipesFor, type MachineStatus } from './machines';
 import { Servant, stepServants, type Demand, type ServantView } from './servants';
-import { add, available, freeSpace, markStoragesChanged, storageChanges, used, type Storage } from './storage';
+import { toolsOf, type ToolEntry } from './itemIndex';
+import { add, available, createStorage, freeSpace, used, type Storage } from './storage';
 import { recruit, trade, type VillageState, type VillageView } from './villageTrade';
 import { Segment, TransportNetwork, type SegmentView } from './transport';
 
@@ -76,6 +77,8 @@ export class Economy {
   private ticksUntilDemands = 0;
   private readonly transport: TransportNetwork;
   private site: BuildingSite | null = null;
+  /** Armazéns ao alcance de cada máquina ou extrator (por id), do mais perto ao mais longe. */
+  private readonly ranges = new Map<number, readonly Storage[]>();
 
   constructor(
     private readonly grid: Grid,
@@ -88,7 +91,7 @@ export class Economy {
     this.villages = villages.map((v) => ({ produces: v.produces, wants: v.wants, population: v.population, result: null, requests: 0 }));
     if (startCenter) {
       const items = new Map(start.stock.map(({ item, amount }) => [item, amount]));
-      this.storages.set(START_STORAGE_ID, { center: startCenter, capacity: start.capacity, items });
+      this.storages.set(START_STORAGE_ID, createStorage(startCenter, start.capacity, items));
       for (let i = 0; i < start.servants; i++) this.servants.push(new Servant(startCenter.x, startCenter.y));
     }
   }
@@ -105,7 +108,7 @@ export class Economy {
       if (def.transport) segments.push(new Segment(building.id, building.x, building.y, building.rotation, def.transport));
       const storage = this.storages.get(building.id);
       if (storage) storage.center = center;
-      else if (def.storage) this.storages.set(building.id, { center, capacity: def.storage.capacity, items: new Map() });
+      else if (def.storage) this.storages.set(building.id, createStorage(center, def.storage.capacity));
       const recipes = recipesFor(building.kind);
       const machine = this.machines.get(building.id);
       if (machine) machine.center = center;
@@ -139,7 +142,24 @@ export class Economy {
       this.machines.delete(id);
       this.machineKinds.delete(id);
     }
-    markStoragesChanged();
+    this.cacheRanges();
+  }
+
+  /**
+   * Armazéns ao alcance de cada máquina e extrator, calculados só quando as construções mudam.
+   * As listas mudaram: toda máquina reavalia no próximo tick.
+   */
+  private cacheRanges(): void {
+    this.ranges.clear();
+    for (const [id, machine] of this.machines) {
+      this.ranges.set(id, this.storagesInRange(machine.center));
+      machine.wake();
+    }
+    for (const [id, extractor] of this.extractors) this.ranges.set(id, this.storagesInRange(extractor.center));
+  }
+
+  private rangeOf(id: number): readonly Storage[] {
+    return this.ranges.get(id) ?? [];
   }
 
   /**
@@ -218,11 +238,8 @@ export class Economy {
   /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
     this.transport.step((x, y, item) => this.receive(x, y, item));
-    for (const extractor of this.extractors.values()) this.stepExtractor(extractor);
-    for (const machine of this.machines.values()) {
-      if (machine.isSleeping(storageChanges())) continue;
-      machine.step(this.storagesInRange(machine.center), storageChanges());
-    }
+    for (const [id, extractor] of this.extractors) this.stepExtractor(extractor, this.rangeOf(id));
+    for (const [id, machine] of this.machines) machine.step(this.rangeOf(id));
     // Pedidos mudam devagar: recalcular a cada meio segundo basta e poupa a simulação.
     if (--this.ticksUntilDemands <= 0) {
       this.demands = this.collectDemands();
@@ -259,12 +276,11 @@ export class Economy {
     };
   }
 
-  private stepExtractor(extractor: Extractor): void {
+  private stepExtractor(extractor: Extractor, storages: readonly Storage[]): void {
     if (extractor.resourceTiles === 0) {
       extractor.status = 'noResource';
       return;
     }
-    const storages = this.storagesInRange(extractor.center);
     const belt = extractor.outputTile && this.transport.at(extractor.outputTile.x, extractor.outputTile.y);
     if (storages.length === 0 && !belt) {
       extractor.status = 'noStorage';
@@ -302,10 +318,10 @@ export class Economy {
       const storageId = this.nearestStorageId(center);
       if (storageId !== null && amount > 0) demands.push({ storageId, item, amount, requester: center, reach: STORAGE_RANGE });
     };
-    for (const machine of this.machines.values()) {
+    for (const [id, machine] of this.machines) {
       const recipe = machine.recipe;
       if (!recipe) continue;
-      const storages = this.storagesInRange(machine.center);
+      const storages = this.rangeOf(id);
       if (machine.status === 'noInput') {
         for (const { item, amount } of recipe.inputs) request(machine.center, item, amount - available(storages, item));
       } else if (machine.status === 'noFuel' && recipe.fuel) {
@@ -316,10 +332,8 @@ export class Economy {
     for (const extractor of this.extractors.values()) {
       const required = extractor.def.tool;
       if (extractor.status !== 'noTool' || !required) continue;
-      const tool = [...GAME_DATA.items.values()].find(
-        (item) => item.tool?.kind === required.kind && item.tool.tier >= required.minTier && this.totalStock(item.id) > 0,
-      );
-      if (tool) request(extractor.center, tool.id, 1);
+      const tool = toolsOf(required.kind, required.minTier).find(({ item }) => this.totalStock(item) > 0);
+      if (tool) request(extractor.center, tool.item, 1);
     }
     return demands;
   }
@@ -353,12 +367,12 @@ export class Economy {
 
   /** Pega no armazém mais próximo a melhor ferramenta do tipo pedido, se houver. */
   private takeTool(storages: readonly Storage[], kind: ToolKind, minTier: ToolTier): HeldTool | null {
+    const tools = toolsOf(kind, minTier);
     for (const storage of storages) {
-      let best: { item: string; tier: number; uses: number } | null = null;
-      for (const [item, amount] of storage.items) {
-        const tool = GAME_DATA.items.get(item)?.tool;
-        if (amount <= 0 || !tool || tool.kind !== kind || tool.tier < minTier) continue;
-        if (!best || tool.tier > best.tier) best = { item, tier: tool.tier, uses: tool.uses };
+      let best: ToolEntry | null = null;
+      for (const tool of tools) {
+        if ((storage.items.get(tool.item) ?? 0) <= 0) continue;
+        if (!best || tool.tier > best.tier) best = tool;
       }
       if (best) {
         add(storage, best.item, -1);
@@ -376,10 +390,5 @@ export class Economy {
       .sort((a, b) => a.distance - b.distance)
       .map(({ storage }) => storage);
   }
-}
-
-function buildingCenter(building: Building): { x: number; y: number } {
-  const { width, height } = footprint(building.kind, building.rotation);
-  return { x: building.x + width / 2, y: building.y + height / 2 };
 }
 

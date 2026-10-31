@@ -15,8 +15,11 @@ export class SimulationClient {
     const init: InitMessage = { kind: 'init', seed };
     this.worker.postMessage(init);
     this.worker.onmessage = (event: MessageEvent<SnapshotMessage>) => {
-      this.latestSnapshot = event.data.snapshot;
-      if (event.data.snapshot.buildings) this.onBuildingsChanged(event.data.snapshot.buildings);
+      const snapshot = event.data.snapshot;
+      // A economia vem só a ~4 Hz: sem ela no snapshot, continua valendo a última recebida.
+      const economy = snapshot.economy ?? this.latestSnapshot?.economy;
+      this.latestSnapshot = economy ? { ...snapshot, economy } : snapshot;
+      if (snapshot.buildings) this.onBuildingsChanged(snapshot.buildings);
     };
   }
 

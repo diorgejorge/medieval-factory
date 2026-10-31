@@ -1,18 +1,29 @@
 import { TICKS_PER_SECOND } from '../config';
 import { GAME_DATA } from '../data/data';
 import type { ItemAmount, RecipeDef } from '../data/gameData';
-import { add, available, freeSpace, take, type Storage } from './storage';
+import { add, available, createStorage, freeSpace, take, versionOf, type Storage } from './storage';
 
 export type MachineStatus = 'working' | 'noRecipe' | 'noInput' | 'noFuel' | 'noStorage' | 'outputFull';
 
+/** Receitas por construção, montadas uma vez (os dados não mudam durante o jogo). */
+let recipesByBuilding: Map<string, readonly RecipeDef[]> | null = null;
+const NO_RECIPES: readonly RecipeDef[] = [];
+
 /** Receitas que uma construção sabe fazer, na ordem do JSON (a primeira é a padrão). */
-export function recipesFor(buildingKind: string): RecipeDef[] {
-  return [...GAME_DATA.recipes.values()].filter((recipe) => recipe.building === buildingKind);
+export function recipesFor(buildingKind: string): readonly RecipeDef[] {
+  if (!recipesByBuilding) {
+    recipesByBuilding = new Map();
+    for (const recipe of GAME_DATA.recipes.values()) {
+      recipesByBuilding.set(recipe.building, [...(recipesByBuilding.get(recipe.building) ?? []), recipe]);
+    }
+  }
+  return recipesByBuilding.get(buildingKind) ?? NO_RECIPES;
 }
 
 /**
  * Máquina: puxa insumos e combustível dos armazéns ao alcance, trabalha `seconds` e devolve o produto.
- * Parada por falta de algo, ela "dorme" e só reavalia quando algum armazém muda (sistema dormente).
+ * Parada por falta de algo, ela "dorme" e só reavalia quando algum armazém ao alcance (ou o buffer)
+ * muda, ou quando as construções mudam (`wake`) — sistema dormente.
  */
 export class Machine {
   status: MachineStatus = 'working';
@@ -34,7 +45,7 @@ export class Machine {
     public center: { x: number; y: number },
     public recipe: RecipeDef | null,
   ) {
-    this.buffer = { center, capacity: Infinity, items: new Map() };
+    this.buffer = createStorage(center, Infinity);
   }
 
   /** Recebe um item de uma calha ou esteira, se a receita usa e ainda cabe (até 2 receitas de estoque). */
@@ -60,8 +71,12 @@ export class Machine {
     return this.recipe && this.crafting ? this.progressTicks / (this.recipe.seconds * TICKS_PER_SECOND) : 0;
   }
 
-  /** Um tick. `storages` = armazéns ao alcance, do mais perto ao mais longe; `version` muda a cada alteração neles. */
-  step(inRange: readonly Storage[], version: number): void {
+  /**
+   * Um tick. `inRange` = armazéns ao alcance, do mais perto ao mais longe; a lista só pode mudar
+   * entre chamadas junto com um `wake()` (a máquina compara a soma das versões deles).
+   */
+  step(inRange: readonly Storage[]): void {
+    const version = this.versionOf(inRange);
     if (this.sleptAt === version) return;
     this.sleptAt = -1;
     const recipe = this.recipe;
@@ -89,8 +104,17 @@ export class Machine {
     if (!this.deliver(storages)) this.status = 'outputFull';
   }
 
-  isSleeping(version: number): boolean {
-    return this.sleptAt === version;
+  isSleeping(inRange: readonly Storage[]): boolean {
+    return this.sleptAt !== -1 && this.sleptAt === this.versionOf(inRange);
+  }
+
+  /** Reavalia no próximo tick (os armazéns ao alcance ou as ligações mudaram). */
+  wake(): void {
+    this.sleptAt = -1;
+  }
+
+  private versionOf(inRange: readonly Storage[]): number {
+    return this.buffer.version + versionOf(inRange);
   }
 
   private sleep(status: MachineStatus, version: number): void {

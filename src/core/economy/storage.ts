@@ -1,23 +1,24 @@
-/**
- * Conta toda mudança em qualquer armazém. Máquinas paradas guardam o valor e só reavaliam
- * quando ele muda: acordar a mais nunca erra, e nenhuma mudança passa sem acordar.
- */
-let changes = 0;
-
-export function storageChanges(): number {
-  return changes;
-}
-
-/** Avise quando armazéns forem criados ou removidos. */
-export function markStoragesChanged(): void {
-  changes++;
-}
-
 /** Armazém: um ponto no mapa com itens somados até a capacidade. */
 export interface Storage {
   center: { x: number; y: number };
   capacity: number;
   items: Map<string, number>;
+  /**
+   * Conta as mudanças neste armazém (só cresce). Máquinas paradas guardam a soma das versões dos
+   * armazéns ao alcance e só reavaliam quando ela muda: nenhuma mudança perto passa sem acordar.
+   */
+  version: number;
+}
+
+export function createStorage(center: { x: number; y: number }, capacity: number, items = new Map<string, number>()): Storage {
+  return { center, capacity, items, version: 0 };
+}
+
+/** Soma das versões: muda se qualquer um dos armazéns mudar (a lista em si não pode mudar entre as leituras). */
+export function versionOf(storages: readonly Storage[]): number {
+  let total = 0;
+  for (const storage of storages) total += storage.version;
+  return total;
 }
 
 export function used(storage: Storage): number {
@@ -32,7 +33,7 @@ export function freeSpace(storage: Storage): number {
 
 /** Soma ou tira (amount negativo) itens; zero some do mapa para o snapshot ficar limpo. */
 export function add(storage: Storage, item: string, amount: number): void {
-  if (amount !== 0) changes++;
+  if (amount !== 0) storage.version++;
   const next = (storage.items.get(item) ?? 0) + amount;
   if (next > 0) storage.items.set(item, next);
   else storage.items.delete(item);

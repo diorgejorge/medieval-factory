@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { TICKS_PER_SECOND, TICK_MS } from '../src/core/config';
-import { SimulationLoop } from '../src/core/simulation';
+import { Economy } from '../src/core/economy/economy';
+import { ECONOMY_INTERVAL_MS, Simulation, SimulationLoop } from '../src/core/simulation';
+import { BuildingSite } from '../src/core/world/buildings';
+import { Grid } from '../src/core/world/grid';
 
 /** Simula `seconds` de tempo real em passos de ~60 FPS. */
 function runFor(loop: SimulationLoop, seconds: number, startMs = 0): number {
@@ -47,5 +50,23 @@ describe('SimulationLoop', () => {
     runFor(a, 3);
     runFor(b, 3);
     expect(a.snapshot().tick).toBe(b.snapshot().tick);
+  });
+
+  it('publica a economia a ~4 Hz e logo depois de qualquer comando', () => {
+    const grid = new Grid(20);
+    const site = new BuildingSite(grid);
+    const loop = new SimulationLoop(new Simulation(site, new Economy(grid, { x: 5, y: 5 })));
+    loop.advance(TICK_MS, 0);
+    expect(loop.snapshot().economy).toBeDefined();
+    loop.advance(TICK_MS, 100);
+    expect(loop.snapshot().economy).toBeUndefined();
+    loop.advance(TICK_MS, ECONOMY_INTERVAL_MS);
+    expect(loop.snapshot().economy).toBeDefined();
+
+    loop.enqueue({ type: 'setPaused', paused: true });
+    loop.advance(TICK_MS, ECONOMY_INTERVAL_MS + 10);
+    expect(loop.snapshot().economy).toBeDefined();
+    loop.advance(TICK_MS, ECONOMY_INTERVAL_MS + 20);
+    expect(loop.snapshot().economy).toBeUndefined();
   });
 });
