@@ -16,7 +16,7 @@
     { "id": "charcoal_kiln", "era": 1, "width": 4, "height": 4, "frame": "charcoal_kiln" },
     { "id": "smelter", "era": 1, "width": 4, "height": 4, "frame": "smelter" },
     { "id": "forge", "era": 2, "width": 4, "height": 4, "frame": "forge" },
-    { "id": "chute", "era": 1, "width": 1, "height": 1, "transport": { "speed": 3, "gravity": true } },
-    { "id": "belt", "era": 1, "width": 1, "height": 1, "transport": { "speed": 1.5, "gravity": false } }
+    { "id": "chute", "era": 1, "width": 1, "height": 1, "frame": "chute", "transport": { "speed": 3, "gravity": true } },
+    { "id": "belt", "era": 1, "width": 1, "height": 1, "frame": "belt", "transport": { "speed": 1.5, "gravity": false } }
   ]
 }
