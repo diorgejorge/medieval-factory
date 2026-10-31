@@ -1,3 +1,4 @@
+import type { TransportDef } from '../economy/transport';
 import { Terrain, type TerrainType } from '../world/terrain';
 
 export const ERAS = [1, 2, 3, 4] as const;
@@ -38,8 +39,8 @@ export interface BuildingDef {
   extracts?: { item: string; terrain: TerrainType; seconds: number; tool?: { kind: ToolKind; minTier: ToolTier } };
   /** Armazém: guarda até `capacity` itens somados. */
   storage?: { capacity: number };
-  /** Calha ou esteira 1×1: leva itens na direção da rotação. */
-  transport?: { speed: number; gravity: boolean };
+  /** Calha, esteira, guincho, divisor ou filtro 1×1: leva itens na direção da rotação. */
+  transport?: TransportDef;
 }
 
 export interface ItemAmount {
@@ -262,6 +263,16 @@ function parseBuilding(
         speed: requirePositive(transport, 'speed', `${where} transport`, problems),
         gravity: transport['gravity'] === true,
       };
+      if (transport['climb'] !== undefined) {
+        const climb = transport['climb'];
+        if (typeof climb === 'number' && climb >= 0) building.transport.climb = climb;
+        else problems.push(`${where} transport: "climb" deve ser um número >= 0`);
+      }
+      if (transport['sort'] !== undefined) {
+        const sort = transport['sort'];
+        if (sort === 'split' || sort === 'filter') building.transport.sort = sort;
+        else problems.push(`${where} transport: "sort" deve ser "split" ou "filter"`);
+      }
       if (building.width !== 1 || building.height !== 1) problems.push(`${where}: calha/esteira deve ser 1×1`);
     } else {
       problems.push(`${where}: "transport" deve ser { speed, gravity }`);

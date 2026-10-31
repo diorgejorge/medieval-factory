@@ -215,6 +215,11 @@ export class Economy {
     return true;
   }
 
+  /** Escolhe o item que um filtro manda em frente (null: o próximo que chegar). */
+  setFilter(buildingId: number, item: string | null): boolean {
+    return this.transport.setFilter(buildingId, item);
+  }
+
   /** Um tick: extratores avançam e entregam; máquinas acordadas puxam insumos e produzem. */
   step(): void {
     this.transport.step((x, y, item) => this.receive(x, y, item));

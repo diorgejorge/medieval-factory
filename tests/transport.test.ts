@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { TICKS_PER_SECOND } from '../src/core/config';
 import { GAME_DATA } from '../src/core/data/data';
 import { Economy } from '../src/core/economy/economy';
-import { ITEM_SPACING, Segment, TransportNetwork } from '../src/core/economy/transport';
+import { ITEM_SPACING, Segment, TransportNetwork, type Receiver } from '../src/core/economy/transport';
 import { BuildingSite, type Rotation } from '../src/core/world/buildings';
 import { Grid } from '../src/core/world/grid';
 
 const BELT = { speed: 2, gravity: false };
 const CHUTE = { speed: 2, gravity: true };
 
-function ticks(network: TransportNetwork, seconds: number, deliver = () => false): void {
+function ticks(network: TransportNetwork, seconds: number, deliver: Receiver = () => false): void {
   for (let i = 0; i < Math.round(seconds * TICKS_PER_SECOND); i++) network.step(deliver);
 }
 
@@ -91,5 +91,94 @@ describe('máquinas ligadas por esteira', () => {
     const snapshot = economy.snapshot();
     expect(snapshot.stock['flour']).toBe(1);
     expect(snapshot.segments.length).toBe(5);
+  });
+});
+
+describe('nora, repartidor e separador', () => {
+  const SPLIT = { speed: 2, gravity: false, sort: 'split' as const };
+  const FILTER = { speed: 2, gravity: false, sort: 'filter' as const };
+
+  /** Um segmento em (2, 2) virado para leste, com esteiras saindo para leste, sul e norte. */
+  function junction(def: typeof SPLIT | typeof FILTER) {
+    const grid = new Grid(5);
+    const network = new TransportNetwork(grid);
+    network.rebuild([
+      new Segment(1, 2, 2, 3, def),
+      new Segment(2, 3, 2, 3, BELT), // em frente
+      new Segment(3, 2, 3, 0, BELT), // direita (sul)
+      new Segment(4, 2, 1, 2, BELT), // esquerda (norte)
+    ]);
+    const received: Record<string, string[]> = { ahead: [], right: [], left: [] };
+    const deliver = (x: number, y: number, item: string) => {
+      const side = x === 4 ? 'ahead' : y === 4 ? 'right' : y === 0 ? 'left' : null;
+      if (side) received[side]?.push(item);
+      return side !== null;
+    };
+    return { network, received, deliver };
+  }
+
+  function feed(network: TransportNetwork, deliver: Receiver, items: string[]): void {
+    for (const item of items) {
+      network.at(2, 2)?.push(item);
+      ticks(network, 0.5, deliver);
+    }
+    ticks(network, 3, deliver);
+  }
+
+  it('a esteira sobe pouco; a nora sobe o relevo', () => {
+    const belt = { speed: 2, gravity: false, climb: 2 };
+    const hoist = { speed: 2, gravity: false, climb: 255 };
+    for (const [def, rise, passes] of [
+      [belt, 2, true],
+      [belt, 3, false],
+      [hoist, 120, true],
+    ] as const) {
+      const grid = new Grid(10);
+      grid.setHeight(1, 0, rise);
+      const network = line(grid, 2, def);
+      network.at(0, 0)?.push('wood');
+      ticks(network, 2);
+      expect(network.at(1, 0)?.items.length, `subida ${rise}`).toBe(passes ? 1 : 0);
+    }
+  });
+
+  it('o repartidor divide por igual entre frente e lados', () => {
+    const { network, received, deliver } = junction(SPLIT);
+    feed(network, deliver, Array.from({ length: 9 }, () => 'wood'));
+    expect([received['ahead']?.length, received['right']?.length, received['left']?.length]).toEqual([3, 3, 3]);
+  });
+
+  it('o separador manda o trigo em frente e a pedra para os lados', () => {
+    const { network, received, deliver } = junction(FILTER);
+    expect(network.setFilter(1, 'wheat')).toBe(true);
+    feed(network, deliver, ['stone', 'wheat', 'stone', 'wheat', 'stone']);
+    expect(received['ahead']).toEqual(['wheat', 'wheat']);
+    expect([...(received['right'] ?? []), ...(received['left'] ?? [])]).toEqual(['stone', 'stone', 'stone']);
+  });
+
+  it('sem escolha, o separador fica com o primeiro item que chegar', () => {
+    const { network, received, deliver } = junction(FILTER);
+    feed(network, deliver, ['iron_ore', 'wood', 'iron_ore']);
+    expect(received['ahead']).toEqual(['iron_ore', 'iron_ore']);
+    expect(network.at(2, 2)?.view().filter).toBe('iron_ore');
+  });
+
+  it('não devolve item para a esteira que alimenta o repartidor', () => {
+    const grid = new Grid(5);
+    const network = new TransportNetwork(grid);
+    network.rebuild([
+      new Segment(1, 2, 2, 3, SPLIT),
+      new Segment(2, 2, 3, 2, BELT), // entra pelo sul, apontando para o repartidor
+    ]);
+    network.at(2, 2)?.push('wood');
+    ticks(network, 2, () => false);
+    expect(network.at(2, 3)?.items).toEqual([]);
+    expect(network.at(2, 2)?.items.length).toBe(1);
+  });
+
+  it('os dados trazem nora, repartidor e separador', () => {
+    expect(GAME_DATA.buildings.get('hoist')?.transport?.climb).toBeGreaterThan(GAME_DATA.buildings.get('belt')?.transport?.climb ?? 0);
+    expect(GAME_DATA.buildings.get('splitter')?.transport?.sort).toBe('split');
+    expect(GAME_DATA.buildings.get('filter')?.transport?.sort).toBe('filter');
   });
 });
