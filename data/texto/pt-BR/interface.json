@@ -5,7 +5,10 @@
     "close": "[Esc] fechar",
     "empty": "vazio",
     "itemAmount": "{item} {quantidade}",
-    "itemSeparator": " · "
+    "itemSeparator": " · ",
+    "quote": "“{texto}”",
+    "listSeparator": ", ",
+    "eraLabel": "Era {numero}: {nome}"
   },
   "hud": {
     "debugLine": "FPS {fps}  zoom {zoom}x  seed {seed}  {era}",
@@ -50,7 +53,14 @@
     "recipe": "Receita: {receita}",
     "recipeFormat": "{entradas} → {saidas}",
     "progress": "Andamento: {progresso}%",
-    "stored": "Guardado: {total} de {capacidade}"
+    "stored": "Guardado: {total} de {capacidade}",
+    "tool": "Ferramenta: {item} ({usos} usos)",
+    "toolNone": "Ferramenta: nenhuma",
+    "recipeItem": "{quantidade} {item}",
+    "recipeItemSeparator": " + ",
+    "recipeFuel": " (queima {combustiveis})",
+    "filterItem": "Separa: {item}",
+    "filterAny": "Separa: o primeiro que chegar"
   },
   "villagePanel": {
     "population": "População: {populacao}",
