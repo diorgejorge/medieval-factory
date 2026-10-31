@@ -44,7 +44,9 @@ Construções antigas continuam com suas cores; a era nova acrescenta, não repi
 
 ## Fonte da arte
 
-- **Terreno, natureza e objetos do mapa:** pacote **Ninja Adventure** (Pixel-boy e AAA), licença **CC0**
+- **Arte própria (`assets/vendor/djorge/`):** é a arte definitiva. Cada arquivo lá substitui o equivalente do
+  pacote provisório no build; regras de nome e tamanho em `assets/vendor/djorge/README.md`.
+- **Provisório — terreno, natureza e objetos do mapa:** pacote **Ninja Adventure** (Pixel-boy e AAA), licença **CC0**
   (uso comercial livre, sem atribuição obrigatória; damos crédito nos créditos do jogo mesmo assim).
   Só os PNGs usados ficam em `assets/vendor/ninja-adventure/`, com a licença. O zip original não vai para o repositório.
 - **Máquinas e construções da fábrica:** feitas por nós, seguindo as cores e o traço do pacote

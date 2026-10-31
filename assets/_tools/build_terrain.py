@@ -1,6 +1,7 @@
 """Monta os atlas de terreno e de objetos a partir do pacote Ninja Adventure (CC0).
 
-Fonte: assets/vendor/ninja-adventure/ (só os PNGs usados + licença).
+Fonte: assets/vendor/djorge/ (arte própria) com o pacote assets/vendor/ninja-adventure/ como provisório:
+cada arquivo em djorge/ substitui o de mesmo nome do pacote.
 Saída: assets/terrain/terrain.{png,json} e assets/objects/objects.{png,json}, no formato de spritesheet do Pixi.
 Uso: python3 assets/_tools/build_terrain.py
 """
@@ -16,7 +17,8 @@ from machines import machine_frames
 from references import reference_frames
 
 ASSETS = Path(__file__).resolve().parent.parent
-VENDOR = ASSETS / "vendor" / "ninja-adventure"
+OWN_ART = ASSETS / "vendor" / "djorge"
+PLACEHOLDER = ASSETS / "vendor" / "ninja-adventure"
 TILE = 16
 HALF = TILE // 2
 PAD = 1  # borda extrudada em cada frame: evita "costuras" ao dar zoom
@@ -24,8 +26,15 @@ PAD = 1  # borda extrudada em cada frame: evita "costuras" ao dar zoom
 Cell = tuple[int, int]  # (coluna, linha) na grade 16x16 de um tileset
 
 
+def own_buildings(folder: Path) -> dict[str, Image.Image]:
+    """Construções já desenhadas em pixel art (djorge/buildings/<id>.png): entram como estão, sem redução."""
+    return {path.stem: Image.open(path).convert("RGBA") for path in sorted(folder.glob("*.png"))}
+
+
 def load(name: str) -> Image.Image:
-    return Image.open(VENDOR / name).convert("RGBA")
+    """Tileset pelo nome: a versão própria em djorge/ quando existe, senão a do pacote."""
+    own = OWN_ART / name
+    return Image.open(own if own.exists() else PLACEHOLDER / name).convert("RGBA")
 
 
 FLOOR, WATER, NATURE = load("TilesetFloor.png"), load("TilesetWater.png"), load("TilesetNature.png")
@@ -331,6 +340,7 @@ def build() -> None:
     objects.update(machines)
     animations.update(machine_animations)
     objects.update(reference_frames(ASSETS / "source"))
+    objects.update(own_buildings(OWN_ART / "buildings"))
     write_atlas(objects, ASSETS / "objects" / "objects.json", cols=8,
                 animations=animations, anchor={"x": 0.5, "y": 1.0})
 
