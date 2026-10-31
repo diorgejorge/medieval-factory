@@ -12,13 +12,19 @@
       "id": "olhar-o-vale",
       "speaker": "arauto",
       "title": "Conheça o vale",
-      "text": "Ande pelo vale com W, A, S, D e use a roda do mouse para aproximar. Eu esperava mais. Mas o rio é bonito."
+      "text": "Ande pelo vale com W, A, S, D ou com as setas, e use a roda do mouse para aproximar. Eu esperava mais. Mas o rio é bonito."
     },
     {
       "id": "primeiro-lenhador",
       "speaker": "arauto",
       "title": "Madeira primeiro",
       "text": "Escolha a Cabana do lenhador na barra e coloque perto da floresta. R gira, Esc cancela."
+    },
+    {
+      "id": "armazem",
+      "speaker": "escriba",
+      "title": "Tudo vai para o Armazém",
+      "text": "Lenhador e Pedreira entregam sozinhos no Armazém ao alcance, e de lá tiram as ferramentas. Sem Armazém por perto, ninguém trabalha."
     },
     {
       "id": "primeira-pedreira",
@@ -42,7 +48,13 @@
       "id": "cadeia-do-pao",
       "speaker": "escriba",
       "title": "Pão para os servos",
-      "text": "Lavoura dá trigo, o Moinho faz farinha e o Forno de pão assa com lenha. Servo alimentado trabalha; servo com fome reclama em versos."
+      "text": "Lavoura dá trigo, o Moinho faz farinha e o Forno de pão assa com lenha. Tudo puxa e devolve ao Armazém por perto. Servo com fome reclama em versos."
+    },
+    {
+      "id": "burro",
+      "speaker": "escriba",
+      "title": "Um burro vale dez servos",
+      "text": "Na Estrebaria mora o burro de carga. Diga de onde ele pega e para onde leva, e ele faz a rota sozinho. Teimoso, mas não falta."
     },
     {
       "id": "vilarejos",
@@ -57,10 +69,16 @@
       "text": "Espaço pausa. 1, 2 e 3 mudam a velocidade. O prazo do rei não pausa no coração dele, mas no jogo, sim."
     },
     {
+      "id": "primeiro-decreto",
+      "speaker": "arauto",
+      "title": "O primeiro decreto",
+      "text": "O rei quer água na Fonte da praça. Ponha uma Tomada d'água no rio e leve a água por calha, morro abaixo, até a fonte."
+    },
+    {
       "id": "fim-do-tutorial",
       "speaker": "arauto",
       "title": "O primeiro decreto",
-      "text": "O vale está de pé. Meu cavalo e eu voltamos à capital; logo chega a primeira ordem do rei. Boa sorte."
+      "text": "O vale está de pé. Cada decreto cumprido e cada produto entregue vale pontos para o seu nome no ranking do reino. Boa sorte."
     }
   ]
 }

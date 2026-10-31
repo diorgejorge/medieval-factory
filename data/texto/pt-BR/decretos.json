@@ -120,6 +120,86 @@
       "reminder": "Faltam {prazo}. O Badalo foi visto andando no compasso do sino.",
       "success": "O Badalo está parado e, segundo Corvo, \"só pensativo\". Recompensa: {recompensa}.",
       "failure": "O Badalo segue marchando. Na hora certa, pelo menos."
+    },
+    {
+      "id": "padaria-sem-servos",
+      "type": "engenharia",
+      "era": 2,
+      "title": "Pão que anda sozinho",
+      "letter": "A padaria real reclama que os servos comem metade da farinha no caminho. Leve {item} do moinho à padaria por burro de carga, sem mãos no meio.",
+      "reminder": "Faltam {prazo}. O padeiro jura que contou os sacos.",
+      "success": "A farinha chega inteira e o padeiro está sem desculpas. Recompensa: {recompensa}.",
+      "failure": "Os servos seguem levando a farinha. E comendo um pouco."
+    },
+    {
+      "id": "agua-do-mosteiro",
+      "type": "engenharia",
+      "era": 2,
+      "title": "Água morro acima",
+      "letter": "O mosteiro do outeiro reza por água há anos. Os santos não responderam. Leve {quantidade} de {item} até o alto do morro com uma nora.",
+      "reminder": "Faltam {prazo}. Os monges já rezam em turnos.",
+      "success": "A água subiu o morro e os monges juram que foi milagre. Recompensa: {recompensa}.",
+      "failure": "O mosteiro segue seco. Os monges mudaram de santo."
+    },
+    {
+      "id": "moinho-de-vento",
+      "type": "engenharia",
+      "era": 2,
+      "title": "Força do vento",
+      "letter": "Sua Majestade leu que no estrangeiro o vento trabalha de graça. Erga um moinho de vento e leve a força dele por eixos até a forja.",
+      "reminder": "Faltam {prazo}. O arauto está segurando o chapéu.",
+      "success": "As pás giram, os eixos rangem e a forja canta. O vento agora paga imposto. Recompensa: {recompensa}.",
+      "failure": "Sem moinho. O vento continua sem emprego."
+    },
+    {
+      "id": "rota-do-pao",
+      "type": "producao",
+      "era": 2,
+      "title": "A rota do pão",
+      "letter": "Um vilarejo vizinho passa fome e o rei quer parecer generoso. Monte uma rota de carroça e entregue {quantidade} de {item} lá.",
+      "reminder": "Faltam {prazo}. O vilarejo já desenhou o rei com cara de bravo.",
+      "success": "O pão chegou e o vilarejo pintou o rei sorrindo. Recompensa: {recompensa}.",
+      "failure": "Nenhuma carroça chegou. O desenho do rei ficou pior."
+    },
+    {
+      "id": "manuscritos-da-escriba",
+      "type": "producao",
+      "era": 2,
+      "title": "Tinta e pergaminho",
+      "letter": "Irmã Benedita quer copiar os segredos das guildas antes que os mestres esqueçam. Entregue {quantidade} de {item} ao scriptório.",
+      "reminder": "Faltam {prazo}. A irmã já escreve nas paredes.",
+      "success": "O scriptório trabalha dia e noite. As guildas abrem as portas. Recompensa: {recompensa}.",
+      "failure": "Sem manuscritos. Um mestre ferreiro esqueceu como se faz prego."
+    },
+    {
+      "id": "mercado-da-praca",
+      "type": "benfeitoria",
+      "era": 2,
+      "title": "Um mercado de verdade",
+      "letter": "Na capital se compra e vende no chão, entre as galinhas. Construa um mercado na praça e encha as bancas com {item}.",
+      "reminder": "Faltam {prazo}. As galinhas já cobram aluguel.",
+      "success": "Bancas cheias, galinhas fora. A capital parece rica. Recompensa: {recompensa}.",
+      "failure": "Sem mercado. As galinhas seguem no comando."
+    },
+    {
+      "id": "guarda-florestal",
+      "type": "producao",
+      "era": 2,
+      "title": "Machados para a guarda",
+      "letter": "A guarda florestal corta lenha com machados de pedra e a floresta ri deles. Entregue {quantidade} de {item} antes do prazo.",
+      "reminder": "Faltam {prazo}. Um carvalho quebrou outro machado.",
+      "success": "A guarda tem ferro na mão e a floresta parou de rir. Recompensa: {recompensa}.",
+      "failure": "A guarda segue com pedra. A floresta segue rindo."
+    },
+    {
+      "id": "aco-da-mestra",
+      "type": "producao",
+      "era": 3,
+      "title": "O aço de Ilda Braga",
+      "letter": "Mestra Ilda Braga diz que ferro é para principiantes. Ela quer {quantidade} de {item} para provar que o vale forja como a capital.",
+      "reminder": "Faltam {prazo}. A mestra testa cada barra com os dentes.",
+      "success": "A mestra mordeu o aço e não disse nada. Vindo dela, é elogio. Recompensa: {recompensa}.",
+      "failure": "Sem aço. A mestra voltou a chamar o vale de oficina de brinquedo."
     }
   ]
 }

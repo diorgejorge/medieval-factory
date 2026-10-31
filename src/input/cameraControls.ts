@@ -19,6 +19,8 @@ export class CameraControls {
   private readonly pressedKeys = new Set<string>();
   private dragPointerId: number | null = null;
   private lastPointer = { x: 0, y: 0 };
+  /** Com o camponês do jogador, WASD/setas andam com ele e a câmera só segue (sem pan pelo teclado). */
+  keyboardPan = true;
 
   constructor(
     private readonly camera: Camera,
@@ -36,6 +38,7 @@ export class CameraControls {
 
   /** Aplica o pan contínuo do teclado. Chamar uma vez por frame. */
   update(deltaSeconds: number): void {
+    if (!this.keyboardPan) return;
     let dx = 0;
     let dy = 0;
     for (const code of this.pressedKeys) {

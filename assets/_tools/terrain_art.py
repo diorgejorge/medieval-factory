@@ -13,7 +13,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageEnhance, ImageFilter, ImageMath, ImageOps
 
-from references import brighten, pixelate, strip_base
+from references import HD_DENSITY, brighten, pixelate, strip_base
 
 SOURCE = Path(__file__).resolve().parent.parent / "source" / "terrain"
 TILE = 16
@@ -23,13 +23,17 @@ VARIANTS = GRID * GRID
 COLORS = 24
 SEAM_BAND = 0.25  # fração do lado da textura usada para emendar as bordas
 SEAM_BAND_WIDE = 0.5  # água: ondas grandes pedem emenda suave, senão aparece um degrau reto
-PILE_WIDTH = TILE - 2  # largura do monte sem o contorno: com ele, ocupa o tile inteiro
+PEBBLE_WIDTH = 5  # pedrinhas soltas no chão de pedra/minério (o monte grande é objeto, ver boulder_frames)
+# Montes (objetos HD): o grande forma o maciço no meio da pedra, o pequeno arremata a borda.
+BOULDER_WIDTHS = {"": 4 * TILE, "_small": 5 * TILE // 2}
 GEM_COVER = 0.12  # fração de pixels de gema na fonte para o pixel reduzido virar gema
 GEM_COLORS = ((248, 204, 64), (120, 200, 248))  # ouro e cristal azul, bem vivos para ler em 16 px
 # Bandas largas (ondas pintadas) denunciam a repetição: tiramos parte do que o desfoque enxerga.
 WAVE_BLUR = 5
 WAVE_FLATTEN = {"grass": 0.6, "sand": 0.55, "dirt": 0.5}
 DIRT_RAMP = ("#5a3a24", "#9a6a45", "#c99464")  # escuro, meio, claro: terra batida, longe da areia
+MOUNTAIN_COLOR = 0.35  # chão de pedra: terra quase sem saturação...
+MOUNTAIN_SHADE = 0.8  # ...e mais escura
 FOREST_SHADE = 0.72  # chão de floresta = grama mais escura...
 FOREST_GREEN = (0.85, 1.0, 0.8)  # ...e puxada para o verde (multiplica R, G, B)
 EDGE_SHADE = 0.68  # borda do lado `a` de uma transição
@@ -136,6 +140,12 @@ def forest_floor(grass: Image.Image) -> Image.Image:
     return quantize(Image.merge("RGB", channels))
 
 
+def mountain_floor(dirt: Image.Image) -> Image.Image:
+    """Chão de montanha: a terra perde cor e escurece, para os montes por cima lerem como maciço."""
+    gray = ImageEnhance.Color(dirt.convert("RGB")).enhance(MOUNTAIN_COLOR)
+    return quantize(ImageEnhance.Brightness(gray).enhance(MOUNTAIN_SHADE))
+
+
 def split(tex: Image.Image) -> list[Image.Image]:
     """Variante i = tile da coluna i % GRID, linha i // GRID."""
     return [tex.crop(((i % GRID) * TILE, (i // GRID) * TILE, (i % GRID + 1) * TILE, (i // GRID + 1) * TILE))
@@ -170,23 +180,37 @@ def add_gems(pile: Image.Image, source: Image.Image) -> Image.Image:
     return out
 
 
-def pile_shapes(name: str) -> list[Image.Image]:
+def pile_shapes(name: str, width: int) -> list[Image.Image]:
     source = brighten(strip_base(Image.open(SOURCE / f"{name}.png").convert("RGBA")))
     # Recorta pelo alfa sólido: restos quase transparentes do tablado encolheriam o monte na redução.
     source = source.crop(source.getchannel("A").point(lambda a: 255 if a >= 128 else 0).getbbox())
-    pile = add_gems(pixelate(source, PILE_WIDTH), source)
+    pile = add_gems(pixelate(source, width), source)
     return [pile, ImageOps.mirror(pile)]
 
 
-def with_pile(ground: list[Image.Image], shapes: list[Image.Image]) -> list[Image.Image]:
-    """Monte centrado e apoiado na base do tile; as duas formas alternam por variante."""
+PEBBLE_SPOTS = ((3, 4), (9, 2), (2, 10), (10, 9), (6, 7))
+
+
+def with_pebbles(ground: list[Image.Image], shapes: list[Image.Image]) -> list[Image.Image]:
+    """Chão de pedra: terra com uma ou duas pedrinhas em lugares que mudam com a variante."""
     out = []
     for i, base in enumerate(ground):
-        pile = shapes[i % len(shapes)]
         tile = base.copy()
-        tile.alpha_composite(pile, ((TILE - pile.width) // 2, max(TILE - pile.height, 0)))
+        for k in range(1 if i % 5 == 0 else 0):  # pedrinha rara: sem padrão de grade
+            x, y = PEBBLE_SPOTS[(i * 3 + k * 2) % len(PEBBLE_SPOTS)]
+            tile.alpha_composite(shapes[(i + k) % len(shapes)], (x, y))
         out.append(tile)
     return out
+
+
+def boulder_frames() -> dict[str, Image.Image]:
+    """Montes grandes de pedra e minério (objetos HD) que o render espalha sobre o chão de pedra."""
+    frames = {}
+    for kind, source in (("rock", "rock_pile"), ("ore_iron", "ore_iron_pile")):
+        for suffix, width in BOULDER_WIDTHS.items():
+            for i, shape in enumerate(pile_shapes(source, width * HD_DENSITY)):
+                frames[f"boulder_{kind}{suffix}_{i}"] = shape
+    return frames
 
 
 # ---------- água animada ----------
@@ -256,8 +280,9 @@ def terrain_frames() -> dict[str, Image.Image]:
     textures = {name: texture(name) for name in ("grass", "sand", "water", "dirt")}
     textures["forest"] = forest_floor(textures["grass"])
     tiles = {name: split(tex) for name, tex in textures.items()}
-    tiles["rock"] = with_pile(tiles["dirt"], pile_shapes("rock_pile"))
-    tiles["ore_iron"] = with_pile(tiles["dirt"], pile_shapes("ore_iron_pile"))
+    mountain = split(mountain_floor(textures["dirt"]))
+    tiles["rock"] = with_pebbles(mountain, pile_shapes("rock_pile", PEBBLE_WIDTH))
+    tiles["ore_iron"] = with_pebbles(mountain, pile_shapes("ore_iron_pile", PEBBLE_WIDTH))
     tiles["water_ripple"] = ripple_frames(tiles["water"][0])
 
     frames = {f"{name}_{i}": tile for name, variants in tiles.items() for i, tile in enumerate(variants)}

@@ -24,7 +24,8 @@ TILE = 16
 OVERHANG_PX = 4  # a arte pode passar 2 px de cada lado do terreno ocupado, nunca mais que isso
 HD_DENSITY = 2  # alta definição: 2 pixels da arte por pixel do chão (o render desenha na metade do tamanho)
 SOURCE_WIDTH = 288  # largura guardada em assets/source: folga para qualquer tamanho final
-SCENERY_WIDTHS = {"tree_round": 2 * TILE, "tree_pine": 2 * TILE}  # árvores: copa de 2 tiles, como as do pacote
+DEFAULT_WIDTH = 4 * TILE + OVERHANG_PX  # construção nova que ainda não está em data/jogo: 4x4, como as outras
+SCENERY_WIDTHS = {"tree_round": 3 * TILE, "tree_pine": 3 * TILE}  # árvores: copa de 3 tiles, proporcional às construções 4x4
 BUILDINGS = Path(__file__).resolve().parents[2] / "data" / "jogo" / "construcoes.json"
 
 
@@ -130,7 +131,7 @@ def reference_frames(source: Path) -> dict[str, Image.Image]:
     for path in sorted(source.glob("*.png")):
         img = Image.open(path).convert("RGBA")
         base_free = cut_below_trunk(img) if path.stem in SCENERY_WIDTHS else strip_base(img)
-        frames[path.stem] = pixelate(brighten(base_free), widths[path.stem] * HD_DENSITY)
+        frames[path.stem] = pixelate(brighten(base_free), widths.get(path.stem, DEFAULT_WIDTH) * HD_DENSITY)
     return frames
 
 

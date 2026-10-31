@@ -14,6 +14,9 @@ const SHADOW_ABOVE_PX = 4;
 const SHADOW_BELOW_PX = 1;
 const SHADOW_OFFSET_X_PX = 1;
 const ANIMATION_FPS = 6;
+/** Peças chapadas no chão (estrada e transporte), ancoradas pela borda do quadro e não pela última linha opaca:
+ * assim uma curva sem parede embaixo não desce 2 px em relação à reta vizinha. */
+const FLAT_FRAME = /^(road|chute|belt|hoist|splitter|filter)(_|$)/;
 /** Folga do culling: copas e telhados passam da célula da base. */
 const CULL_MARGIN_PX = 4 * TILE_SIZE_PX;
 /** O culling liga/desliga blocos de objetos de uma vez; só refaz quando a câmera muda de bloco. */
@@ -155,10 +158,12 @@ export class ObjectLayer {
     // Arte em alta definição tem mais pixels que o chão e é reduzida pela densidade.
     const density = first.density ?? 1;
     const bounds = scaleBounds(this.opaqueBounds(name, first), density);
+    // Peça chapada no chão ocupa o tile todo: a base é a borda do quadro, mesmo com grama vazada embaixo.
+    const bottom = FLAT_FRAME.test(name) ? Math.round(first.h / density) - 1 : bounds.bottom;
     const x = Math.round(object.x * TILE_SIZE_PX);
     const y = Math.round(object.y * TILE_SIZE_PX);
     sprite.scale.set(1 / density);
-    sprite.position.set(x - Math.floor(first.w / density / 2), y - bounds.bottom - 1);
+    sprite.position.set(x - Math.floor(first.w / density / 2), y - bottom - 1);
 
     // Sombra colada à base, na largura da silhueta. Construções não têm: a arte já assenta no chão.
     if (object.noShadow) return { group, sprite, shadow: null, x, y };

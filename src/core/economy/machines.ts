@@ -40,6 +40,10 @@ export class Machine {
   emit: ((item: string) => boolean) | null = null;
   /** Ligada a calhas ou esteiras: não dorme, porque a fila muda sem passar por armazém. */
   connected = false;
+  /** Ticks de receita por tick: 2 com força da rede de eixos, 1 sem. */
+  speed = 1;
+  /** Chamado a cada receita pronta, com os produtos (conta para os decretos). */
+  onCraft: ((outputs: readonly ItemAmount[]) => void) | null = null;
 
   constructor(
     public center: { x: number; y: number },
@@ -98,9 +102,11 @@ export class Machine {
       this.fuelTicks--;
     }
     this.status = 'working';
-    if (++this.progressTicks < recipe.seconds * TICKS_PER_SECOND) return;
+    this.progressTicks += this.speed;
+    if (this.progressTicks < recipe.seconds * TICKS_PER_SECOND) return;
     this.crafting = false;
     this.pending = recipe.outputs.map((output) => ({ ...output }));
+    this.onCraft?.(recipe.outputs);
     if (!this.deliver(storages)) this.status = 'outputFull';
   }
 

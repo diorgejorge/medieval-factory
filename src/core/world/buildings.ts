@@ -74,10 +74,11 @@ export function buildingCenter(building: Pick<Building, 'kind' | 'x' | 'y' | 'ro
   return { x: building.x + width / 2, y: building.y + height / 2 };
 }
 
-/** Objeto para a camada de desenho: centro da base, embaixo do terreno ocupado. */
-export function buildingObject(building: Building): MapObject {
+/** Objeto para a camada de desenho: centro da base, embaixo do terreno ocupado. `active` usa a arte de quando ela trabalha (frameActive), se houver. */
+export function buildingObject(building: Building, active = false): MapObject {
   const { width, height } = footprint(building.kind, building.rotation);
-  const frame = `${buildingDef(building.kind).frame ?? building.kind}_r${building.rotation}`;
+  const def = buildingDef(building.kind);
+  const frame = `${(active ? def.frameActive : undefined) ?? def.frame ?? building.kind}_r${building.rotation}`;
   return { frame, x: building.x + width / 2, y: building.y + height, noShadow: true };
 }
 
@@ -171,6 +172,7 @@ export class BuildingSite {
     for (const building of buildings) {
       this.buildings.set(building.id, { ...building });
       this.occupy(building, building.id);
+      this.nextId = Math.max(this.nextId, building.id + 1);
     }
   }
 

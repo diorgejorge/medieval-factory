@@ -1,4 +1,4 @@
-import { GameDataError } from './gameData';
+import { BUILDING_CATEGORIES, GameDataError, type BuildingCategory } from './gameData';
 
 /**
  * Chaves de data/texto/pt-BR/interface.json que o código usa, por seção, com os placeholders
@@ -24,6 +24,10 @@ export const INTERFACE_KEYS = {
     stock: ['itens'],
     servants: ['ocupados', 'total'],
     ownVillage: [],
+    hand: ['itens'],
+    saved: [],
+    noSave: [],
+    saveFailed: [],
   },
   toolbar: { remove: [], chooseBuilding: [], help: [], lockedEra: [] },
   placement: {
@@ -47,6 +51,8 @@ export const INTERFACE_KEYS = {
     noInput: [],
     noFuel: [],
     outputFull: [],
+    dry: [],
+    farFromTown: [],
   },
   buildingPanel: {
     recipe: ['receita'],
@@ -66,6 +72,8 @@ export const INTERFACE_KEYS = {
     routeNone: [],
     routePickOrigin: [],
     routePickDestination: [],
+    torque: ['uso', 'forca'],
+    torqueOff: [],
   },
   villagePanel: {
     population: ['populacao'],
@@ -76,6 +84,13 @@ export const INTERFACE_KEYS = {
     recruitRefused: ['vilarejo', 'comida'],
   },
   eraNotice: { hint: [] },
+  decree: {
+    title: ['titulo'],
+    progress: ['entregue', 'quantidade'],
+    timeLeft: ['prazo'],
+    favor: ['favor'],
+    minutes: ['minutos'],
+  },
 } as const satisfies Record<string, Record<string, readonly string[]>>;
 
 type Keys = typeof INTERFACE_KEYS;
@@ -129,4 +144,27 @@ export function fillText(text: string, values: Readonly<Record<string, string | 
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Nomes provisórios das categorias da barra, até o Roteiro pôr os dele em toolbar.categories. */
+const PROVISIONAL_CATEGORY_NAMES: Readonly<Record<BuildingCategory, string>> = {
+  housing: 'Moradia',
+  extraction: 'Extração',
+  production: 'Produção',
+  logistics: 'Transporte',
+};
+
+/**
+ * Nome de cada categoria da barra (interface.json, toolbar.categories). Opcional por enquanto:
+ * a categoria sem texto usa o nome provisório, para o jogo não parar esperando o Roteiro.
+ */
+export function parseCategoryNames(file: unknown): Readonly<Record<BuildingCategory, string>> {
+  const toolbar = isObject(file) ? file['toolbar'] : undefined;
+  const given = isObject(toolbar) ? toolbar['categories'] : undefined;
+  const names = { ...PROVISIONAL_CATEGORY_NAMES };
+  for (const category of BUILDING_CATEGORIES) {
+    const text = isObject(given) ? given[category] : undefined;
+    if (typeof text === 'string' && text.length > 0) names[category] = text;
+  }
+  return names;
 }

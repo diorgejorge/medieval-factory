@@ -16,6 +16,10 @@
     "charcoal": "Carvão vegetal",
     "iron_ingot": "Barra de ferro",
     "iron_axe": "Machado de ferro",
-    "iron_pickaxe": "Picareta de ferro"
+    "iron_pickaxe": "Picareta de ferro",
+    "water": "Água",
+    "manuscript": "Manuscrito",
+    "steel": "Aço",
+    "donkey": "Burro"
   }
 }

@@ -8,6 +8,8 @@ até as cadeias de produção rodarem sem intervenção. O jogador passa a plane
 
 ## MVP (M0–M5)
 
+**Status (2026-10-31):** frentes 1–20 feitas na pasta local (falta subir em PR). Extras já feitos: barra por categoria, tutorial, camponês do jogador com colheita à mão, decretos de Era II (padaria, rota do pão, guarda florestal, moinho de vento) e benfeitorias (poço, celeiro).
+
 | # | Marco | Frente | Como testar |
 |---|---|---|---|
 | 1 | M0 | Fundação: Vite + TS strict + Vitest + ESLint/Prettier; grade 256×256 com Pixi, câmera (pan/zoom) e culling por chunk | `docker compose up --build -d`; mapa a ~60 FPS |

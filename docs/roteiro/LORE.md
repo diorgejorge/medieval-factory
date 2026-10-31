@@ -17,6 +17,17 @@ das vilas do vale para comer, beber e se exibir para os reinos vizinhos.
 O vale de **Vau das Pedras** foi abandonado depois de uma enchente que levou a ponte e o moleiro. O rei decide repovoá-lo
 e manda para lá alguém de pouca fama e muita disposição: **o jogador**.
 
+## Pontos e ranking
+
+O vale é medido em **pontos**. Cada produto entregue e cada decreto cumprido rendem pontos ao nome do jogador, e o
+rei mantém o **Ranking do reino** (local agora, global depois). Na história, é o "Livro de Honra" de Coroa-d'Água:
+o rei adora comparar súditos. Os pesos ficam em `data/pontuacao.json` (proposta em `docs/roteiro/PONTUACAO.md`).
+
+## Transporte
+
+Não há esteiras. A carga anda no lombo do **burro** (Era I), depois na **carroça de burro** (Era II–III) e, na
+Era IV, na **carroça a vapor** de Mestre Corvo. A calha de madeira continua para água e itens morro abaixo.
+
 ## Arco por era
 
 | Era | Momento da história | Gancho |

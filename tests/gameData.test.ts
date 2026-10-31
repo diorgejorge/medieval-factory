@@ -4,16 +4,17 @@ import items from '../data/jogo/itens.json';
 import eras from '../data/jogo/eras.json';
 import start from '../data/jogo/inicio.json';
 import recipes from '../data/jogo/receitas.json';
+import challenges from '../data/jogo/desafios.json';
 import buildingNames from '../data/texto/pt-BR/construcoes.json';
 import itemNames from '../data/texto/pt-BR/itens.json';
 import { GAME_DATA } from '../src/core/data/data';
-import { GameDataError, parseGameData, type RawGameData } from '../src/core/data/gameData';
+import { BUILDING_CATEGORIES, GameDataError, parseGameData, type RawGameData } from '../src/core/data/gameData';
 import { Terrain } from '../src/core/world/terrain';
 import objectsAtlas from '../assets/objects/objects.json';
 
 /** Cópia profunda dos dados reais, para estragar um pedaço por teste. */
 function rawCopy() {
-  return structuredClone({ items, buildings, recipes, itemNames, buildingNames, start, eras });
+  return structuredClone({ items, buildings, recipes, itemNames, buildingNames, start, eras, challenges });
 }
 
 function must<T>(value: T | undefined): T {
@@ -107,6 +108,13 @@ describe('dados do jogo (data/jogo)', () => {
     for (const building of GAME_DATA.buildings.values()) {
       if (building.frame) expect(names, building.id).toContain(building.frame);
     }
+  });
+
+  it('toda construção tem uma categoria da barra e categoria errada é apontada', () => {
+    for (const building of GAME_DATA.buildings.values()) expect(BUILDING_CATEGORIES, building.id).toContain(building.category);
+    const raw = rawCopy();
+    (raw.buildings.buildings[0] as Record<string, unknown>)['category'] = 'castelo';
+    expect(problemsOf(raw).some((p) => p.includes('"category" deve ser um destes'))).toBe(true);
   });
 
   it('usa os nomes do Roteiro', () => {

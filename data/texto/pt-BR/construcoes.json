@@ -15,12 +15,24 @@
     "charcoal_kiln": "Carvoaria",
     "smelter": "Fundição",
     "forge": "Forja",
-    "belt": "Esteira de roletes",
     "chute": "Calha de madeira",
     "hoist": "Nora",
     "splitter": "Repartidor",
     "filter": "Separador",
     "road": "Estrada de terra",
-    "cart_yard": "Pátio das carroças"
+    "cart_yard": "Pátio das carroças",
+    "water_intake": "Tomada d'água",
+    "fountain": "Fonte da praça",
+    "well": "Poço da vila",
+    "granary": "Celeiro real",
+    "monastery": "Mosteiro do outeiro",
+    "market": "Mercado da praça",
+    "windmill": "Moinho de vento",
+    "gearbox": "Caixa de engrenagens",
+    "scriptorium": "Scriptório",
+    "donkey_pen": "Estrebaria do burro",
+    "donkey_cart": "Carroça de burro",
+    "steam_wagon": "Carroça a vapor",
+    "belt": "Esteira de roletes"
   }
 }

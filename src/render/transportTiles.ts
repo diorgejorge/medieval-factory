@@ -15,10 +15,13 @@ interface Piece {
   out: Side;
 }
 
+/** Ordem dos lados de entrada no nome do frame, igual à de assets/_tools/conveyor.py. */
+const INPUT_ORDER: readonly Side[] = ['n', 'e', 's', 'w'];
+
 /**
- * Encaixe automático de calhas e esteiras (peças 1×1): a arte de cada peça depende de quem despeja nela.
- * Com alguém atrás, segue reta; só de lado, vira curva (`<m>_turn_<entra><sai>`); sem ninguém, ganha a
- * tampa do começo (`<m>_start_<sai>`). Sem a arte no atlas, mantém o frame original.
+ * Encaixe automático de calhas e esteiras (peças 1×1): a arte de cada peça mostra por onde a carga entra.
+ * O frame é `<m>_from_<entradas>_to_<saída>` (entradas na ordem n, e, s, w; `none` = começo da linha),
+ * então reta, curva, T e cruz emendam com as vizinhas. Sem a arte no atlas, mantém o frame original.
  */
 export function connectTransport(objects: readonly MapObject[], hasFrame: (name: string) => boolean): MapObject[] {
   const pieces = new Map<string, Piece>();
@@ -36,9 +39,8 @@ export function connectTransport(objects: readonly MapObject[], hasFrame: (name:
       const [dx, dy] = STEP[side];
       return pieces.get(`${tx + dx},${ty + dy}`)?.out === OPPOSITE[side];
     };
-    if (feeds(OPPOSITE[piece.out])) return object;
-    const from = SIDES.find((side) => side !== piece.out && feeds(side));
-    const frame = from ? `${piece.material}_turn_${from}${piece.out}` : `${piece.material}_start_${piece.out}`;
+    const inputs = INPUT_ORDER.filter((side) => side !== piece.out && feeds(side)).join('');
+    const frame = `${piece.material}_from_${inputs || 'none'}_to_${piece.out}`;
     return hasFrame(frame) ? { ...object, frame } : object;
   });
 }
@@ -47,7 +49,14 @@ const ROAD = 'road';
 /** Ordem dos lados no nome do frame da estrada (`road_<lados>`), igual à de assets/_tools/roads.py. */
 const ROAD_SIDES: readonly Side[] = ['n', 'e', 's', 'w'];
 
-/** Estrada emenda com as vizinhas: o frame lista os lados que têm estrada (`road_ns`, `road_nesw`...). */
+/** Variantes da arte de cada encaixe (assets/_tools/road_art.py), sorteadas pela posição. */
+const ROAD_VARIANTS = 4;
+
+function roadVariant(x: number, y: number): number {
+  return (((x * 7 + y * 3) % ROAD_VARIANTS) + ROAD_VARIANTS) % ROAD_VARIANTS;
+}
+
+/** Estrada emenda com as vizinhas: o frame lista os lados que têm estrada (`road_ns_2`, `road_nesw_0`...). */
 export function connectRoads(objects: readonly MapObject[], hasFrame: (name: string) => boolean): MapObject[] {
   const roads = new Set(objects.filter((object) => object.frame === ROAD).map(tileKey));
   if (roads.size === 0) return [...objects];
@@ -55,7 +64,9 @@ export function connectRoads(objects: readonly MapObject[], hasFrame: (name: str
     if (object.frame !== ROAD) return object;
     const [tx, ty] = tileOf(object);
     const sides = ROAD_SIDES.filter((side) => roads.has(`${tx + STEP[side][0]},${ty + STEP[side][1]}`)).join('');
-    const frame = sides ? `${ROAD}_${sides}` : ROAD;
+    const base = sides ? `${ROAD}_${sides}` : ROAD;
+    const variant = `${base}_${roadVariant(tx, ty)}`;
+    const frame = hasFrame(variant) ? variant : base;
     return hasFrame(frame) ? { ...object, frame } : object;
   });
 }

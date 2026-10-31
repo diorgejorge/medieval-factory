@@ -1,8 +1,32 @@
 {
   "version": 1,
   "names": {
-    "prefixes": ["Vau", "Ponte", "Pedra", "Moinho", "Freixo", "Salgueiro", "Fonte", "Lameiro", "Carvalho", "Ribeira", "Outeiro", "Juncal"],
-    "suffixes": ["Velho", "Verde", "do Lento", "das Rãs", "Alto", "Fundo", "de Baixo", "das Ovelhas", "Torto", "Seco"]
+    "prefixes": [
+      "Vau",
+      "Ponte",
+      "Pedra",
+      "Moinho",
+      "Freixo",
+      "Salgueiro",
+      "Fonte",
+      "Lameiro",
+      "Carvalho",
+      "Ribeira",
+      "Outeiro",
+      "Juncal"
+    ],
+    "suffixes": [
+      "Velho",
+      "Verde",
+      "do Lento",
+      "das Rãs",
+      "Alto",
+      "Fundo",
+      "de Baixo",
+      "das Ovelhas",
+      "Torto",
+      "Seco"
+    ]
   },
   "temperaments": [
     {
@@ -11,7 +35,12 @@
       "request": "Andamos precisando de {item}. Se sobrar, lembra da gente.",
       "tradeAccepted": "Negócio feito, e leva um pão pro caminho.",
       "tradeRefused": "Assim não dá, mas a sopa continua de graça.",
-      "recruit": "Tem gente aqui querendo trabalho. Paga em comida que eles vão."
+      "recruit": "Tem gente aqui querendo trabalho. Paga em comida que eles vão.",
+      "info": "Em {vilarejo} todo mundo se conhece, até as galinhas. Vivemos de {item} e de boa conversa.",
+      "askProtection": "Tem bicho rondando {vilarejo} à noite. Se puder ajudar, a sopa é sua para sempre.",
+      "thanksProtection": "Dormimos tranquilos de novo. Volte quando quiser, a porta fica aberta.",
+      "tradeNoStock": "Hoje não sobrou {item}, desculpe. Volte amanhã que a gente separa.",
+      "idle": "Aceita um pão? Acabou de sair."
     },
     {
       "id": "desconfiado",
@@ -19,7 +48,12 @@
       "request": "Falta {item}. Não que seja da sua conta.",
       "tradeAccepted": "Hum. Justo. Desta vez.",
       "tradeRefused": "Achei mesmo que era golpe.",
-      "recruit": "Uns dois aceitam ir. Se você alimentar direito."
+      "recruit": "Uns dois aceitam ir. Se você alimentar direito.",
+      "info": "{vilarejo} cuida da própria vida. Fazemos {item}. Só isso que você precisa saber.",
+      "askProtection": "Não gostamos de pedir. Mas tem gente estranha na estrada. Gente pior que você.",
+      "thanksProtection": "Hum. Ajudou. Vamos lembrar disso. Talvez.",
+      "tradeNoStock": "Não tem {item}. E se tivesse, ia pensar duas vezes.",
+      "idle": "Ainda aqui?"
     },
     {
       "id": "mercador",
@@ -27,7 +61,12 @@
       "request": "Pago bem por {item}. Bem para mim, claro.",
       "tradeAccepted": "Prazer fazer negócio! Volte sempre, e com mais.",
       "tradeRefused": "Contraproposta: você paga mais.",
-      "recruit": "Servos? Tenho. Com desconto, se levar três."
+      "recruit": "Servos? Tenho. Com desconto, se levar três.",
+      "info": "{vilarejo}, a melhor feira do vale! Nosso forte é {item}, mas vendemos até a sombra.",
+      "askProtection": "Ladrões na estrada atrapalham o comércio. Proteja nossas carroças e faço preço de amigo.",
+      "thanksProtection": "Estradas seguras, lucros seguros! Seu desconto está garantido. Pequeno, mas garantido.",
+      "tradeNoStock": "Acabou o {item}! Mas tenho uma lista de espera. Paga para entrar?",
+      "idle": "Olhar é de graça. Por enquanto."
     },
     {
       "id": "devoto",
@@ -35,7 +74,12 @@
       "request": "Para a capela, precisamos de {item}. Os santos agradecem.",
       "tradeAccepted": "Que seja abençoado o seu depósito.",
       "tradeRefused": "Rezaremos para você mudar de ideia.",
-      "recruit": "Alguns fiéis podem ajudar, se houver pão e descanso no domingo."
+      "recruit": "Alguns fiéis podem ajudar, se houver pão e descanso no domingo.",
+      "info": "{vilarejo} cresceu em volta da capela. Fazemos {item} e rezamos pelo resto.",
+      "askProtection": "Algo assusta os fiéis na estrada da capela. Pedimos sua ajuda, e a dos santos.",
+      "thanksProtection": "Os sinos tocaram por você hoje. Os santos anotaram seu nome.",
+      "tradeNoStock": "O {item} acabou. Paciência é virtude, voltamos a ter.",
+      "idle": "Que a colheita seja boa para todos."
     },
     {
       "id": "orgulhoso",
@@ -43,7 +87,12 @@
       "request": "Nosso {item} é o melhor do reino. Mas aceitaríamos mais.",
       "tradeAccepted": "Aceitamos. Por generosidade.",
       "tradeRefused": "Em {vilarejo} não se aceita qualquer coisa.",
-      "recruit": "Nossa gente vale o dobro. E come o dobro."
+      "recruit": "Nossa gente vale o dobro. E come o dobro.",
+      "info": "{vilarejo} existe desde antes do reino. Nosso {item} é o melhor, pergunte por aí.",
+      "askProtection": "Não precisamos de ajuda. Mas aceitaríamos, para mostrar boa vontade.",
+      "thanksProtection": "Faríamos sozinhos, claro. Mas foi gentil da sua parte.",
+      "tradeNoStock": "Nosso {item} acabou. Coisa boa acaba rápido.",
+      "idle": "Admire à vontade. É de graça."
     }
   ]
 }

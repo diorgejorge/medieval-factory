@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import interfaceText from '../data/texto/pt-BR/interface.json';
 import { UI_TEXT } from '../src/core/data/data';
 import { GameDataError } from '../src/core/data/gameData';
-import { INTERFACE_KEYS, fillText, parseInterfaceText, quoteText } from '../src/core/data/interfaceText';
+import { INTERFACE_KEYS, fillText, parseCategoryNames, parseInterfaceText, quoteText } from '../src/core/data/interfaceText';
 
 function problemsOf(raw: unknown): string[] {
   try {
@@ -46,5 +46,14 @@ describe('textos da interface (data/texto/pt-BR/interface.json)', () => {
     // O valor não é lido de novo: um {texto} dentro da fala não é trocado.
     expect(quoteText(UI_TEXT, 'Oi {texto}')).toBe(fillText(UI_TEXT.common.quote, { texto: 'Oi {texto}' }));
     expect(quoteText(UI_TEXT, 'Oi {texto}')).toContain('Oi {texto}');
+  });
+});
+
+describe('nomes das categorias da barra (toolbar.categories)', () => {
+  it('usa o texto do Roteiro quando existe e o provisório quando falta', () => {
+    const names = parseCategoryNames({ version: 1, toolbar: { categories: { housing: 'Casas' } } });
+    expect(names.housing).toBe('Casas');
+    expect(names.logistics.length).toBeGreaterThan(0);
+    expect(parseCategoryNames({}).extraction.length).toBeGreaterThan(0);
   });
 });

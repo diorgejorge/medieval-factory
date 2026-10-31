@@ -19,13 +19,31 @@
     "help": "[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo ou construção  [R] girar",
     "stock": "Estoque: {itens}",
     "servants": "Servos: {ocupados} trabalhando de {total}",
-    "ownVillage": "Sua vila"
+    "ownVillage": "Sua vila",
+    "hand": "Nas mãos: {itens}  [E] colher perto de árvore ou rocha; larga sozinho perto de um armazém",
+    "saved": "Jogo salvo",
+    "noSave": "Nenhum jogo salvo ainda",
+    "saveFailed": "Não deu para salvar neste navegador",
+    "score": "Pontos: {pontos}",
+    "scoreGain": "+{pontos}",
+    "save": "Salvar",
+    "load": "Carregar",
+    "loaded": "Jogo carregado",
+    "harvest": "Colher",
+    "walkHint": "[W A S D] ou setas para andar",
+    "harvestHint": "[E] colher"
   },
   "toolbar": {
     "remove": "Remover",
     "chooseBuilding": "Escolha o que construir",
     "help": "[R] girar  [X] remover  [Esc] cancelar",
-    "lockedEra": "Abre na próxima era"
+    "lockedEra": "Abre na próxima era",
+    "categories": {
+      "housing": "Moradia",
+      "extraction": "Extração",
+      "production": "Produção",
+      "logistics": "Transporte"
+    }
   },
   "placement": {
     "unknown": "Construção desconhecida",
@@ -35,19 +53,21 @@
     "occupied": "Já tem uma construção aqui",
     "reserved": "Terreno de um vilarejo",
     "lockedEra": "Abre na próxima era",
-    "needsWater": "A roda d'água precisa encostar na água",
-    "noResource": "Não há o recurso por perto (madeira, pedra ou minério)"
+    "needsWater": "Precisa encostar na água do rio ou do lago",
+    "noResource": "Não há o recurso por perto"
   },
   "buildingStatus": {
     "working": "Trabalhando",
     "noTool": "Parado: falta ferramenta no armazém",
-    "noStorage": "Parado: nenhum armazém por perto",
+    "noStorage": "Parado: nenhum armazém ao alcance",
     "storageFull": "Parado: armazém cheio",
     "noResource": "Parado: não há o recurso em volta",
     "noRecipe": "Parado: escolha uma receita",
     "noInput": "Parado: faltam insumos no armazém",
     "noFuel": "Parado: falta combustível no armazém",
-    "outputFull": "Parado: sem espaço no armazém para o produto"
+    "outputFull": "Parado: sem espaço no armazém para o produto",
+    "dry": "Seca: traga água por calha ou no lombo do burro",
+    "farFromTown": "Longe demais da vila: a fonte precisa ficar perto do armazém da vila"
   },
   "buildingPanel": {
     "recipe": "Receita: {receita}",
@@ -65,7 +85,9 @@
     "routeCargo": "Leva: {item}",
     "routeNone": "Sem rota",
     "routePickOrigin": "Escolher origem",
-    "routePickDestination": "Escolher destino"
+    "routePickDestination": "Escolher destino",
+    "torque": "Força da rede: {uso} de {forca}",
+    "torqueOff": "Parado: sem força. Ligue por eixos a uma roda d'água ou moinho de vento"
   },
   "villagePanel": {
     "population": "População: {populacao}",
@@ -77,5 +99,26 @@
   },
   "eraNotice": {
     "hint": "Novas construções na barra. [Esc] fechar"
+  },
+  "decree": {
+    "title": "Decreto real: {titulo}",
+    "progress": "Entregue: {entregue}/{quantidade}",
+    "timeLeft": "Prazo: {prazo}",
+    "favor": "Favor do rei: {favor}",
+    "minutes": "{minutos} min",
+    "result": {
+      "success": "Decreto cumprido!",
+      "failure": "Decreto não cumprido."
+    }
+  },
+  "ranking": {
+    "title": "Ranking do reino",
+    "row": "{posicao}. {nome} — {pontos} pontos (Era {era})",
+    "empty": "Ninguém no ranking ainda. Seja o primeiro.",
+    "newRecord": "Novo recorde! {pontos} pontos",
+    "askName": "Seu nome para o ranking",
+    "submit": "Gravar no ranking",
+    "local": "Neste computador",
+    "global": "Reino inteiro (em breve)"
   }
 }

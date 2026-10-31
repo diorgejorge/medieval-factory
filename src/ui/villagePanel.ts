@@ -17,6 +17,10 @@ export interface Temperament {
   tradeAccepted: string;
   tradeRefused: string;
   recruit: string;
+  /** Apresentação do vilarejo; {item} = o primeiro que ele produz. */
+  info: string;
+  /** Saudação de quem já foi visitado. */
+  idle: string;
 }
 
 export interface VillageActions {
@@ -35,6 +39,9 @@ export class VillagePanel {
   private readonly actions = document.createElement('div');
   /** Pedidos já feitos quando o painel abriu: respostas antigas não aparecem de novo. */
   private requestsAtOpen = 0;
+  /** Vilarejos já visitados: na volta, a saudação curta (idle) no lugar da primeira. */
+  private readonly visited = new Set<number>();
+  private greetIdle = false;
 
   constructor(
     private readonly element: HTMLElement,
@@ -50,6 +57,8 @@ export class VillagePanel {
     this.openIndex = index;
     this.village = village;
     this.requestsAtOpen = economy?.villages[index]?.requests ?? 0;
+    this.greetIdle = this.visited.has(index);
+    this.visited.add(index);
     this.actions.replaceChildren(...this.buildButtons(village, index));
     this.element.replaceChildren(this.info, this.actions);
     this.refresh(economy);
@@ -74,11 +83,15 @@ export class VillagePanel {
     const firstWant = village.wants[0];
     const lines = [
       el('h2', village.name),
-      el('p', temperament ? fill(temperament.greeting) : '', 'quote'),
+      el('p', temperament ? fill(this.greetIdle ? temperament.idle : temperament.greeting) : '', 'quote'),
       el('p', fillText(TEXT.population, { populacao: state?.population ?? village.population })),
       el('p', fillText(TEXT.produces, { itens: list(village.produces) })),
       el('p', fillText(TEXT.wants, { itens: list(village.wants) })),
     ];
+    const firstProduct = village.produces[0];
+    if (temperament && firstProduct && !this.greetIdle) {
+      lines.push(el('p', fill(temperament.info, label(firstProduct).toLocaleLowerCase('pt-BR')), 'quote'));
+    }
     if (temperament && firstWant) {
       lines.push(el('p', fill(temperament.request, label(firstWant).toLocaleLowerCase('pt-BR')), 'quote'));
     }

@@ -1,23 +1,16 @@
-"""Estrada de terra batida (road + road_<lados>) e pátio das carroças (cart_yard, 4x4), desenhados por nós.
-
-A estrada ocupa o tile inteiro (a base do objeto é a última linha opaca, então ela não pode ter margem
-embaixo). Lado sem vizinho ganha uma borda escura; o render escolhe `road_<lados ligados>` (ordem n, e, s, w).
-"""
+"""Pátio das carroças (cart_yard, 4x4), desenhado por nós, e a estrada (arte em road_art.py)."""
 
 from __future__ import annotations
-
-from itertools import combinations
 
 from PIL import Image
 
 from machines import IRON, OUTLINE, WOOD, Color, Sprite
+from road_art import road_frames
 from transport import TILE, fill
 
 DIRT = ((0x6E, 0x4A, 0x30), (0x9C, 0x70, 0x48), (0xB8, 0x8A, 0x5A), (0xD4, 0xA8, 0x74))
 STRAW = ((0xB0, 0x7A, 0x2A), (0xE0, 0xB0, 0x48), (0xFF, 0xE1, 0x66))
 WATER = (0x4A, 0x8E, 0xC8)
-ROAD_SIDES = "nesw"
-RUTS = (4, 11)  # linhas dos sulcos das rodas
 YARD_W, YARD_H = 4 * TILE + 4, 4 * TILE + 12
 
 
@@ -29,30 +22,6 @@ def speckle(x: int, y: int, salt: int = 0) -> int:
 def dirt(x: int, y: int) -> Color:
     n = speckle(x, y)
     return DIRT[3] if n == 0 else DIRT[1] if n < 3 else DIRT[2]
-
-
-def road(connected: str) -> Image.Image:
-    img = Image.new("RGBA", (TILE, TILE))
-    for y in range(TILE):
-        for x in range(TILE):
-            edges = {"n": y == 0, "s": y == TILE - 1, "w": x == 0, "e": x == TILE - 1}
-            # Sulcos das rodas nos lados ligados; borda escura onde a estrada termina.
-            open_edge = any(hit and side not in connected for side, hit in edges.items())
-            rut = any(side in connected and reaches for side, reaches in (
-                ("n", x in RUTS and y <= RUTS[1]), ("s", x in RUTS and y >= RUTS[0]),
-                ("w", y in RUTS and x <= RUTS[1]), ("e", y in RUTS and x >= RUTS[0])))
-            color = DIRT[0] if open_edge else DIRT[1] if rut and speckle(x, y, 1) > 4 else dirt(x, y)
-            img.putpixel((x, y), (*color, 255))
-    return img
-
-
-def road_frames() -> dict[str, Image.Image]:
-    frames = {"road": road("")}
-    for size in range(1, len(ROAD_SIDES) + 1):
-        for sides in combinations(ROAD_SIDES, size):
-            name = "".join(sides)
-            frames[f"road_{name}"] = road(name)
-    return frames
 
 
 def fence(sp: Sprite, x0: int, y0: int, x1: int, y1: int, gate: range = range(0)) -> None:
