@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "note": "Textos fixos da interface (HUD, barra, painéis). Chaves de 'buildingStatus' e 'placement' são os mesmos ids de status/problema do código. Placeholders entre chaves; número nenhum fica aqui.",
+  "common": {
+    "close": "[Esc] fechar",
+    "empty": "vazio",
+    "itemAmount": "{item} {quantidade}",
+    "itemSeparator": " · "
+  },
+  "hud": {
+    "debugLine": "FPS {fps}  zoom {zoom}x  seed {seed}  {era}",
+    "simLine": "UPS {ups}  tick {tick}  {estado}",
+    "starting": "simulação iniciando...",
+    "paused": "PAUSADO",
+    "speed": "{velocidade}x",
+    "help": "[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo ou construção  [R] girar",
+    "stock": "Estoque: {itens}",
+    "servants": "Servos: {ocupados} trabalhando de {total}",
+    "ownVillage": "Sua vila"
+  },
+  "toolbar": {
+    "remove": "Remover",
+    "chooseBuilding": "Escolha o que construir",
+    "help": "[R] girar  [X] remover  [Esc] cancelar",
+    "lockedEra": "Abre na próxima era"
+  },
+  "placement": {
+    "unknown": "Construção desconhecida",
+    "outside": "Fora do mapa",
+    "water": "Não dá para construir na água",
+    "forest": "Tem árvores aqui",
+    "occupied": "Já tem uma construção aqui",
+    "reserved": "Terreno de um vilarejo",
+    "lockedEra": "Abre na próxima era",
+    "needsWater": "A roda d'água precisa encostar na água",
+    "noResource": "Não há o recurso por perto (madeira, pedra ou minério)"
+  },
+  "buildingStatus": {
+    "working": "Trabalhando",
+    "noTool": "Parado: falta ferramenta no armazém",
+    "noStorage": "Parado: nenhum armazém por perto",
+    "storageFull": "Parado: armazém cheio",
+    "noResource": "Parado: não há o recurso em volta",
+    "noRecipe": "Parado: escolha uma receita",
+    "noInput": "Parado: faltam insumos no armazém",
+    "noFuel": "Parado: falta combustível no armazém",
+    "outputFull": "Parado: sem espaço no armazém para o produto"
+  },
+  "buildingPanel": {
+    "recipe": "Receita: {receita}",
+    "recipeFormat": "{entradas} → {saidas}",
+    "progress": "Andamento: {progresso}%",
+    "stored": "Guardado: {total} de {capacidade}"
+  },
+  "villagePanel": {
+    "population": "População: {populacao}",
+    "produces": "Produz: {itens}",
+    "wants": "Pede: {itens}",
+    "trade": "Dar {quantidade} {dar} → receber {quantidade} {receber}",
+    "recruit": "Recrutar um servo ({comida} de comida)",
+    "recruitRefused": "Hoje ninguém de {vilarejo} vai: precisa de {comida} de comida e de gente sobrando."
+  },
+  "eraNotice": {
+    "hint": "Novas construções na barra. [Esc] fechar"
+  }
+}
