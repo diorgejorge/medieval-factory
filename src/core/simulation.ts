@@ -11,7 +11,9 @@ export type SimulationCommand =
   | { type: 'placeBuilding'; kind: BuildingKind; x: number; y: number; rotation: Rotation }
   | { type: 'removeBuilding'; x: number; y: number }
   | { type: 'rotateBuilding'; x: number; y: number }
-  | { type: 'setRecipe'; buildingId: number; recipe: string };
+  | { type: 'setRecipe'; buildingId: number; recipe: string }
+  | { type: 'trade'; village: number; give: string; receive: string }
+  | { type: 'recruit'; village: number };
 
 /** Estado publicado para a main thread a cada avanço. */
 export interface SimulationSnapshot {
@@ -115,6 +117,12 @@ export class SimulationLoop {
         break;
       case 'setRecipe':
         this.simulation.economy?.setRecipe(command.buildingId, command.recipe);
+        break;
+      case 'trade':
+        this.simulation.economy?.tradeWithVillage(command.village, command.give, command.receive);
+        break;
+      case 'recruit':
+        this.simulation.economy?.recruitFromVillage(command.village);
         break;
     }
   }
