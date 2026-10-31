@@ -26,7 +26,7 @@ describe('eras', () => {
     expect(loop.snapshot().era).toBe(1);
     expect(site.check('forge', 4, 4, 0)).toBe('lockedEra');
     loop.enqueue({ type: 'placeBuilding', kind: 'forge', x: 4, y: 4, rotation: 0 });
-    loop.enqueue({ type: 'placeBuilding', kind: 'smelter', x: 7, y: 7, rotation: 0 });
+    loop.enqueue({ type: 'placeBuilding', kind: 'smelter', x: 14, y: 14, rotation: 0 });
     loop.advance(0, 0);
     expect(site.all.map((b) => b.kind)).toEqual(['smelter']);
 
