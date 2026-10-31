@@ -10,7 +10,8 @@ export type SimulationCommand =
   | { type: 'setSpeed'; speed: GameSpeed }
   | { type: 'placeBuilding'; kind: BuildingKind; x: number; y: number; rotation: Rotation }
   | { type: 'removeBuilding'; x: number; y: number }
-  | { type: 'rotateBuilding'; x: number; y: number };
+  | { type: 'rotateBuilding'; x: number; y: number }
+  | { type: 'setRecipe'; buildingId: number; recipe: string };
 
 /** Estado publicado para a main thread a cada avanço. */
 export interface SimulationSnapshot {
@@ -111,6 +112,9 @@ export class SimulationLoop {
         break;
       case 'rotateBuilding':
         if (this.simulation.site?.rotateAt(command.x, command.y)) this.changedBuildings();
+        break;
+      case 'setRecipe':
+        this.simulation.economy?.setRecipe(command.buildingId, command.recipe);
         break;
     }
   }

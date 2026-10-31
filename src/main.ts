@@ -77,7 +77,9 @@ async function start(): Promise<void> {
   };
 
   const villagePanel = new VillagePanel(panel, villageTexts.temperaments);
-  const buildingPanel = new BuildingPanel(panel);
+  const buildingPanel = new BuildingPanel(panel, (buildingId, recipe) =>
+    simulation.send({ type: 'setRecipe', buildingId, recipe }),
+  );
   bindClicks(app.canvas, (screen) => {
     if (build.click(screen)) return;
     const point = camera.screenToWorld(screen);
