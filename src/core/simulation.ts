@@ -1,4 +1,5 @@
 import { GAME_SPEEDS, MAX_TICKS_PER_ADVANCE, TICK_MS, type GameSpeed } from './config';
+import { GAME_DATA } from './data/data';
 import { FixedStepClock } from './time/fixedStepClock';
 import { RateMeter } from './time/rateMeter';
 import type { Economy, EconomySnapshot } from './economy/economy';
@@ -21,6 +22,8 @@ export interface SimulationSnapshot {
   paused: boolean;
   speed: GameSpeed;
   ups: number;
+  /** Era atual (1 = Madeira, 2 = Ferro...). */
+  era: number;
   /** Muda a cada construção colocada, removida ou girada; a tela só redesenha quando muda. */
   buildingsVersion: number;
   /** Só vem quando `buildingsVersion` mudou desde o último snapshot. */
@@ -32,6 +35,7 @@ export interface SimulationSnapshot {
 /** O mundo simulado. Por enquanto conta ticks e guarda as construções; os sistemas entram nas próximas frentes. */
 export class Simulation {
   tick = 0;
+  era = 1;
   buildingsVersion = 0;
 
   constructor(
@@ -44,6 +48,15 @@ export class Simulation {
   step(): void {
     this.tick++;
     this.economy?.step();
+    this.advanceEra();
+  }
+
+  /** A era seguinte abre na primeira vez que o item dela aparece num armazém (data/jogo/eras.json). */
+  private advanceEra(): void {
+    const next = GAME_DATA.eras.find((era) => era.id === this.era + 1);
+    if (!next || !this.economy || this.economy.stockOf(next.unlockItem) === 0) return;
+    this.era = next.id;
+    if (this.site) this.site.era = next.id;
   }
 }
 
@@ -78,6 +91,7 @@ export class SimulationLoop {
       paused: this.paused,
       speed: this.speed,
       ups: this.upsMeter.perSecond,
+      era: this.simulation.era,
       buildingsVersion: this.simulation.buildingsVersion,
     };
     if (this.simulation.economy) snapshot.economy = this.simulation.economy.snapshot();

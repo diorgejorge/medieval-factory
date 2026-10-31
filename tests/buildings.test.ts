@@ -8,7 +8,10 @@ function site(): BuildingSite {
   const grid = new Grid(20);
   for (let y = 0; y < 20; y++) grid.setTerrain(10, y, Terrain.Water);
   grid.setTerrain(2, 15, Terrain.Forest);
-  return new BuildingSite(grid, [{ left: 14, top: 14, width: 4, height: 4 }]);
+  const s = new BuildingSite(grid, [{ left: 14, top: 14, width: 4, height: 4 }]);
+  // Regras de ocupação valem para qualquer era; a trava de era tem teste próprio.
+  s.era = 4;
+  return s;
 }
 
 describe('BuildingSite: regras de ocupação', () => {

@@ -255,6 +255,11 @@ export class Economy {
     return demands;
   }
 
+  /** Quanto do item há somando todos os armazéns. */
+  stockOf(item: string): number {
+    return this.totalStock(item);
+  }
+
   private totalStock(item: string): number {
     return available([...this.storages.values()], item);
   }

@@ -11,6 +11,7 @@ const PROBLEM_TEXT: Readonly<Record<PlacementProblem, string>> = {
   forest: 'Tem árvores aqui',
   occupied: 'Já tem uma construção aqui',
   reserved: 'Terreno de um vilarejo',
+  lockedEra: 'Abre na próxima era',
   needsWater: "A roda d'água precisa encostar na água",
   noResource: 'Não há o recurso por perto (madeira, pedra ou minério)',
 };
@@ -20,6 +21,7 @@ const HELP = '[R] girar  [X] remover  [Esc] cancelar';
 /** Barra de construção no rodapé: um botão por construção que já tem arte, mais o de remover. */
 export class BuildToolbar {
   private readonly buttons = new Map<BuildingKind, HTMLButtonElement>();
+  private readonly eras = new Map<BuildingKind, number>();
   private readonly status: HTMLElement;
 
   constructor(element: HTMLElement, onSelect: (tool: BuildTool) => void) {
@@ -30,12 +32,22 @@ export class BuildToolbar {
       button.textContent = name;
       button.addEventListener('click', () => onSelect(button.classList.contains('active') ? null : tool));
       this.buttons.set(tool, button);
+      if (tool !== 'remove') this.eras.set(tool, GAME_DATA.buildings.get(tool)?.era ?? 1);
       row.appendChild(button);
     }
     this.status = document.createElement('div');
     this.status.className = 'status';
     element.replaceChildren(row, this.status);
     this.setTool(null);
+  }
+
+  /** Construções de eras futuras ficam travadas na barra. */
+  setEra(era: number): void {
+    for (const [tool, button] of this.buttons) {
+      const needed = this.eras.get(tool) ?? 1;
+      button.disabled = needed > era;
+      button.title = needed > era ? 'Abre na próxima era' : '';
+    }
   }
 
   setTool(tool: BuildTool): void {
