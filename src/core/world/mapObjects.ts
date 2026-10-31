@@ -10,6 +10,11 @@ export interface MapObject {
   frame: string;
   x: number;
   y: number;
+  /**
+   * Largura do terreno ocupado, em tiles. Quando existe, a sombra segue a base no chão e não a
+   * silhueta inteira (pás de moinho, base em losango e telhados largos não esticam a sombra).
+   */
+  footprintWidth?: number;
 }
 
 export const TREES = {
