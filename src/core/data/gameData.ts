@@ -61,6 +61,8 @@ export interface GameData {
   recipes: ReadonlyMap<string, RecipeDef>;
   /** Estoque e capacidade da vila do jogador, que é o primeiro armazém (data/jogo/inicio.json). */
   start: { capacity: number; servants: number; stock: ItemAmount[] };
+  /** O que abre cada era (data/jogo/eras.json), em ordem. */
+  eras: { id: Era; unlockItem: string }[];
 }
 
 /** Os arquivos de data/jogo e os nomes de data/texto/pt-BR, como vêm do disco (ainda sem conferir). */
@@ -71,6 +73,7 @@ export interface RawGameData {
   itemNames: unknown;
   buildingNames: unknown;
   start: unknown;
+  eras: unknown;
 }
 
 export class GameDataError extends Error {
@@ -111,8 +114,26 @@ export function parseGameData(raw: RawGameData): GameData {
     parseRecipe(entry, where, items, buildings, problems),
   );
   const start = parseStart(raw.start, items, problems);
+  const eras = parseEras(raw.eras, items, problems);
   if (problems.length > 0) throw new GameDataError(problems);
-  return { items, buildings, recipes, start };
+  return { items, buildings, recipes, start, eras };
+}
+
+function parseEras(file: unknown, items: ReadonlyMap<string, ItemDef>, problems: string[]): GameData['eras'] {
+  const where = 'eras.json';
+  const list = isObject(file) ? file['eras'] : undefined;
+  if (!isObject(file) || typeof file['version'] !== 'number' || !Array.isArray(list)) {
+    problems.push(`${where}: precisa de "version" (número) e da lista "eras"`);
+    return [];
+  }
+  return list.flatMap((entry: unknown) => {
+    if (!isObject(entry) || !isObject(entry['unlock'])) {
+      problems.push(`${where}: cada era é { id, unlock: { item } }`);
+      return [];
+    }
+    const id = requireOneOf(entry, 'id', ERAS, where, problems);
+    return [{ id, unlockItem: requireItem(entry['unlock'], 'item', items, `${where} era ${id}`, problems) }];
+  });
 }
 
 function parseStart(file: unknown, items: ReadonlyMap<string, ItemDef>, problems: string[]): GameData['start'] {

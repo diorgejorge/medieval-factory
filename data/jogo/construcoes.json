@@ -13,8 +13,8 @@
     { "id": "mine", "era": 1, "width": 2, "height": 2, "frame": "mine", "extracts": { "item": "iron_ore", "terrain": "ore_iron", "seconds": 10, "tool": { "kind": "pickaxe", "minTier": 1 } } },
     { "id": "farm", "era": 1, "width": 3, "height": 3, "frame": "farm", "extracts": { "item": "wheat", "terrain": "grass", "seconds": 12 } },
     { "id": "mill", "era": 1, "width": 2, "height": 2, "frame": "mill" },
-    { "id": "charcoal_kiln", "era": 2, "width": 2, "height": 2, "frame": "charcoal_kiln" },
-    { "id": "smelter", "era": 2, "width": 2, "height": 2, "frame": "smelter" },
+    { "id": "charcoal_kiln", "era": 1, "width": 2, "height": 2, "frame": "charcoal_kiln" },
+    { "id": "smelter", "era": 1, "width": 2, "height": 2, "frame": "smelter" },
     { "id": "forge", "era": 2, "width": 2, "height": 2, "frame": "forge" }
   ]
 }

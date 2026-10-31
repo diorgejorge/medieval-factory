@@ -40,7 +40,8 @@ export type PlacementProblem =
   | 'occupied'
   | 'reserved'
   | 'needsWater'
-  | 'noResource';
+  | 'noResource'
+  | 'lockedEra';
 
 /** Raio, em tiles a partir da borda, onde um extrator procura o recurso. */
 export const EXTRACTION_RADIUS = 3;
@@ -87,6 +88,8 @@ export class BuildingSite {
   private readonly reserved: Uint8Array;
   private readonly buildings = new Map<number, Building>();
   private nextId = 1;
+  /** Era atual: construções de eras futuras ainda não podem ser feitas. */
+  era = 1;
 
   constructor(
     private readonly grid: Grid,
@@ -108,6 +111,7 @@ export class BuildingSite {
   /** Primeiro problema que impede construir ali, ou null se pode. `ignoreId` permite girar no lugar. */
   check(kind: BuildingKind, x: number, y: number, rotation: Rotation, ignoreId = 0): PlacementProblem | null {
     if (!GAME_DATA.buildings.has(kind)) return 'unknown';
+    if (buildingDef(kind).era > this.era) return 'lockedEra';
     const { width, height } = footprint(kind, rotation);
     for (let ty = y; ty < y + height; ty++) {
       for (let tx = x; tx < x + width; tx++) {

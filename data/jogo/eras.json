@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "note": "Como cada era se abre: a primeira vez que 'item' aparece num armazém do jogador. Nomes e textos das eras: data/texto/pt-BR/eras.json (Roteiro).",
+  "eras": [
+    { "id": 2, "unlock": { "item": "iron_ingot" } }
+  ]
+}

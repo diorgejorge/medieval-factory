@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import buildings from '../data/jogo/construcoes.json';
 import items from '../data/jogo/itens.json';
+import eras from '../data/jogo/eras.json';
 import start from '../data/jogo/inicio.json';
 import recipes from '../data/jogo/receitas.json';
 import buildingNames from '../data/texto/pt-BR/construcoes.json';
@@ -12,7 +13,7 @@ import objectsAtlas from '../assets/objects/objects.json';
 
 /** Cópia profunda dos dados reais, para estragar um pedaço por teste. */
 function rawCopy() {
-  return structuredClone({ items, buildings, recipes, itemNames, buildingNames, start });
+  return structuredClone({ items, buildings, recipes, itemNames, buildingNames, start, eras });
 }
 
 function must<T>(value: T | undefined): T {

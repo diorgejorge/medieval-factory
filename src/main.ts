@@ -20,6 +20,7 @@ import { ServantLayer } from './render/servantLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
 import { BuildingPanel, formatItems } from './ui/buildingPanel';
 import { BuildToolbar } from './ui/buildToolbar';
+import { eraName, showEraNotice } from './ui/eraNotice';
 import { VillagePanel } from './ui/villagePanel';
 
 const HUD_REFRESH_MS = 250;
@@ -100,6 +101,8 @@ async function start(): Promise<void> {
     else if (neighbor) villagePanel.show(neighbor, villages.indexOf(neighbor), economy);
   });
 
+  let era = 1;
+  toolbar.setEra(era);
   let sinceHudRefresh = 0;
   app.ticker.add((ticker) => {
     controls.update(ticker.deltaMS / 1000);
@@ -117,12 +120,21 @@ async function start(): Promise<void> {
       hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
       buildingPanel.refresh(simulation.snapshot?.economy);
       villagePanel.refresh(simulation.snapshot?.economy);
+      const snapshotEra = simulation.snapshot?.era ?? era;
+      if (snapshotEra !== era) {
+        era = snapshotEra;
+        site.era = era;
+        toolbar.setEra(era);
+        buildingPanel.hide();
+        villagePanel.hide();
+        showEraNotice(panel, era);
+      }
     }
   });
 }
 
 function formatHud(fps: number, zoom: number, seed: number, snapshot: SimulationSnapshot | null): string {
-  const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}`;
+  const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}${snapshot ? `  ${eraName(snapshot.era)}` : ''}`;
   const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo ou construção  [R] girar';
   if (!snapshot) return `${render}\nsimulação iniciando...\n${help}`;
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
