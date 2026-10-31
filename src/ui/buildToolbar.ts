@@ -41,6 +41,7 @@ export class BuildToolbar {
   setTool(tool: BuildTool): void {
     for (const [key, button] of this.buttons) button.classList.toggle('active', key === tool);
     this.status.textContent = tool ? HELP : 'Escolha o que construir';
+    this.status.classList.remove('blocked');
   }
 
   /** Mostra por que não dá para construir no lugar do cursor (ou a ajuda, se der). */
