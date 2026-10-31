@@ -1,5 +1,5 @@
 import { GAME_DATA, UI_TEXT } from '../core/data/data';
-import { fillText } from '../core/data/interfaceText';
+import { fillText, quoteText } from '../core/data/interfaceText';
 import type { EconomySnapshot } from '../core/economy/economy';
 import { RECRUIT_FOOD, TRADE_AMOUNT, type VillageResult } from '../core/economy/villageTrade';
 import type { Village, VillageGood } from '../core/world/villages';
@@ -67,20 +67,23 @@ export class VillagePanel {
     if (this.openIndex === null || !village) return;
     const state = economy?.villages[this.openIndex];
     const temperament = this.temperaments[village.temperament];
-    const fill = (text: string, item = '') => text.replaceAll('{vilarejo}', village.name).replaceAll('{item}', item);
+    // Fala do vilarejo já entre as aspas do interface.json.
+    const fill = (text: string, item = '') =>
+      quoteText(UI_TEXT, text.replaceAll('{vilarejo}', village.name).replaceAll('{item}', item));
+    const list = (goods: readonly VillageGood[]) => goods.map(label).join(UI_TEXT.common.listSeparator);
     const firstWant = village.wants[0];
     const lines = [
       el('h2', village.name),
-      el('p', temperament ? `“${fill(temperament.greeting)}”` : '', 'quote'),
+      el('p', temperament ? fill(temperament.greeting) : '', 'quote'),
       el('p', fillText(TEXT.population, { populacao: state?.population ?? village.population })),
-      el('p', fillText(TEXT.produces, { itens: village.produces.map(label).join(', ') })),
-      el('p', fillText(TEXT.wants, { itens: village.wants.map(label).join(', ') })),
+      el('p', fillText(TEXT.produces, { itens: list(village.produces) })),
+      el('p', fillText(TEXT.wants, { itens: list(village.wants) })),
     ];
     if (temperament && firstWant) {
-      lines.push(el('p', `“${fill(temperament.request, label(firstWant).toLocaleLowerCase('pt-BR'))}”`, 'quote'));
+      lines.push(el('p', fill(temperament.request, label(firstWant).toLocaleLowerCase('pt-BR')), 'quote'));
     }
     if (state?.result && state.requests > this.requestsAtOpen && temperament) {
-      lines.push(el('p', `“${fill(answer(temperament, state.result))}”`, state.result.endsWith('Refused') ? 'warning' : 'quote'));
+      lines.push(el('p', fill(answer(temperament, state.result)), state.result.endsWith('Refused') ? 'warning' : 'quote'));
     }
     this.info.replaceChildren(...lines);
   }

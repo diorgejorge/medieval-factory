@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import interfaceText from '../data/texto/pt-BR/interface.json';
 import { UI_TEXT } from '../src/core/data/data';
 import { GameDataError } from '../src/core/data/gameData';
-import { INTERFACE_KEYS, fillText, parseInterfaceText } from '../src/core/data/interfaceText';
+import { INTERFACE_KEYS, fillText, parseInterfaceText, quoteText } from '../src/core/data/interfaceText';
 
 function problemsOf(raw: unknown): string[] {
   try {
@@ -43,5 +43,8 @@ describe('textos da interface (data/texto/pt-BR/interface.json)', () => {
       'Dar 5 Trigo → receber 5 Pão',
     );
     expect(fillText('Hoje ninguém de {vilarejo} vai: {comida}', { comida: 3 })).toBe('Hoje ninguém de {vilarejo} vai: 3');
+    // O valor não é lido de novo: um {texto} dentro da fala não é trocado.
+    expect(quoteText(UI_TEXT, 'Oi {texto}')).toBe(fillText(UI_TEXT.common.quote, { texto: 'Oi {texto}' }));
+    expect(quoteText(UI_TEXT, 'Oi {texto}')).toContain('Oi {texto}');
   });
 });

@@ -5,7 +5,15 @@ import { GameDataError } from './gameData';
  * que cada texto precisa ter (o código preenche esses e só esses).
  */
 export const INTERFACE_KEYS = {
-  common: { close: [], empty: [], itemAmount: ['item', 'quantidade'], itemSeparator: [] },
+  common: {
+    close: [],
+    empty: [],
+    itemAmount: ['item', 'quantidade'],
+    itemSeparator: [],
+    quote: ['texto'],
+    listSeparator: [],
+    eraLabel: ['numero', 'nome'],
+  },
   hud: {
     debugLine: ['fps', 'zoom', 'seed', 'era'],
     simLine: ['ups', 'tick', 'estado'],
@@ -45,6 +53,14 @@ export const INTERFACE_KEYS = {
     recipeFormat: ['entradas', 'saidas'],
     progress: ['progresso'],
     stored: ['total', 'capacidade'],
+    tool: ['item', 'usos'],
+    toolNone: [],
+    recipeItem: ['quantidade', 'item'],
+    recipeItemSeparator: [],
+    recipeFuel: ['combustiveis'],
+    // Do painel de separador, que ainda vai ser feito: já conferidos aqui.
+    filterItem: ['item'],
+    filterAny: [],
   },
   villagePanel: {
     population: ['populacao'],
@@ -94,6 +110,11 @@ export function parseInterfaceText(file: unknown): InterfaceText {
   }
   if (problems.length > 0) throw new GameDataError(problems);
   return result as unknown as InterfaceText;
+}
+
+/** Põe o texto entre as aspas do interface.json (common.quote). */
+export function quoteText(text: InterfaceText, inner: string): string {
+  return fillText(text.common.quote, { texto: inner });
 }
 
 /** Troca cada {nome} do texto pelo valor dado; placeholders sem valor ficam como estão. */

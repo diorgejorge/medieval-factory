@@ -12,8 +12,11 @@ export function describeRecipe(recipeId: string): string {
   const recipe = GAME_DATA.recipes.get(recipeId);
   if (!recipe) return recipeId;
   const list = (amounts: readonly { item: string; amount: number }[]) =>
-    amounts.map(({ item, amount }) => `${amount} ${itemName(item)}`).join(' + ');
-  const fuel = recipe.fuel ? ` (queima ${recipe.fuel.map(itemName).join(' ou ')})` : '';
+    amounts
+      .map(({ item, amount }) => fillText(TEXT.recipeItem, { quantidade: amount, item: itemName(item) }))
+      .join(TEXT.recipeItemSeparator);
+  // " ou " entre combustíveis ainda não tem chave no interface.json.
+  const fuel = recipe.fuel ? fillText(TEXT.recipeFuel, { combustiveis: recipe.fuel.map(itemName).join(' ou ') }) : '';
   return fillText(TEXT.recipeFormat, { entradas: list(recipe.inputs), saidas: list(recipe.outputs) }) + fuel;
 }
 
@@ -74,7 +77,10 @@ export class BuildingPanel {
     }
     if (report.status) lines.push(el('p', STATUS_TEXT[report.status], report.status === 'working' ? '' : 'warning'));
     if (report.tool !== undefined) {
-      lines.push(el('p', report.tool ? `Ferramenta: ${itemName(report.tool.item)} (${report.tool.usesLeft} usos)` : 'Ferramenta: nenhuma'));
+      const tool = report.tool
+        ? fillText(TEXT.tool, { item: itemName(report.tool.item), usos: report.tool.usesLeft })
+        : TEXT.toolNone;
+      lines.push(el('p', tool));
     }
     if (report.items) {
       const total = Object.values(report.items).reduce((sum, amount) => sum + amount, 0);
