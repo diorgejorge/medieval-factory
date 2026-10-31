@@ -42,22 +42,19 @@ describe('BuildingSite: regras de ocupação', () => {
   it('a roda d’água precisa encostar na água', () => {
     const s = site();
     expect(s.check('watermill', 2, 2, 0)).toBe('needsWater');
-    expect(s.check('watermill', 8, 2, 0)).toBeNull();
+    expect(s.check('watermill', 6, 2, 0)).toBeNull();
     expect(s.check('watermill', 11, 2, 0)).toBeNull();
   });
 
-  it('girar troca largura e altura e respeita o espaço', () => {
-    expect(footprint('house', 0)).toEqual({ width: 4, height: 2 });
-    expect(footprint('house', 1)).toEqual({ width: 2, height: 4 });
+  it('girar muda a direção e mantém o canto (as construções de agora são quadradas)', () => {
+    expect(footprint('house', 0)).toEqual({ width: 4, height: 4 });
+    expect(footprint('house', 1)).toEqual({ width: 4, height: 4 });
     const s = site();
     s.place('house', 1, 1, 0);
     expect(s.rotateAt(1, 1)?.rotation).toBe(1);
-    expect(s.buildingAt(1, 4)).not.toBeNull();
-    expect(s.buildingAt(3, 1)).toBeNull();
-
+    expect(s.buildingAt(4, 4)).not.toBeNull();
+    expect(s.buildingAt(5, 1)).toBeNull();
     expect(s.rotateAt(1, 1)?.rotation).toBe(2);
-    s.place('oven', 1, 3, 0);
-    expect(s.rotateAt(1, 1)).toBeNull();
   });
 
   it('remove e libera os tiles', () => {
@@ -72,7 +69,7 @@ describe('BuildingSite: regras de ocupação', () => {
     expect(buildingObject({ id: 1, kind: 'house', x: 1, y: 1, rotation: 0 })).toEqual({
       frame: 'house_thatch_r0',
       x: 3,
-      y: 3,
+      y: 5,
       noShadow: true,
     });
   });
@@ -103,11 +100,11 @@ describe('comandos de construção na simulação', () => {
 });
 
 describe('buildingCenter', () => {
-  it('acompanha a forma girada: girar mantém o canto e troca largura e altura', () => {
+  it('acompanha a forma girada: girar mantém o canto', () => {
     const s = site();
-    const house = s.place('house', 1, 1, 0); // 4×2
-    expect(house && buildingCenter(house)).toEqual({ x: 3, y: 2 });
-    s.rotateAt(1, 1); // 2×4 no mesmo canto
-    expect(house && buildingCenter(house)).toEqual({ x: 2, y: 3 });
+    const house = s.place('house', 1, 1, 0); // 4×4
+    expect(house && buildingCenter(house)).toEqual({ x: 3, y: 3 });
+    s.rotateAt(1, 1); // mesmo canto
+    expect(house && buildingCenter(house)).toEqual({ x: 3, y: 3 });
   });
 });
