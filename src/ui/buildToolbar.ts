@@ -12,6 +12,7 @@ const PROBLEM_TEXT: Readonly<Record<PlacementProblem, string>> = {
   occupied: 'Já tem uma construção aqui',
   reserved: 'Terreno de um vilarejo',
   needsWater: "A roda d'água precisa encostar na água",
+  noResource: 'Não há o recurso por perto (madeira, pedra ou minério)',
 };
 
 const HELP = '[R] girar  [X] remover  [Esc] cancelar';

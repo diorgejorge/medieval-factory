@@ -2,9 +2,10 @@ import { Application, Container } from 'pixi.js';
 import { SimulationClient } from './bridge/simulationClient';
 import { MAP_SIZE_TILES, TILE_SIZE_PX } from './core/config';
 import type { SimulationSnapshot } from './core/simulation';
-import { buildingObject } from './core/world/buildings';
+import { START_STORAGE_ID } from './core/economy/economy';
+import { buildingDef, buildingObject } from './core/world/buildings';
 import { findNearestGrass } from './core/world/generator';
-import { villageAt } from './core/world/villages';
+import { isClickOnArea, villageAt } from './core/world/villages';
 import { createWorld } from './core/world/world';
 import villageTexts from '../data/texto/pt-BR/vilarejos.json';
 import { BuildControls } from './input/buildControls';
@@ -16,6 +17,7 @@ import { Camera } from './render/camera';
 import { GridRenderer } from './render/gridRenderer';
 import { ObjectLayer } from './render/objectLayer';
 import { loadObjectsAtlas, loadTerrainAtlas } from './render/terrainAtlas';
+import { BuildingPanel, formatItems } from './ui/buildingPanel';
 import { BuildToolbar } from './ui/buildToolbar';
 import { VillagePanel } from './ui/villagePanel';
 
@@ -75,12 +77,19 @@ async function start(): Promise<void> {
   };
 
   const villagePanel = new VillagePanel(panel, villageTexts.temperaments);
+  const buildingPanel = new BuildingPanel(panel);
   bindClicks(app.canvas, (screen) => {
     if (build.click(screen)) return;
     const point = camera.screenToWorld(screen);
-    const clicked = villageAt(villages, Math.floor(point.x / TILE_SIZE_PX), Math.floor(point.y / TILE_SIZE_PX));
-    if (clicked) villagePanel.show(clicked);
-    else villagePanel.hide();
+    const tile = { x: Math.floor(point.x / TILE_SIZE_PX), y: Math.floor(point.y / TILE_SIZE_PX) };
+    const economy = simulation.snapshot?.economy;
+    const building = site.buildingAt(tile.x, tile.y);
+    const neighbor = villageAt(villages, tile.x, tile.y);
+    buildingPanel.hide();
+    villagePanel.hide();
+    if (building) buildingPanel.show(building.id, buildingDef(building.kind).name, economy);
+    else if (village && isClickOnArea(village.area, tile.x, tile.y)) buildingPanel.show(START_STORAGE_ID, 'Sua vila', economy);
+    else if (neighbor) villagePanel.show(neighbor);
   });
 
   let sinceHudRefresh = 0;
@@ -97,18 +106,20 @@ async function start(): Promise<void> {
     if (sinceHudRefresh >= HUD_REFRESH_MS) {
       sinceHudRefresh = 0;
       hud.textContent = formatHud(ticker.FPS, camera.zoom, seed, simulation.snapshot);
+      buildingPanel.refresh(simulation.snapshot?.economy);
     }
   });
 }
 
 function formatHud(fps: number, zoom: number, seed: number, snapshot: SimulationSnapshot | null): string {
   const render = `FPS ${Math.round(fps)}  zoom ${zoom}x  seed ${seed}`;
-  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo  [R] girar construção';
+  const help = '[espaço] pausa  [1-3] velocidade  [N] novo mapa  [clique] vilarejo ou construção  [R] girar';
   if (!snapshot) return `${render}\nsimulação iniciando...\n${help}`;
   // Pausado, o Worker não publica snapshots e o último UPS ficaria congelado na tela.
   const ups = snapshot.paused ? 0 : Math.round(snapshot.ups);
   const state = snapshot.paused ? 'PAUSADO' : `${snapshot.speed}x`;
-  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n${help}`;
+  const stock = snapshot.economy ? `\nEstoque: ${formatItems(snapshot.economy.stock)}` : '';
+  return `${render}\nUPS ${ups}  tick ${snapshot.tick}  ${state}\n${help}${stock}`;
 }
 
 /** A seed vem da URL (?seed=123) para um mapa poder ser compartilhado; sem ela, sorteia uma. */

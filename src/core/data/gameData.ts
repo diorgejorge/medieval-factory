@@ -7,6 +7,9 @@ export type Era = (typeof ERAS)[number];
 export const TOOL_TIERS = [1, 2, 3] as const;
 export type ToolTier = (typeof TOOL_TIERS)[number];
 
+export const TOOL_KINDS = ['axe', 'pickaxe'] as const;
+export type ToolKind = (typeof TOOL_KINDS)[number];
+
 export const ITEM_CATEGORIES = ['resource', 'intermediate', 'food', 'fuel', 'tool'] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
@@ -17,7 +20,7 @@ export interface ItemDef {
   category: ItemCategory;
   /** Segundos de queima, para combustíveis. */
   fuel?: number;
-  tool?: { tier: ToolTier; uses: number };
+  tool?: { kind: ToolKind; tier: ToolTier; uses: number };
   /** Vilarejos produzem e pedem. */
   trade?: boolean;
 }
@@ -31,7 +34,10 @@ export interface BuildingDef {
   /** Arte no atlas de objetos; sem ela a construção ainda não aparece na barra. */
   frame?: string;
   needsWater?: boolean;
-  extracts?: { item: string; terrain: TerrainType; minTool: ToolTier };
+  /** Extrator: tira 1 `item` do `terrain` em volta a cada `seconds` (dividido pelo nível da ferramenta). */
+  extracts?: { item: string; terrain: TerrainType; seconds: number; tool?: { kind: ToolKind; minTier: ToolTier } };
+  /** Armazém: guarda até `capacity` itens somados. */
+  storage?: { capacity: number };
 }
 
 export interface ItemAmount {
@@ -53,6 +59,8 @@ export interface GameData {
   items: ReadonlyMap<string, ItemDef>;
   buildings: ReadonlyMap<string, BuildingDef>;
   recipes: ReadonlyMap<string, RecipeDef>;
+  /** Estoque e capacidade da vila do jogador, que é o primeiro armazém (data/jogo/inicio.json). */
+  start: { capacity: number; stock: ItemAmount[] };
 }
 
 /** Os arquivos de data/jogo e os nomes de data/texto/pt-BR, como vêm do disco (ainda sem conferir). */
@@ -62,6 +70,7 @@ export interface RawGameData {
   recipes: unknown;
   itemNames: unknown;
   buildingNames: unknown;
+  start: unknown;
 }
 
 export class GameDataError extends Error {
@@ -101,8 +110,21 @@ export function parseGameData(raw: RawGameData): GameData {
   const recipes = parseList(raw.recipes, 'recipes', 'receitas.json', problems, (entry, where) =>
     parseRecipe(entry, where, items, buildings, problems),
   );
+  const start = parseStart(raw.start, items, problems);
   if (problems.length > 0) throw new GameDataError(problems);
-  return { items, buildings, recipes };
+  return { items, buildings, recipes, start };
+}
+
+function parseStart(file: unknown, items: ReadonlyMap<string, ItemDef>, problems: string[]): GameData['start'] {
+  const where = 'inicio.json';
+  if (!isObject(file) || typeof file['version'] !== 'number') {
+    problems.push(`${where}: precisa de "version" (número)`);
+    return { capacity: 0, stock: [] };
+  }
+  return {
+    capacity: requirePositiveInt(file, 'capacity', where, problems),
+    stock: parseAmounts(file['stock'], `${where} stock`, items, problems),
+  };
 }
 
 function parseList<T extends { id: string }>(
@@ -157,11 +179,12 @@ function parseItem(
     const tool = entry['tool'];
     if (isObject(tool)) {
       item.tool = {
+        kind: requireOneOf(tool, 'kind', TOOL_KINDS, `${where} tool`, problems),
         tier: requireOneOf(tool, 'tier', TOOL_TIERS, `${where} tool`, problems),
         uses: requirePositiveInt(tool, 'uses', `${where} tool`, problems),
       };
     } else {
-      problems.push(`${where}: "tool" deve ser { tier, uses }`);
+      problems.push(`${where}: "tool" deve ser { kind, tier, uses }`);
     }
   }
   if (item.category === 'tool' && !item.tool) problems.push(`${where}: ferramenta sem "tool"`);
@@ -195,9 +218,23 @@ function parseBuilding(
       building.extracts = {
         item: requireItem(extracts, 'item', items, `${where} extracts`, problems),
         terrain,
-        minTool: requireOneOf(extracts, 'minTool', TOOL_TIERS, `${where} extracts`, problems),
+        seconds: requirePositive(extracts, 'seconds', `${where} extracts`, problems),
       };
+      const tool = extracts['tool'];
+      if (isObject(tool)) {
+        building.extracts.tool = {
+          kind: requireOneOf(tool, 'kind', TOOL_KINDS, `${where} extracts.tool`, problems),
+          minTier: requireOneOf(tool, 'minTier', TOOL_TIERS, `${where} extracts.tool`, problems),
+        };
+      } else if (tool !== undefined) {
+        problems.push(`${where}: "extracts.tool" deve ser { kind, minTier }`);
+      }
     }
+  }
+  if (entry['storage'] !== undefined) {
+    const storage = entry['storage'];
+    if (isObject(storage)) building.storage = { capacity: requirePositiveInt(storage, 'capacity', `${where} storage`, problems) };
+    else problems.push(`${where}: "storage" deve ser { capacity }`);
   }
   return problems.length === before ? building : null;
 }

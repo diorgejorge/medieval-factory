@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import buildings from '../data/jogo/construcoes.json';
 import items from '../data/jogo/itens.json';
+import start from '../data/jogo/inicio.json';
 import recipes from '../data/jogo/receitas.json';
 import buildingNames from '../data/texto/pt-BR/construcoes.json';
 import itemNames from '../data/texto/pt-BR/itens.json';
@@ -11,7 +12,7 @@ import objectsAtlas from '../assets/objects/objects.json';
 
 /** Cópia profunda dos dados reais, para estragar um pedaço por teste. */
 function rawCopy() {
-  return structuredClone({ items, buildings, recipes, itemNames, buildingNames });
+  return structuredClone({ items, buildings, recipes, itemNames, buildingNames, start });
 }
 
 function must<T>(value: T | undefined): T {
@@ -40,7 +41,13 @@ describe('dados do jogo (data/jogo)', () => {
   it('converte era, ferramenta, combustível e terreno do extrator', () => {
     expect(GAME_DATA.items.get('iron_axe')).toMatchObject({ era: 2, category: 'tool', tool: { tier: 2 } });
     expect(GAME_DATA.items.get('charcoal')?.fuel).toBeGreaterThan(GAME_DATA.items.get('firewood')?.fuel ?? 0);
-    expect(GAME_DATA.buildings.get('lumberjack')?.extracts).toEqual({ item: 'wood', terrain: Terrain.Forest, minTool: 1 });
+    expect(GAME_DATA.buildings.get('lumberjack')?.extracts).toEqual({
+      item: 'wood',
+      terrain: Terrain.Forest,
+      seconds: 6,
+      tool: { kind: 'axe', minTier: 1 },
+    });
+    expect(GAME_DATA.start.stock).toContainEqual({ item: 'stone_axe', amount: 2 });
     expect(GAME_DATA.recipes.get('bake_bread')).toMatchObject({ building: 'oven', fuel: ['firewood', 'charcoal'] });
   });
 
@@ -74,7 +81,7 @@ describe('dados do jogo (data/jogo)', () => {
     must(raw.recipes.recipes.find((r) => r.id === 'bake_bread')).fuel = ['flour'];
     const axe = must(raw.items.items.find((i) => i.id === 'stone_axe'));
     axe.era = 9;
-    axe.tool = { tier: 7, uses: 0 };
+    axe.tool = { kind: 'axe', tier: 7, uses: 0 };
     const problems = problemsOf(raw);
     expect(problems.some((p) => p.includes('"flour" não é um combustível'))).toBe(true);
     expect(problems.some((p) => p.includes('"era" deve ser'))).toBe(true);
